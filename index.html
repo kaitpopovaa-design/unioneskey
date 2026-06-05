@@ -114,7 +114,7 @@
                 <div class="flex items-center gap-2 sm:gap-4">
                     <span id="role-badge" class="px-4 py-1.5 rounded-xl text-xs font-bold border border-gray-200 bg-gray-50 text-gray-700 hidden sm:inline-block"></span>
                     
-                    <!-- Кнопка настройки доступов для Директора -->
+                    <!-- Кнопка тонкой настройки доступов, видимая только Директору -->
                     <button id="btn-open-settings" onclick="openSettingsModal()" class="hidden px-3 sm:px-4 py-2 bg-purple-50 hover:bg-purple-100 text-brand-purple font-semibold rounded-xl text-sm transition-colors border border-purple-100">⚙️ Доступы</button>
                     
                     <button onclick="logOut()" class="px-4 py-2 bg-gray-50 hover:bg-gray-100 text-brand-gray hover:text-brand-dark font-medium rounded-xl text-sm transition-colors border border-gray-100">Выйти</button>
@@ -141,7 +141,7 @@
                 </div>
             </div>
 
-            <!-- ГЛАВНАЯ ТАБЛИЦА -->
+            <!-- ГЛАВНАЯ ТАБЛИЦА С ЗАЩИТОЙ ОТ СЪЕЗЖАНИЯ -->
             <div class="bg-white rounded-[2rem] border border-gray-100 shadow-soft overflow-hidden animate-fade-in">
                 <div class="p-5 sm:p-6 border-b flex justify-between items-center">
                     <h3 class="text-lg font-bold text-brand-dark">Информационная панель</h3>
@@ -258,7 +258,7 @@
         <div class="bg-white border sm:border-gray-100 p-0 sm:p-8 rounded-t-[2rem] sm:rounded-[2rem] w-full max-w-5xl shadow-2xl h-[85vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden animate-fade-in">
             <div class="p-5 sm:p-6 border-b flex justify-between items-center bg-gray-50/50 mb-0 sm:mb-4 font-bold text-brand-dark shrink-0">
                 <h3 class="text-lg sm:text-xl font-bold">Финансы компании</h3>
-                <button onclick="closeCompanyHistoryModal()" class="p-2 sm:p-0 text-3xl leading-none hover:text-brand-purple transition-colors">&times;</button>
+                <button onclick="closeCompanyHistoryModal()" class="text-3xl leading-none hover:text-brand-purple transition-colors">&times;</button>
             </div>
             <div class="overflow-y-auto flex-1 bg-white sm:rounded-2xl border-0 sm:border border-gray-100 sm:shadow-inner">
                 <table class="w-full text-left border-collapse">
@@ -340,7 +340,7 @@
     </div>
 
     <!-- МОДАЛКА НОВОГО ОБЪЕКТА -->
-    <div id="add-project-modal" class="fixed inset-0 bg-gray-950/40 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div id="add-project-modal" class="fixed inset-0 bg-gray-950/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white p-6 sm:p-8 rounded-t-[2rem] sm:rounded-[2rem] w-full max-w-md shadow-2xl animate-fade-in border flex flex-col max-h-[95vh]">
             <div class="flex justify-between items-center mb-4 sm:mb-6 shrink-0">
                 <h3 class="text-xl sm:text-2xl font-bold">Новый объект</h3>
@@ -822,7 +822,7 @@
                 }
                 
                 // Считываем доступы партнеров, если они вернулись с сервера без перезаписи цветов
-                if (jsonData.partners) {
+                if (jsonData && jsonData.partners) {
                     for (const key in jsonData.partners) {
                         if (PARTNER_CONFIG[key]) {
                             PARTNER_CONFIG[key].name = String(jsonData.partners[key].name || '').trim();
@@ -834,11 +834,14 @@
                     updateAccessDropdowns();
                 }
 
-                data = jsonData.projects.map(p => {
+                const rawProjects = (jsonData && jsonData.projects) ? jsonData.projects : [];
+                data = rawProjects.map(p => {
                     const parsedExpenses = (p.expenses || []).map(e => ({ date: e.date, category: e.category, amount: parseFormattedNumber(e.amount), comment: e.comment, investor: e.investor, rowIndex: e.rowIndex }));
                     return { ...p, id: Number(p.id), contract: parseFormattedNumber(p.contract), paid: parseFormattedNumber(p.paid), cost: parsedExpenses.reduce((sum, e) => sum + e.amount, 0), expenses: parsedExpenses };
                 });
-                companyTransactions = jsonData.companyTransactions ? jsonData.companyTransactions.map(tx => ({ ...tx, amount: parseFormattedNumber(tx.amount) })) : [];
+                
+                const rawCompany = (jsonData && jsonData.companyTransactions) ? jsonData.companyTransactions : [];
+                companyTransactions = rawCompany.map(tx => ({ ...tx, amount: parseFormattedNumber(tx.amount) }));
                 setRole(currentRole);
                 showNotification('Данные успешно синхронизированы с Google Sheets!');
             } catch (e) {
@@ -1087,67 +1090,6 @@
             if (label) label.innerText = accessString;
             
             updateAccess(id, accessString);
-        }
-
-        function logOut() {
-            authRole = null;
-            currentRole = null;
-            const pinEl = document.getElementById('pin-input');
-            if (pinEl) pinEl.value = '';
-            document.getElementById('login-screen').classList.remove('hidden');
-            document.getElementById('app-content').classList.add('hidden');
-            const demoBanner = document.getElementById('demo-banner');
-            if (demoBanner) demoBanner.classList.add('hidden');
-        }
-
-        function switchView(target) {
-            const btns = ['director', 'dima', 'kolya', 'partner3', 'partner4'];
-            btns.forEach(b => {
-                const el = document.getElementById(`btn-view-${b}`);
-                if (el) {
-                    el.className = b === target 
-                        ? 'px-6 py-2 rounded-xl text-xs font-bold bg-white shadow-sm transition-all whitespace-nowrap' 
-                        : 'px-6 py-2 rounded-xl text-xs font-bold text-gray-500 transition-all whitespace-nowrap';
-                }
-            });
-            setRole(target);
-        }
-
-        // ВОССТАНОВЛЕННАЯ ГЛОБАЛЬНАЯ ФУНКЦИЯ sendPost ДЛЯ СВЯЗИ С GOOGLE SHEETS
-        async function sendPost(payload, reload = false) {
-            simulateOfflinePost(payload);
-            if (!isLive()) return;
-
-            try {
-                const details = {
-                    'jsonData': JSON.stringify(payload)
-                };
-                
-                let formBody = [];
-                for (let property in details) {
-                    let encodedKey = encodeURIComponent(property);
-                    let encodedValue = encodeURIComponent(details[property]);
-                    formBody.push(encodedKey + "=" + encodedValue);
-                }
-                formBody = formBody.join("&");
-
-                fetch(API_URL, { 
-                    method: 'POST', 
-                    mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
-                    },
-                    body: formBody 
-                }).catch(e => {
-                    console.log("Запрос отправлен.");
-                });
-                
-                if (reload) {
-                    setTimeout(initApp, 2500);
-                }
-            } catch (e) { 
-                console.error("Ошибка при отправке POST:", e);
-            }
         }
 
         // КЛИК НА СТАТУС В ТАБЛИЦЕ
@@ -1700,7 +1642,7 @@
                         <option value="personal" ${t.type === 'personal' ? 'selected' : ''}>Личный вывод</option>
                     </select>
                 </td>
-                <td class="px-3 py-2"><input type="text" id="edit-comp-amount-${idx}" value="${formatNumberWithSpaces(t.amount)}" oninput="formatInputSpaces(this)" class="h-9 min-w-[100px] px-2 py-0 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full text-right font-bold outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
+                <td class="px-3 py-2"><input type="text" id="edit-comp-amount-${idx}" value="${formatNumberWithSpaces(t.amount)}" oninput="formatInputSpaces(this)" class="bg-gray-50 border border-gray-200 rounded-lg p-1.5 text-xs w-full text-right font-bold outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
                 <td class="px-3 py-2">
                     <input type="text" id="edit-comp-category-${idx}" value="${t.category}" list="category-options-edit" class="h-9 min-w-[140px] px-2 py-0 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru">
                 </td>
