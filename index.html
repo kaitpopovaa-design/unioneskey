@@ -293,7 +293,7 @@
                         <select id="uni-type" onchange="toggleUniModalFields()" class="w-full h-14 bg-gray-50 border border-gray-200 rounded-2xl px-4 text-sm outline-none focus:border-brand-purple transition-all">
                             <option value="project">Расход по объекту</option>
                             <option value="general">Общий расход компании</option>
-                            <option value="personal">Личные траты</option>
+                            <option value="personal">Личные трат</option>
                         </select>
                     </div>
                     <div id="uni-project-wrapper" class="space-y-1.5">
@@ -456,17 +456,8 @@
         </div>
     </div>
 
-    <!-- Модалка с ошибкой -->
-    <div id="error-modal" class="fixed inset-0 bg-gray-950/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-3xl w-full max-w-md shadow-2xl text-center space-y-4 animate-fade-in">
-            <h3 class="text-xl font-bold text-red-500">⚠️ Сбой подключения</h3>
-            <p class="text-sm text-gray-600">Не удалось загрузить данные из Google Таблиц.</p>
-            <button onclick="retryConnection()" class="w-full py-3 bg-gray-100 rounded-xl font-bold hover:bg-gray-200">Продолжить автономно</button>
-        </div>
-    </div>
-
     <script>
-        // Интегрированный API-адрес
+        // Обновленный API-адрес с поддержкой динамических партнеров и процентами
         const API_URL = "https://script.google.com/macros/s/AKfycbxPof6CcCPx1KS_pH0NmOVCiRKpvpf_2HnPtoiG_i9vKlJk1rh0YaBq3RvxnZlkwLX-Xw/exec"; 
 
         // Изначальный/глобальный конфиг партнеров
@@ -686,63 +677,147 @@
             setRole(currentRole);
         }
 
-        function setRole(role) {
-            currentRole = role;
-            const badge = document.getElementById('role-badge'), switcher = document.getElementById('director-view-switcher');
-            
-            // Скрыть/показать шестеренку управления доступом
-            const settingsBtn = document.getElementById('btn-open-settings');
-            if (settingsBtn) {
-                settingsBtn.classList.toggle('hidden', currentRole !== 'director');
-            }
+        // Глобальная переменная для отслеживания статуса фонового запроса
+        let isSyncingConfig = false;
 
-            if (authRole === 'director') {
-                if (switcher) switcher.classList.remove('hidden');
-                let displayRole = 'Директор';
-                if (role === 'dima') displayRole = PARTNER_CONFIG.dima.name;
-                else if (role === 'kolya') displayRole = PARTNER_CONFIG.kolya.name;
-                else if (role === 'partner3') displayRole = PARTNER_CONFIG.partner3.name;
-                else if (role === 'partner4') displayRole = PARTNER_CONFIG.partner4.name;
-                badge.innerText = `Режим: ${displayRole}`;
-            } else {
-                if (switcher) switcher.classList.add('hidden');
-                let displayRole = '';
-                if (role === 'dima') displayRole = `Кабинет: ${PARTNER_CONFIG.dima.name}`;
-                else if (role === 'kolya') displayRole = `Кабинет: ${PARTNER_CONFIG.kolya.name}`;
-                else if (role === 'partner3') displayRole = `Кабинет: ${PARTNER_CONFIG.partner3.name}`;
-                else if (role === 'partner4') displayRole = `Кабинет: ${PARTNER_CONFIG.partner4.name}`;
-                badge.innerText = displayRole;
-            }
-            
-            const btnAddProject = document.getElementById('btn-add-project');
-            if (btnAddProject) {
-                btnAddProject.classList.toggle('hidden', currentRole !== 'director');
-            }
+        // ПРЕДВАРИТЕЛЬНАЯ ФОНОВАЯ ЗАГРУЗКА ПАРОЛЕЙ И ИМЕН ИЗ ТАБЛИЦЫ ДО ВХОДА
+        async function preFetchConfig() {
+            if (!isLive() || isSyncingConfig) return;
+            isSyncingConfig = true;
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                const jsonData = await response.json();
+                
+                // 1. Обновляем PIN-коды и имена в памяти страницы
+                if (jsonData && jsonData.partners) {
+                    for (const key in jsonData.partners) {
+                        if (PARTNER_CONFIG[key]) {
+                            PARTNER_CONFIG[key].name = String(jsonData.partners[key].name || '').trim();
+                            PARTNER_CONFIG[key].pin = String(jsonData.partners[key].pin || '').trim();
+                        }
+                    }
+                    localStorage.setItem('union_partner_config_v2', JSON.stringify(PARTNER_CONFIG));
+                }
 
-            const directorCards = document.getElementById('director-cards');
-            const mainChartsWrapper = document.getElementById('main-charts-wrapper');
-            const topActions = document.getElementById('top-actions');
+                // 2. Предварительно парсим проекты, чтобы после логина они открылись моментально
+                if (jsonData && jsonData.projects) {
+                    data = jsonData.projects.map(p => {
+                        const parsedExpenses = (p.expenses || []).map(e => ({ date: e.date, category: e.category, amount: parseFormattedNumber(e.amount), comment: e.comment, investor: e.investor, rowIndex: e.rowIndex }));
+                        return { ...p, id: Number(p.id), contract: parseFormattedNumber(p.contract), paid: parseFormattedNumber(p.paid), cost: parsedExpenses.reduce((sum, e) => sum + e.amount, 0), expenses: parsedExpenses };
+                    });
+                }
 
-            if (authRole === 'director' && currentRole === 'director') {
-                if (directorCards) directorCards.classList.remove('hidden');
-                if (mainChartsWrapper) mainChartsWrapper.classList.remove('hidden');
-                if (topActions) topActions.classList.remove('hidden');
-            } else {
-                if (directorCards) directorCards.classList.add('hidden');
-                if (mainChartsWrapper) mainChartsWrapper.classList.add('hidden');
-                if (topActions) topActions.classList.add('hidden');
+                // 3. Предварительно парсим транзакции компании
+                if (jsonData && jsonData.companyTransactions) {
+                    companyTransactions = jsonData.companyTransactions.map(tx => ({ ...tx, amount: parseFormattedNumber(tx.amount) }));
+                }
+            } catch (e) {
+                console.warn("Сбой фонового предзапроса доступов (используем кэш):", e);
+            } finally {
+                isSyncingConfig = false;
             }
-            
-            let displayTitle = "Строительные объекты";
-            if (currentRole === 'director') displayTitle = "Управление всей компанией";
-            else if (PARTNER_CONFIG[currentRole]) displayTitle = `Строительные объекты — ${PARTNER_CONFIG[currentRole].name}`;
-            document.getElementById('role-title').innerText = displayTitle;
-
-            renderTable(); 
-            setTimeout(renderCharts, 100);
         }
 
-        // Универсальный динамический фильтр по кураторам
+        // Умный вход: если PIN-код отсутствует в кэше, принудительно опрашиваем Google Таблицу на наличие обновлений
+        async function checkPin() {
+            const pinVal = document.getElementById('pin-input').value.trim();
+            loadConfig();
+
+            let foundRole = null;
+            for (const [role, cfg] of Object.entries(PARTNER_CONFIG)) {
+                if (cfg.pin === pinVal) {
+                    foundRole = role;
+                    break;
+                }
+            }
+
+            // Если пароль не подошел, делаем принудительный синхронный запрос за свежими паролями
+            if (!foundRole && isLive()) {
+                const btn = document.querySelector('#login-screen button[type="submit"]');
+                const originalText = btn ? btn.innerText : "Войти в систему";
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerText = "Проверка доступов...";
+                }
+
+                await preFetchConfig(); // Качаем актуальные PIN-коды прямо сейчас!
+
+                // Проверяем введенный код повторно по свежей базе
+                for (const [role, cfg] of Object.entries(PARTNER_CONFIG)) {
+                    if (cfg.pin === pinVal) {
+                        foundRole = role;
+                        break;
+                    }
+                }
+
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                }
+            }
+
+            if (foundRole) {
+                authRole = foundRole;
+                currentRole = authRole;
+                
+                // Плавно переключаем экраны
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-content').classList.remove('hidden');
+
+                // Инициализируем интерфейс
+                renderViewSwitcher();
+                updateAccessDropdowns();
+                setRole(currentRole);
+            } else {
+                const err = document.getElementById('login-error');
+                if (err) err.classList.remove('hidden');
+            }
+        }
+
+        // Обновленная функция инициализации (загружает только если данные еще не получены)
+        async function initApp() {
+            loadConfig();
+            renderViewSwitcher();
+            updateAccessDropdowns();
+
+            if (!authRole) {
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('app-content').classList.add('hidden');
+                document.getElementById('sync-screen').classList.add('hidden');
+                return;
+            }
+            
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-content').classList.remove('hidden');
+
+            if (data && data.length > 0) {
+                setRole(currentRole);
+                return;
+            }
+
+            document.getElementById('sync-screen').classList.remove('hidden');
+
+            if (!isLive()) {
+                loadLocalFallback();
+                return;
+            }
+
+            try {
+                await preFetchConfig();
+                setRole(currentRole);
+                showNotification('Данные успешно синхронизированы с Google Sheets!');
+            } catch (e) {
+                console.warn("Сетевой сбой при инициализации Google Sheets. Переход в оффлайн-режим...", e);
+                loadLocalFallback();
+            } finally {
+                document.getElementById('sync-screen').classList.add('hidden');
+            }
+        }
+
+        // Динамический фильтр по кураторам
         function getFilteredProjects() {
             return data.filter(p => {
                 const name = String(p.name || '').toLowerCase();
@@ -763,351 +838,41 @@
             });
         }
 
-        function checkPin() {
-            const pinVal = document.getElementById('pin-input').value.trim();
-            loadConfig();
-            
-            let foundRole = null;
-            for (const [role, cfg] of Object.entries(PARTNER_CONFIG)) {
-                if (cfg.pin === pinVal) {
-                    foundRole = role;
-                    break;
-                }
-            }
-
-            if (foundRole) {
-                authRole = foundRole;
-                currentRole = authRole;
-                initApp();
-            } else {
-                const err = document.getElementById('login-error');
-                if (err) err.classList.remove('hidden');
-            }
-        }
-
-        async function initApp() {
-            loadConfig();
-            renderViewSwitcher();
-            updateAccessDropdowns();
-
-            if (!authRole) {
-                document.getElementById('login-screen').classList.remove('hidden');
-                document.getElementById('app-content').classList.add('hidden');
-                document.getElementById('sync-screen').classList.add('hidden');
-                return;
-            }
-            
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('app-content').classList.remove('hidden');
-            document.getElementById('sync-screen').classList.remove('hidden');
-
-            if (!isLive()) {
-                loadLocalFallback();
-                return;
-            }
+        // Глобальная функция отправки данных на сервер Google Sheets
+        async function sendPost(payload, reload = false) {
+            simulateOfflinePost(payload);
+            if (!isLive()) return;
 
             try {
-                const response = await fetch(API_URL, {
-                    method: 'GET',
-                    mode: 'cors'
+                const details = {
+                    'jsonData': JSON.stringify(payload)
+                };
+                
+                let formBody = [];
+                for (let property in details) {
+                    let encodedKey = encodeURIComponent(property);
+                    let encodedValue = encodeURIComponent(details[property]);
+                    formBody.push(encodedKey + "=" + encodedValue);
+                }
+                formBody = formBody.join("&");
+
+                fetch(API_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                    },
+                    body: formBody 
+                }).catch(e => {
+                    console.log("Запрос отправлен.");
                 });
                 
-                const rawText = await response.text();
-                let jsonData;
-                try {
-                    jsonData = JSON.parse(rawText);
-                } catch (jsonErr) {
-                    console.error("Сервер вернул не JSON. Требуется авторизация или ошибка доступа. Ответ сервера:", rawText);
-                    throw new Error("Неверный формат ответа");
+                if (reload) {
+                    setTimeout(initApp, 2500);
                 }
-                
-                // Считываем доступы партнеров, если они вернулись с сервера без перезаписи цветов
-                if (jsonData && jsonData.partners) {
-                    for (const key in jsonData.partners) {
-                        if (PARTNER_CONFIG[key]) {
-                            PARTNER_CONFIG[key].name = String(jsonData.partners[key].name || '').trim();
-                            PARTNER_CONFIG[key].pin = String(jsonData.partners[key].pin || '').trim();
-                        }
-                    }
-                    localStorage.setItem('union_partner_config_v2', JSON.stringify(PARTNER_CONFIG));
-                    renderViewSwitcher();
-                    updateAccessDropdowns();
-                }
-
-                const rawProjects = (jsonData && jsonData.projects) ? jsonData.projects : [];
-                data = rawProjects.map(p => {
-                    const parsedExpenses = (p.expenses || []).map(e => ({ date: e.date, category: e.category, amount: parseFormattedNumber(e.amount), comment: e.comment, investor: e.investor, rowIndex: e.rowIndex }));
-                    return { ...p, id: Number(p.id), contract: parseFormattedNumber(p.contract), paid: parseFormattedNumber(p.paid), cost: parsedExpenses.reduce((sum, e) => sum + e.amount, 0), expenses: parsedExpenses };
-                });
-                
-                const rawCompany = (jsonData && jsonData.companyTransactions) ? jsonData.companyTransactions : [];
-                companyTransactions = rawCompany.map(tx => ({ ...tx, amount: parseFormattedNumber(tx.amount) }));
-                setRole(currentRole);
-                showNotification('Данные успешно синхронизированы с Google Sheets!');
-            } catch (e) {
-                console.warn("Сетевой сбой при инициализации Google Sheets. Переход в оффлайн-режим...", e);
-                loadLocalFallback();
-            } finally {
-                document.getElementById('sync-screen').classList.add('hidden');
+            } catch (e) { 
+                console.error("Ошибка при отправке POST:", e);
             }
-        }
-
-        function loadLocalFallback() {
-            data = JSON.parse(JSON.stringify(mockData));
-            companyTransactions = JSON.parse(JSON.stringify(mockCompanyTransactions));
-            setRole(currentRole); 
-            const demoBanner = document.getElementById('demo-banner');
-            if (demoBanner) demoBanner.classList.remove('hidden');
-            showNotification('Связь с базой отсутствует. Включен автономный режим.', 'error');
-        }
-
-        function simulateOfflinePost(payload) {
-            if (payload.action === 'addExpense') {
-                const proj = data.find(p => Number(p.id) === Number(payload.projectId));
-                if (proj) {
-                    if (!proj.expenses) proj.expenses = [];
-                    proj.expenses.push({
-                        date: payload.date,
-                        category: payload.category,
-                        amount: Number(payload.amount),
-                        comment: payload.comment,
-                        investor: payload.investor || 'Юнион Эскей'
-                    });
-                    proj.cost = proj.expenses.reduce((sum, e) => sum + e.amount, 0);
-                }
-            } else if (payload.action === 'addCompanyExpense') {
-                companyTransactions.push({
-                    date: payload.date,
-                    type: payload.type, 
-                    amount: Number(payload.amount),
-                    category: payload.category,
-                    comment: payload.comment
-                });
-            } else if (payload.action === 'addProject') {
-                const nextId = data.length ? Math.max(...data.map(p => p.id)) + 1 : 1;
-                data.push({
-                    id: nextId,
-                    name: payload.name,
-                    status: 'Согласование',
-                    todo: '',
-                    contract: Number(payload.contract),
-                    paid: Number(payload.paid || 0),
-                    cost: 0,
-                    partnerAccess: payload.partnerAccess || 'Нет',
-                    expenses: []
-                });
-            } else if (payload.action === 'updateStatus') {
-                const proj = data.find(p => Number(p.id) === Number(payload.projectId));
-                if (proj) proj.status = payload.status;
-            } else if (payload.action === 'updateContract') {
-                const proj = data.find(p => Number(p.id) === Number(payload.projectId));
-                if (proj) proj.contract = Number(payload.contract);
-            } else if (payload.action === 'updatePaid') {
-                const proj = data.find(p => Number(p.id) === Number(payload.paid));
-                if (proj) proj.paid = Number(payload.paid);
-            } else if (payload.action === 'updateTodo') {
-                const proj = data.find(p => Number(p.id) === Number(payload.projectId));
-                if (proj) proj.todo = payload.todo;
-            } else if (payload.action === 'updateAccess') {
-                const proj = data.find(p => Number(p.id) === Number(payload.projectId));
-                if (proj) proj.partnerAccess = payload.partnerAccess;
-            } else if (payload.action === 'deleteExpense') {
-                const proj = data.find(p => Number(p.id) === Number(payload.projectId));
-                if (proj && proj.expenses) {
-                    const idx = proj.expenses.findIndex(e => e.date === payload.date && e.category === payload.category && e.amount === payload.amount && e.comment === payload.comment);
-                    if (idx !== -1) {
-                        proj.expenses.splice(idx, 1);
-                        proj.cost = proj.expenses.reduce((sum, e) => sum + e.amount, 0);
-                    }
-                }
-            }
-            renderTable();
-            renderCharts();
-            if (currentHistoryProjectId) {
-                renderHistoryTable(currentHistoryProjectId);
-            }
-        }
-
-        function toggleUniModalFields() {
-            const type = document.getElementById('uni-type').value;
-            const isProj = type === 'project';
-            
-            document.getElementById('uni-project-wrapper').classList.toggle('hidden', !isProj);
-            document.getElementById('uni-investor-wrapper').classList.toggle('hidden', !isProj);
-            
-            updateCategoryDatalist();
-        }
-
-        function updateCategoryDatalist() {
-            const type = document.getElementById('uni-type').value;
-            const datalist = document.getElementById('category-options');
-            if (!datalist) return;
-
-            const usedCategories = new Set();
-            data.forEach(p => {
-                (p.expenses || []).forEach(e => {
-                    if (e.category) usedCategories.add(e.category.trim());
-                });
-            });
-
-            companyTransactions.forEach(t => {
-                if (t.category) usedCategories.add(t.category.trim());
-            });
-
-            let defaults = [];
-            if (type === 'project') {
-                defaults = ["Материалы", "Спецтехника", "Зарплата рабочим", "Логистика", "Документация", "Налоги"];
-            } else if (type === 'general') {
-                defaults = ["Аренда офиса", "Зарплата офиса", "Реклама", "Налоги", "Связь и интернет"];
-            } else if (type === 'personal') {
-                defaults = ["Дивиденды", "Личный вывод"];
-            }
-
-            const allOptions = [];
-            usedCategories.forEach(cat => allOptions.push(cat));
-            defaults.forEach(def => {
-                if (!allOptions.includes(def)) {
-                    allOptions.push(def);
-                }
-            });
-
-            datalist.innerHTML = allOptions.map(opt => `<option value="${opt}">`).join('');
-        }
-
-        function updateEditCategoryDatalist() {
-            const datalist = document.getElementById('category-options-edit');
-            if (!datalist) return;
-
-            const usedCategories = new Set();
-            data.forEach(p => {
-                (p.expenses || []).forEach(e => {
-                    if (e.category) usedCategories.add(e.category.trim());
-                });
-            });
-            companyTransactions.forEach(t => {
-                if (t.category) usedCategories.add(t.category.trim());
-            });
-
-            const defaults = ["Материалы", "Спецтехника", "Зарплата рабочим", "Логистика", "Документация", "Налоги", "Аренда офиса", "Зарплата офиса", "Реклама", "Налоги", "Связь и интернет", "Дивиденды", "Личный вывод"];
-            
-            const allOptions = [];
-            usedCategories.forEach(cat => allOptions.push(cat));
-            defaults.forEach(def => {
-                if (!allOptions.includes(def)) {
-                    allOptions.push(def);
-                }
-            });
-
-            datalist.innerHTML = allOptions.map(opt => `<option value="${opt}">`).join('');
-        }
-
-        // ДИНАМИЧЕСКИЙ ВЫВОД ИНВЕСТОРОВ С ПОДДЕРЖКОЙ СВОБОДНОГО ВВОДА
-        function updateInvestorDatalist() {
-            const datalist = document.getElementById('investor-options');
-            if (!datalist) return;
-
-            const projectId = document.getElementById('uni-project').value;
-            const uniqueInvestors = new Set();
-            uniqueInvestors.add("Юнион Эскей");
-
-            for (const key in PARTNER_CONFIG) {
-                const partnerName = PARTNER_CONFIG[key].name;
-                if (partnerName && partnerName !== "Директор") {
-                    uniqueInvestors.add(partnerName.trim());
-                }
-            }
-
-            if (projectId) {
-                const p = data.find(x => x.id == projectId);
-                if (p && p.partnerAccess) {
-                    const accessList = p.partnerAccess.split(',').map(s => s.trim());
-                    accessList.forEach(name => {
-                        if (name && name.toLowerCase() !== 'нет' && name.toLowerCase() !== 'все') {
-                            uniqueInvestors.add(name);
-                        }
-                    });
-                }
-            }
-
-            data.forEach(proj => {
-                (proj.expenses || []).forEach(exp => {
-                    if (exp.investor) {
-                        uniqueInvestors.add(exp.investor.trim());
-                    }
-                });
-            });
-
-            datalist.innerHTML = Array.from(uniqueInvestors)
-                .map(name => `<option value="${name}">`)
-                .join('');
-                
-            const input = document.getElementById('uni-investor-input');
-            if (input && !input.value) {
-                input.value = "Юнион Эскей";
-            }
-        }
-
-        // --- ЛОГИКА ВЫБОРА НЕСКОЛЬКИХ ПАРТНЕРОВ (MULTI-SELECT DROPDOWN) ---
-        function toggleAccessDropdown(id, event) {
-            event.stopPropagation();
-            const menu = document.getElementById(`access-dropdown-menu-${id}`);
-            if (!menu) return;
-            
-            const allMenus = document.querySelectorAll('[id^="access-dropdown-menu-"]');
-            allMenus.forEach(m => {
-                if (m.id !== `access-dropdown-menu-${id}`) {
-                    m.classList.add('hidden');
-                }
-            });
-            menu.classList.toggle('hidden');
-        }
-
-        function handleAccessCheckboxChange(id, checkbox) {
-            const container = document.getElementById(`access-dropdown-menu-${id}`);
-            if (!container) return;
-            
-            const allChk = container.querySelector('input[value="Все"]');
-            const partnerChks = container.querySelectorAll(`.partner-chk-${id}`);
-            
-            if (checkbox.value === 'Все') {
-                partnerChks.forEach(chk => {
-                    chk.disabled = checkbox.checked;
-                    if (checkbox.checked) chk.checked = true;
-                });
-            }
-            
-            let selected = [];
-            if (allChk && allChk.checked) {
-                selected.push("Все");
-            } else {
-                partnerChks.forEach(chk => {
-                    if (chk.checked) selected.push(chk.value);
-                });
-            }
-            
-            const accessString = selected.length > 0 ? selected.join(', ') : 'Нет';
-            const label = document.getElementById(`access-label-${id}`);
-            if (label) label.innerText = accessString;
-            
-            updateAccess(id, accessString);
-        }
-
-        // КЛИК НА СТАТУС В ТАБЛИЦЕ
-        function handleStatusChange(id, value) {
-            if (value === 'delete') {
-                const container = document.getElementById(`status-container-${id}`);
-                if (container) {
-                    container.innerHTML = `
-                        <div class="flex items-center justify-center gap-2 bg-red-50 border border-red-200 py-1 px-2 rounded-xl h-[34px]">
-                            <span class="text-[10px] font-bold text-red-700">Удалить?</span>
-                            <button type="button" onclick="confirmDeleteProject(${id})" class="text-xs font-extrabold text-red-600 hover:text-red-800">Да</button>
-                            <button type="button" onclick="renderTable()" class="text-xs font-bold text-gray-500 hover:text-gray-700">Нет</button>
-                        </div>
-                    `;
-                }
-                return;
-            }
-            updateProjectStatus(id, value);
         }
 
         function renderTable() {
@@ -1227,38 +992,12 @@
             updateEditCategoryDatalist();
         }
 
-        async function confirmDeleteProject(id) {
-            const origIdx = data.findIndex(p => Number(p.id) === Number(id));
-            if (origIdx === -1) return;
-
-            data.splice(origIdx, 1);
-            renderTable(); renderCharts();
-
-            await sendPost({ action: 'deleteProject', projectId: id }, false);
-            showNotification('Объект успешно удален', 'success');
-        }
-
-        function getYearMonth(dateStr) {
-            if (!dateStr) return "";
-            if (dateStr.includes('-')) {
-                return dateStr.substring(0, 7);
-            }
-            if (dateStr.includes('.')) {
-                const parts = dateStr.split('.');
-                if (parts.length === 3) {
-                    return `${parts[2]}-${parts[1]}`;
-                }
-            }
-            return dateStr.substring(0, 7);
-        }
-
-        // Вспомогательная функция определения цвета инвестора на круговой диаграмме
-        // Защищено от утери свойства 'color' при слияниях
+        // Вспомогательная функция определения цвета инвестора (пастельные тона)
         function getInvestorColor(name, index) {
             if (name === 'Юнион Эскей') return COLORS.ue;
             const cleanName = String(name || '').trim().toLowerCase();
-            if (cleanName === 'рома' || cleanName === 'роме') return COLORS.roma; // Нежнейший цвет топленого масла (пастельно-желтый)
-            if (cleanName === 'коля') return COLORS.kolya; // Пастельный персиковый
+            if (cleanName === 'рома' || cleanName === 'роме') return COLORS.roma; // Цвет топленого масла
+            if (cleanName === 'коля') return COLORS.kolya; 
             for (const cfg of Object.values(PARTNER_CONFIG)) {
                 if (cfg.name.trim().toLowerCase() === cleanName) {
                     if (cfg.name.trim().toLowerCase() === 'рома') return COLORS.roma;
@@ -1445,9 +1184,7 @@
                     const card = document.createElement('div');
                     card.className = "bg-white p-6 rounded-3xl border border-gray-100 shadow-soft animate-fade-in";
                     
-                    // ДИНАМИЧЕСКИЙ СБОР ВСЕХ ИНВЕСТОРОВ ДЛЯ ТЕКУЩЕГО ПРОЕКТА
-                    // ИСПРАВЛЕНИЕ: Убрали ограничение приватности — все видят все вклады на доступных им объектах!
-                    // ИСПРАВЛЕНИЕ 2: Интегрирована защита от задвоений из-за регистров и пробелов (trim и дедупликация)
+                    // Сбор инвесторов с нормализацией имен
                     const investorSums = {};
                     p.expenses.forEach(e => {
                         const rawInv = String(e.investor || 'Юнион Эскей').trim();
@@ -1455,10 +1192,9 @@
                         if (rawInv.toLowerCase() === 'юнион эскей') {
                             inv = 'Юнион Эскей';
                         } else {
-                            // Ищем совпадение в PARTNER_CONFIG, игнорируя регистр
                             for (const cfg of Object.values(PARTNER_CONFIG)) {
                                 if (cfg.name.trim().toLowerCase() === rawInv.toLowerCase()) {
-                                    inv = cfg.name; // Приводим к стандарту имени
+                                    inv = cfg.name; 
                                     break;
                                 }
                             }
@@ -1486,7 +1222,6 @@
                     });
 
                     // Категории затрат
-                    // ИСПРАВЛЕНИЕ: Убрали ограничение приватности — все видят полную структуру трат по объекту!
                     const catSums = {};
                     p.expenses.forEach(e => {
                         const cat = e.category || "Без категории";
@@ -1569,7 +1304,6 @@
             document.getElementById('company-history-modal').classList.remove('hidden');
         }
 
-        // СБРОС ТЕКУЩЕГО ID ИСТОРИИ ПРИ ЗАКРЫТИИ
         function closeCompanyHistoryModal() {
             document.getElementById('company-history-modal').classList.add('hidden');
         }
@@ -1785,7 +1519,7 @@
                 <td class="px-3 py-2">
                     <input type="text" id="edit-category-${projectId}-${idx}" value="${exp.category}" list="category-options-edit" class="h-9 min-w-[140px] px-2 py-0 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru">
                 </td>
-                <td class="px-3 py-2"><input type="text" id="edit-amount-${projectId}-${idx}" value="${formatNumberWithSpaces(exp.amount)}" oninput="formatInputSpaces(this)" class="h-9 min-w-[100px] px-2 py-0 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full text-right font-bold outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
+                <td class="px-3 py-2"><input type="text" id="edit-amount-${projectId}-${idx}" value="${formatNumberWithSpaces(exp.amount)}" oninput="formatInputSpaces(this)" class="bg-gray-50 border border-gray-200 rounded-lg p-1.5 text-xs w-full text-right font-bold outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
                 <td class="px-3 py-2"><select id="edit-investor-${projectId}-${idx}" class="h-9 min-w-[110px] px-2 py-0 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple cursor-pointer">${investorOptions}</select></td>
                 <td class="px-3 py-2"><input type="text" id="edit-comment-${projectId}-${idx}" value="${exp.comment || ''}" class="h-9 min-w-[150px] px-2 py-0 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
                 <td class="px-3 py-2 text-right whitespace-nowrap">
@@ -1986,11 +1720,13 @@
         let isDataLoaded = false;
         let pendingPin = null;
 
-        window.onload = () => { 
+        window.onload = async () => { 
             const pinEl = document.getElementById('pin-input');
             if (pinEl) pinEl.focus(); 
-            loadConfig();       // Загрузка дефолтного кэша
-            initApp();          // Быстрый фоновый запрос к таблице
+            loadConfig();       // Загрузка дефолтных паролей из кэша браузера
+            
+            // Запускаем асинхронную фоновую загрузку актуальных паролей и данных
+            preFetchConfig();
         };
 
         // Закрытие выпадающих списков при клике в любое другое место экрана
