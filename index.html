@@ -114,7 +114,7 @@
                 <div class="flex items-center gap-2 sm:gap-4">
                     <span id="role-badge" class="px-4 py-1.5 rounded-xl text-xs font-bold border border-gray-200 bg-gray-50 text-gray-700 hidden sm:inline-block"></span>
                     
-                    <!-- Кнопка тонкой настройки доступов, видимая только Директору -->
+                    <!-- Кнопка настройки доступов для Директора -->
                     <button id="btn-open-settings" onclick="openSettingsModal()" class="hidden px-3 sm:px-4 py-2 bg-purple-50 hover:bg-purple-100 text-brand-purple font-semibold rounded-xl text-sm transition-colors border border-purple-100">⚙️ Доступы</button>
                     
                     <button onclick="logOut()" class="px-4 py-2 bg-gray-50 hover:bg-gray-100 text-brand-gray hover:text-brand-dark font-medium rounded-xl text-sm transition-colors border border-gray-100">Выйти</button>
@@ -141,7 +141,7 @@
                 </div>
             </div>
 
-            <!-- ГЛАВНАЯ ТАБЛИЦА С ЗАЩИТОЙ ОТ СЪЕЗЖАНИЯ -->
+            <!-- ГЛАВНАЯ ТАБЛИЦА -->
             <div class="bg-white rounded-[2rem] border border-gray-100 shadow-soft overflow-hidden animate-fade-in">
                 <div class="p-5 sm:p-6 border-b flex justify-between items-center">
                     <h3 class="text-lg font-bold text-brand-dark">Информационная панель</h3>
@@ -327,7 +327,7 @@
                     
                     <div class="space-y-1.5">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Комментарий</label>
-                        <input type="text" id="uni-comment" placeholder="Описание" class="w-full h-14 bg-gray-50 border border-gray-200 rounded-2xl px-4 text-sm outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru">
+                        <input type="text" id="uni-comment" placeholder="Описание" class="w-full h-14 bg-gray-50 border border-gray-200 rounded-2xl px-4 text-sm outline-none" translate="no" spellcheck="false" lang="ru">
                     </div>
                 </div>
                 
@@ -457,7 +457,7 @@
     </div>
 
     <script>
-        // Обновленный API-адрес с поддержкой динамических партнеров и процентами
+        // Интегрированный API-адрес
         const API_URL = "https://script.google.com/macros/s/AKfycbxPof6CcCPx1KS_pH0NmOVCiRKpvpf_2HnPtoiG_i9vKlJk1rh0YaBq3RvxnZlkwLX-Xw/exec"; 
 
         // Изначальный/глобальный конфиг партнеров (с исправленными дефолтами для Димы - 1010 и АВ-Промстрой - 1111)
@@ -465,7 +465,7 @@
             director: { name: "Директор", pin: "0942", color: "#8B5CF6" },
             dima: { name: "Дима", pin: "1010", color: "#BAE6FD" },               // Мягкий небесный
             kolya: { name: "Коля", pin: "8914", color: "#FFEDD5" },               // Теплый персиковый
-            partner3: { name: "АВ-Промстрой", pin: "1111", color: "#D1FAE5" },    // Установлен пин 1111 и имя АВ-Промстрой
+            partner3: { name: "АВ-Промстрой", pin: "1111", color: "#D1FAE5" },    // Установлен пин 1111 и имя АВ-Промстрой дефолтно
             partner4: { name: "Партнер 4", pin: "4444", color: "#FCE7F3" }        // Розовый
         };
 
@@ -677,48 +677,65 @@
             setRole(currentRole);
         }
 
-        // Глобальная переменная для отслеживания статуса фонового запроса
-        let isSyncingConfig = false;
+        // Глобальная переменная для отслеживания активного промиса предзагрузки
+        let activeFetchPromise = null;
 
-        // ПРЕДВАРИТЕЛЬНАЯ ФОНОВАЯ ЗАГРУЗКА ПАРОЛЕЙ И ИМЕН ИЗ ТАБЛИЦЫ ДО ВХОДА
+        // ПРЕДВАРИТЕЛЬНАЯ ФОНОВАЯ ЗАГРУЗКА ДАННЫХ И ДОСТУПОВ (РЕШЕНИЕ ГОНКИ ЗАПРОСОВ)
         async function preFetchConfig() {
-            if (!isLive() || isSyncingConfig) return;
-            isSyncingConfig = true;
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'GET',
-                    mode: 'cors'
-                });
-                const jsonData = await response.json();
-                
-                // 1. Обновляем PIN-коды и имена в памяти страницы
-                if (jsonData && jsonData.partners) {
-                    for (const key in jsonData.partners) {
-                        if (PARTNER_CONFIG[key]) {
-                            PARTNER_CONFIG[key].name = String(jsonData.partners[key].name || '').trim();
-                            PARTNER_CONFIG[key].pin = String(jsonData.partners[key].pin || '').trim();
-                        }
-                    }
-                    localStorage.setItem('union_partner_config_v2', JSON.stringify(PARTNER_CONFIG));
-                }
-
-                // 2. Предварительно парсим проекты, чтобы после логина они открылись моментально
-                if (jsonData && jsonData.projects) {
-                    data = jsonData.projects.map(p => {
-                        const parsedExpenses = (p.expenses || []).map(e => ({ date: e.date, category: e.category, amount: parseFormattedNumber(e.amount), comment: e.comment, investor: e.investor, rowIndex: e.rowIndex }));
-                        return { ...p, id: Number(p.id), contract: parseFormattedNumber(p.contract), paid: parseFormattedNumber(p.paid), cost: parsedExpenses.reduce((sum, e) => sum + e.amount, 0), expenses: parsedExpenses };
-                    });
-                }
-
-                // 3. Предварительно парсим транзакции компании
-                if (jsonData && jsonData.companyTransactions) {
-                    companyTransactions = jsonData.companyTransactions.map(tx => ({ ...tx, amount: parseFormattedNumber(tx.amount) }));
-                }
-            } catch (e) {
-                console.warn("Сбой фонового предзапроса доступов (используем кэш):", e);
-            } finally {
-                isSyncingConfig = false;
+            if (!isLive()) return;
+            if (activeFetchPromise) {
+                // Если запрос уже выполняется – возвращаем этот же активный промис
+                return activeFetchPromise;
             }
+
+            activeFetchPromise = (async () => {
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'GET',
+                        mode: 'cors'
+                    });
+                    const rawText = await response.text();
+                    let jsonData;
+                    try {
+                        jsonData = JSON.parse(rawText);
+                    } catch (jsonErr) {
+                        console.error("Ответ сервера не является JSON. Ответ:", rawText);
+                        throw new Error("Неверный формат ответа от Google Sheets");
+                    }
+                    
+                    // Считываем доступы партнеров, если они вернулись с сервера без перезаписи цветов
+                    if (jsonData && jsonData.partners) {
+                        for (const key in jsonData.partners) {
+                            if (PARTNER_CONFIG[key]) {
+                                PARTNER_CONFIG[key].name = String(jsonData.partners[key].name || '').trim();
+                                PARTNER_CONFIG[key].pin = String(jsonData.partners[key].pin || '').trim();
+                            }
+                        }
+                        localStorage.setItem('union_partner_config_v2', JSON.stringify(PARTNER_CONFIG));
+                    }
+
+                    // Парсим проекты
+                    if (jsonData && jsonData.projects) {
+                        data = jsonData.projects.map(p => {
+                            const parsedExpenses = (p.expenses || []).map(e => ({ date: e.date, category: e.category, amount: parseFormattedNumber(e.amount), comment: e.comment, investor: e.investor, rowIndex: e.rowIndex }));
+                            return { ...p, id: Number(p.id), contract: parseFormattedNumber(p.contract), paid: parseFormattedNumber(p.paid), cost: parsedExpenses.reduce((sum, e) => sum + e.amount, 0), expenses: parsedExpenses };
+                        });
+                    }
+
+                    // Парсим транзакции компании
+                    if (jsonData && jsonData.companyTransactions) {
+                        companyTransactions = jsonData.companyTransactions.map(tx => ({ ...tx, amount: parseFormattedNumber(tx.amount) }));
+                    }
+                    
+                    return true;
+                } catch (e) {
+                    console.error("Ошибка preFetchConfig:", e);
+                    activeFetchPromise = null; // Сбрасываем, чтобы можно было перезапустить при следующем входе
+                    throw e; // Пробрасываем ошибку дальше в initApp()
+                }
+            })();
+
+            return activeFetchPromise;
         }
 
         // Умный вход: если PIN-код отсутствует в кэше, принудительно опрашиваем Google Таблицу на наличие обновлений
@@ -743,7 +760,11 @@
                     btn.innerText = "Проверка доступов...";
                 }
 
-                await preFetchConfig(); // Качаем актуальные PIN-коды прямо сейчас!
+                try {
+                    await preFetchConfig(); // Качаем актуальные PIN-коды прямо сейчас!
+                } catch(err) {
+                    console.warn("Не удалось обновить конфиг перед проверкой:", err);
+                }
 
                 // Проверяем введенный код повторно по свежей базе
                 for (const [role, cfg] of Object.entries(PARTNER_CONFIG)) {
@@ -770,7 +791,9 @@
                 // Инициализируем интерфейс
                 renderViewSwitcher();
                 updateAccessDropdowns();
-                setRole(currentRole);
+                
+                // Переходим к синхронизации данных в кабинете
+                initApp();
             } else {
                 const err = document.getElementById('login-error');
                 if (err) err.classList.remove('hidden');
@@ -793,11 +816,6 @@
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app-content').classList.remove('hidden');
 
-            if (data && data.length > 0) {
-                setRole(currentRole);
-                return;
-            }
-
             document.getElementById('sync-screen').classList.remove('hidden');
 
             if (!isLive()) {
@@ -806,6 +824,7 @@
             }
 
             try {
+                // Дожидаемся фонового или принудительного запроса
                 await preFetchConfig();
                 setRole(currentRole);
                 showNotification('Данные успешно синхронизированы с Google Sheets!');
@@ -873,6 +892,24 @@
             } catch (e) { 
                 console.error("Ошибка при отправке POST:", e);
             }
+        }
+
+        // КЛИК НА СТАТУС В ТАБЛИЦЕ
+        function handleStatusChange(id, value) {
+            if (value === 'delete') {
+                const container = document.getElementById(`status-container-${id}`);
+                if (container) {
+                    container.innerHTML = `
+                        <div class="flex items-center justify-center gap-2 bg-red-50 border border-red-200 py-1 px-2 rounded-xl h-[34px]">
+                            <span class="text-[10px] font-bold text-red-700">Удалить?</span>
+                            <button type="button" onclick="confirmDeleteProject(${id})" class="text-xs font-extrabold text-red-600 hover:text-red-800">Да</button>
+                            <button type="button" onclick="renderTable()" class="text-xs font-bold text-gray-500 hover:text-gray-700">Нет</button>
+                        </div>
+                    `;
+                }
+                return;
+            }
+            updateProjectStatus(id, value);
         }
 
         function renderTable() {
@@ -992,12 +1029,23 @@
             updateEditCategoryDatalist();
         }
 
+        async function confirmDeleteProject(id) {
+            const origIdx = data.findIndex(p => Number(p.id) === Number(id));
+            if (origIdx === -1) return;
+
+            data.splice(origIdx, 1);
+            renderTable(); renderCharts();
+
+            await sendPost({ action: 'deleteProject', projectId: id }, false);
+            showNotification('Объект успешно удален', 'success');
+        }
+
         // Вспомогательная функция определения цвета инвестора (пастельные тона)
         function getInvestorColor(name, index) {
             if (name === 'Юнион Эскей') return COLORS.ue;
             const cleanName = String(name || '').trim().toLowerCase();
             if (cleanName === 'рома' || cleanName === 'роме') return COLORS.roma; // Цвет топленого масла
-            if (cleanName === 'коля') return COLORS.kolya; 
+            if (cleanName === 'коля') return COLORS.kolya; // Персик
             for (const cfg of Object.values(PARTNER_CONFIG)) {
                 if (cfg.name.trim().toLowerCase() === cleanName) {
                     if (cfg.name.trim().toLowerCase() === 'рома') return COLORS.roma;
@@ -1184,7 +1232,7 @@
                     const card = document.createElement('div');
                     card.className = "bg-white p-6 rounded-3xl border border-gray-100 shadow-soft animate-fade-in";
                     
-                    // Сбор инвесторов с нормализацией имен
+                    // ДИНАМИЧЕСКИЙ СБОР ВСЕХ ИНВЕСТОРОВ ДЛЯ ТЕКУЩЕГО ПРОЕКТА
                     const investorSums = {};
                     p.expenses.forEach(e => {
                         const rawInv = String(e.investor || 'Юнион Эскей').trim();
@@ -1372,7 +1420,7 @@
             row.innerHTML = `
                 <td class="px-3 py-2"><input type="date" id="edit-comp-date-${idx}" value="${t.date}" class="h-9 min-w-[120px] px-2 py-0 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
                 <td class="px-3 py-2">
-                    <select id="edit-comp-type-${idx}" class="h-9 min-w-[120px] px-2 py-0 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple cursor-pointer">
+                    <select id="edit-comp-type-${idx}" class="bg-gray-50 border border-gray-200 rounded-lg p-1.5 text-xs w-full outline-none focus:border-brand-purple cursor-pointer">
                         <option value="general" ${t.type === 'general' ? 'selected' : ''}>Общий расход</option>
                         <option value="personal" ${t.type === 'personal' ? 'selected' : ''}>Личный вывод</option>
                     </select>
@@ -1522,7 +1570,7 @@
                 </td>
                 <td class="px-3 py-2"><input type="text" id="edit-amount-${projectId}-${idx}" value="${formatNumberWithSpaces(exp.amount)}" oninput="formatInputSpaces(this)" class="bg-gray-50 border border-gray-200 rounded-lg p-1.5 text-xs w-full text-right font-bold outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
                 <td class="px-3 py-2"><select id="edit-investor-${projectId}-${idx}" class="h-9 min-w-[110px] px-2 py-0 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple cursor-pointer">${investorOptions}</select></td>
-                <td class="px-3 py-2"><input type="text" id="edit-comment-${projectId}-${idx}" value="${exp.comment || ''}" class="h-9 min-w-[150px] px-2 py-0 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
+                <td class="px-3 py-2"><input type="text" id="edit-comment-${projectId}-${idx}" value="${exp.comment || ''}" class="bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
                 <td class="px-3 py-2 text-right whitespace-nowrap">
                     <button onclick="saveEditExpense(${projectId}, ${origIdx}, ${idx})" class="text-green-600 hover:underline font-bold text-xs mr-3">ОК</button>
                     <button onclick="renderHistoryTable(${projectId})" class="text-gray-400 hover:underline font-bold text-xs">Отмена</button>
@@ -1727,7 +1775,9 @@
             loadConfig();       // Загрузка дефолтных паролей из кэша браузера
             
             // Запускаем асинхронную фоновую загрузку актуальных паролей и данных
-            preFetchConfig();
+            preFetchConfig().catch(e => {
+                console.warn("Фоновая загрузка при старте не удалась (ожидаем логина):", e);
+            });
         };
 
         // Закрытие выпадающих списков при клике в любое другое место экрана
@@ -1741,6 +1791,60 @@
                 }
             });
         });
+
+        // ВОССТАНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ КОРРЕКТНОЙ СМЕНЫ РОЛЕЙ И СКРЫТИЯ ДИРЕКТОРСКИХ ПАНЕЛЕЙ
+        function setRole(role) {
+            currentRole = role;
+            const badge = document.getElementById('role-badge'), switcher = document.getElementById('director-view-switcher');
+            
+            // Скрыть/показать шестеренку управления доступом
+            const settingsBtn = document.getElementById('btn-open-settings');
+            if (settingsBtn) {
+                settingsBtn.classList.toggle('hidden', currentRole !== 'director');
+            }
+
+            if (authRole === 'director') {
+                if (switcher) switcher.classList.remove('hidden');
+                let displayRole = 'Директор';
+                if (PARTNER_CONFIG[role]) displayRole = PARTNER_CONFIG[role].name;
+                badge.innerText = `Режим: ${displayRole}`;
+            } else {
+                if (switcher) switcher.classList.add('hidden');
+                let displayRole = 'Партнер';
+                if (PARTNER_CONFIG[role]) displayRole = PARTNER_CONFIG[role].name;
+                badge.innerText = `Кабинет: ${displayRole}`;
+            }
+            
+            const btnAddProject = document.getElementById('btn-add-project');
+            if (btnAddProject) {
+                btnAddProject.classList.toggle('hidden', currentRole !== 'director');
+            }
+
+            const directorCards = document.getElementById('director-cards');
+            const mainChartsWrapper = document.getElementById('main-charts-wrapper');
+            const topActions = document.getElementById('top-actions');
+
+            // Жесткое скрытие директорских панелей для всех партнеров
+            if (authRole === 'director' && currentRole === 'director') {
+                if (directorCards) directorCards.classList.remove('hidden');
+                if (mainChartsWrapper) mainChartsWrapper.classList.remove('hidden');
+                if (topActions) topActions.classList.remove('hidden');
+            } else {
+                if (directorCards) directorCards.classList.add('hidden'); 
+                if (mainChartsWrapper) mainChartsWrapper.classList.add('hidden');
+                if (topActions) topActions.classList.add('hidden');
+            }
+
+            // Динамически меняем заголовок кабинета
+            let displayTitle = "Строительные объекты";
+            if (currentRole === 'director') displayTitle = "Управление всей компанией";
+            else if (PARTNER_CONFIG[currentRole]) displayTitle = `Строительные объекты — ${PARTNER_CONFIG[currentRole].name}`;
+            const roleTitle = document.getElementById('role-title');
+            if (roleTitle) roleTitle.innerText = displayTitle;
+            
+            renderTable(); 
+            setTimeout(renderCharts, 100);
+        }
     </script>
 </body>
 </html>
