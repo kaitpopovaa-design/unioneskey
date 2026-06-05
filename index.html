@@ -232,7 +232,7 @@
         <div class="bg-white rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl w-full max-w-5xl h-[85vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden animate-fade-in">
             <div class="p-5 sm:p-6 border-b flex justify-between items-center bg-gray-50/50 shrink-0">
                 <div><h3 class="text-lg sm:text-xl font-bold text-brand-dark">История расходов</h3><p id="history-object-name" class="text-xs font-bold text-brand-purple mt-1"></p></div>
-                <button onclick="closeHistoryModal()" class="p-2 sm:p-0 text-3xl leading-none hover:text-brand-purple transition-colors">&times;</button>
+                <button onclick="closeHistoryModal()" class="text-3xl leading-none hover:text-brand-purple transition-colors">&times;</button>
             </div>
             <div class="overflow-y-auto flex-1">
                 <table class="w-full text-left border-collapse">
@@ -293,7 +293,7 @@
                         <select id="uni-type" onchange="toggleUniModalFields()" class="w-full h-14 bg-gray-50 border border-gray-200 rounded-2xl px-4 text-sm outline-none focus:border-brand-purple transition-all">
                             <option value="project">Расход по объекту</option>
                             <option value="general">Общий расход компании</option>
-                            <option value="personal">Личные трат</option>
+                            <option value="personal">Личные траты</option>
                         </select>
                     </div>
                     <div id="uni-project-wrapper" class="space-y-1.5">
@@ -460,13 +460,13 @@
         // Обновленный API-адрес с поддержкой динамических партнеров и процентами
         const API_URL = "https://script.google.com/macros/s/AKfycbxPof6CcCPx1KS_pH0NmOVCiRKpvpf_2HnPtoiG_i9vKlJk1rh0YaBq3RvxnZlkwLX-Xw/exec"; 
 
-        // Изначальный/глобальный конфиг партнеров
+        // Изначальный/глобальный конфиг партнеров (с исправленными дефолтами для Димы - 1010 и АВ-Промстрой - 1111)
         let PARTNER_CONFIG = {
             director: { name: "Директор", pin: "0942", color: "#8B5CF6" },
-            dima: { name: "Дима", pin: "1010", color: "#BAE6FD" },       // Мягкий небесный
-            kolya: { name: "Коля", pin: "8914", color: "#FFEDD5" },       // Теплый персиковый
-            partner3: { name: "Партнер 3", pin: "3333", color: "#D1FAE5" },// Мята
-            partner4: { name: "Партнер 4", pin: "4444", color: "#FCE7F3" } // Розовый
+            dima: { name: "Дима", pin: "1010", color: "#BAE6FD" },               // Мягкий небесный
+            kolya: { name: "Коля", pin: "8914", color: "#FFEDD5" },               // Теплый персиковый
+            partner3: { name: "АВ-Промстрой", pin: "1111", color: "#D1FAE5" },    // Установлен пин 1111 и имя АВ-Промстрой
+            partner4: { name: "Партнер 4", pin: "4444", color: "#FCE7F3" }        // Розовый
         };
 
         let data = [], companyTransactions = [], authRole = null, currentRole = null;
@@ -1192,9 +1192,10 @@
                         if (rawInv.toLowerCase() === 'юнион эскей') {
                             inv = 'Юнион Эскей';
                         } else {
+                            // Ищем совпадение в PARTNER_CONFIG, игнорируя регистр
                             for (const cfg of Object.values(PARTNER_CONFIG)) {
                                 if (cfg.name.trim().toLowerCase() === rawInv.toLowerCase()) {
-                                    inv = cfg.name; 
+                                    inv = cfg.name; // Приводим к стандарту имени
                                     break;
                                 }
                             }
@@ -1380,7 +1381,7 @@
                 <td class="px-3 py-2">
                     <input type="text" id="edit-comp-category-${idx}" value="${t.category}" list="category-options-edit" class="h-9 min-w-[140px] px-2 py-0 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru">
                 </td>
-                <td class="px-3 py-2"><input type="text" id="edit-comp-comment-${idx}" value="${t.comment || ''}" class="h-9 min-w-[150px] px-2 py-0 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
+                <td class="px-3 py-2"><input type="text" id="edit-comp-comment-${idx}" value="${t.comment || ''}" class="bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
                 <td class="px-3 py-2 text-right whitespace-nowrap">
                     <button onclick="saveEditCompanyExpense(${origIdx}, ${idx})" class="text-green-600 hover:underline font-bold text-xs mr-3">ОК</button>
                     <button onclick="renderCompanyHistoryTable()" class="text-gray-400 hover:underline font-bold text-xs">Отмена</button>
