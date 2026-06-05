@@ -141,7 +141,7 @@
                 </div>
             </div>
 
-            <!-- ГЛАВНАЯ ТАБЛИЦА -->
+            <!-- ГЛАВНАЯ ТАБЛИЦА С ЗАЩИТОЙ ОТ СЪЕЗЖАНИЯ -->
             <div class="bg-white rounded-[2rem] border border-gray-100 shadow-soft overflow-hidden animate-fade-in">
                 <div class="p-5 sm:p-6 border-b flex justify-between items-center">
                     <h3 class="text-lg font-bold text-brand-dark">Информационная панель</h3>
@@ -205,7 +205,7 @@
                 
                 <!-- Правый график: Структура доходов -->
                 <div class="bg-white p-5 sm:p-6 rounded-[2rem] border shadow-soft flex flex-col justify-between lg:col-span-5">
-                    <h3 class="font-bold text-brand-dark mb-4 text-xs uppercase tracking-wider text-center border-b pb-2">Структура доходов</h3>
+                    <h3 class="font-bold text-brand-dark mb-4 text-xs uppercase tracking-wider text-center border-b pb-2">Structure</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-4">
                         <div class="flex flex-col items-center border-b sm:border-b-0 sm:border-r border-gray-100 pb-4 sm:pb-0 sm:pr-3">
                             <span class="text-[9px] uppercase font-bold text-brand-gray mb-2 text-center h-6 flex items-center justify-center">Уже поступило</span>
@@ -315,7 +315,7 @@
                         </div>
                         <div class="space-y-1.5">
                             <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Сумма (₽)</label>
-                            <input type="text" id="uni-amount" oninput="formatInputSpaces(this)" placeholder="0" class="w-full h-14 bg-gray-50 border border-gray-200 rounded-2xl px-4 text-sm font-bold outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
+                            <input type="text" id="uni-amount" oninput="formatInputSpaces(this)" placeholder="0" class="w-full h-14 bg-gray-50 border border-gray-200 rounded-2xl px-4 text-sm font-bold outline-none" translate="no" spellcheck="false" lang="ru" required>
                         </div>
                     </div>
                     
@@ -456,6 +456,15 @@
         </div>
     </div>
 
+    <!-- Модалка с ошибкой -->
+    <div id="error-modal" class="fixed inset-0 bg-gray-950/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-3xl w-full max-w-md shadow-2xl text-center space-y-4 animate-fade-in">
+            <h3 class="text-xl font-bold text-red-500">⚠️ Сбой подключения</h3>
+            <p class="text-sm text-gray-600">Не удалось загрузить данные из Google Таблиц.</p>
+            <button onclick="retryConnection()" class="w-full py-3 bg-gray-100 rounded-xl font-bold hover:bg-gray-200">Продолжить автономно</button>
+        </div>
+    </div>
+
     <script>
         // Интегрированный API-адрес
         const API_URL = "https://script.google.com/macros/s/AKfycbxPof6CcCPx1KS_pH0NmOVCiRKpvpf_2HnPtoiG_i9vKlJk1rh0YaBq3RvxnZlkwLX-Xw/exec"; 
@@ -539,6 +548,14 @@
             input.setSelectionRange(cursorPosition, cursorPosition);
         }
 
+        // Умная нормализация имен для сравнения без учета пробелов, регистра, тире и дефисов
+        function normalizeName(str) {
+            return String(str || '')
+                .toLowerCase()
+                .replace(/[\s\-_]/g, '') // Убирает дефисы, тире, пробелы и нижние подчеркивания
+                .trim();
+        }
+
         // Вспомогательная функция для извлечения "Год-Месяц"
         function getYearMonth(dateStr) {
             if (!dateStr) return "";
@@ -558,6 +575,7 @@
             return typeof API_URL !== 'undefined' && API_URL && API_URL.trim() !== "" && API_URL.startsWith("http"); 
         }
 
+        // ВСПЛЫВАЮЩИЕ УВЕДОМЛЕНИЯ (ТОСТЫ)
         function showNotification(msg, type = 'success') {
             const t = document.getElementById('notification-toast'), c = document.getElementById('notification-content');
             if (!t || !c) return;
@@ -567,8 +585,7 @@
             setTimeout(() => { t.classList.replace('opacity-100', 'opacity-0'); t.classList.replace('translate-y-0', 'translate-y-10'); }, 6000); 
         }
 
-        // Загрузка кастомных имен/PIN-кодов из памяти устройства (localStorage)
-        // Обновляем свойства поэлементно, чтобы не стереть предустановленные COLORS.
+        // ВОССТАНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ ЗАГРУЗКИ КАСТОМНЫХ НАСТРОЕК
         function loadConfig() {
             const saved = localStorage.getItem('union_partner_config_v2');
             if (saved) {
@@ -587,6 +604,7 @@
         }
 
         // Динамический рендеринг кнопок кабинетов в зависимости от настроек
+        // (Для корректного вывода списка партнеров на Директорской панели)
         function renderViewSwitcher() {
             const switcher = document.getElementById('director-view-switcher');
             if (!switcher) return;
@@ -836,25 +854,107 @@
             }
         }
 
-        // Динамический фильтр по кураторам
+        // Динамический фильтр по кураторам с мягким и гибким поиском совпадений (без дефисов, пробелов и регистра)
         function getFilteredProjects() {
             return data.filter(p => {
                 const name = String(p.name || '').toLowerCase();
                 const accessRaw = String(p.partnerAccess || '').trim().toLowerCase();
-                const accessList = accessRaw.split(',').map(s => s.trim());
+                
+                // Делим строку доступов по запятым и очищаем каждое имя
+                const accessList = accessRaw.split(',').map(s => normalizeName(s));
                 const isGenerator = name.includes('генератор');
                 
-                const nameDima = PARTNER_CONFIG.dima.name.toLowerCase();
-                const nameKolya = PARTNER_CONFIG.kolya.name.toLowerCase();
-                const nameP3 = PARTNER_CONFIG.partner3.name.toLowerCase();
-                const nameP4 = PARTNER_CONFIG.partner4.name.toLowerCase();
+                const nameDima = normalizeName(PARTNER_CONFIG.dima.name);
+                const nameKolya = normalizeName(PARTNER_CONFIG.kolya.name);
+                const nameP3 = normalizeName(PARTNER_CONFIG.partner3.name);
+                const nameP4 = normalizeName(PARTNER_CONFIG.partner4.name);
 
-                if (currentRole === 'dima') return !isGenerator && (accessList.includes(nameDima) || accessList.includes('все'));
-                if (currentRole === 'kolya') return isGenerator && (accessList.includes(nameKolya) || accessList.includes('все'));
-                if (currentRole === 'partner3') return (accessList.includes(nameP3) || accessList.includes('все'));
-                if (currentRole === 'partner4') return (accessList.includes(nameP4) || accessList.includes('все'));
+                // Если в доступах указано "Все", то видят все партнеры
+                const hasAllAccess = accessList.includes('все');
+
+                if (currentRole === 'dima') {
+                    return !isGenerator && (accessList.includes(nameDima) || hasAllAccess);
+                }
+                if (currentRole === 'kolya') {
+                    return isGenerator && (accessList.includes(nameKolya) || hasAllAccess);
+                }
+                if (currentRole === 'partner3') {
+                    return (accessList.includes(nameP3) || hasAllAccess);
+                }
+                if (currentRole === 'partner4') {
+                    return (accessList.includes(nameP4) || hasAllAccess);
+                }
                 return true; 
             });
+        }
+
+        // СИМУЛЯЦИЯ И ОПТИМИСТИЧНОЕ ОБНОВЛЕНИЕ ДАННЫХ В ОФФЛАЙН-РЕЖИМЕ
+        function simulateOfflinePost(payload) {
+            if (!payload) return;
+            if (payload.action === 'addExpense') {
+                const proj = data.find(p => Number(p.id) === Number(payload.projectId));
+                if (proj) {
+                    if (!proj.expenses) proj.expenses = [];
+                    proj.expenses.push({
+                        date: payload.date,
+                        category: payload.category,
+                        amount: Number(payload.amount),
+                        comment: payload.comment || '',
+                        investor: payload.investor || 'Юнион Эскей'
+                    });
+                    proj.cost = proj.expenses.reduce((sum, e) => sum + e.amount, 0);
+                }
+            } else if (payload.action === 'addCompanyExpense') {
+                companyTransactions.push({
+                    date: payload.date,
+                    type: payload.type, 
+                    amount: Number(payload.amount),
+                    category: payload.category,
+                    comment: payload.comment || ''
+                });
+            } else if (payload.action === 'addProject') {
+                const nextId = data.length ? Math.max(...data.map(p => p.id)) + 1 : 1;
+                data.push({
+                    id: nextId,
+                    name: payload.name,
+                    status: 'Согласование',
+                    todo: '',
+                    contract: Number(payload.contract),
+                    paid: Number(payload.paid || 0),
+                    cost: 0,
+                    partnerAccess: payload.partnerAccess || 'Нет',
+                    expenses: []
+                });
+            } else if (payload.action === 'updateStatus') {
+                const proj = data.find(p => Number(p.id) === Number(payload.projectId));
+                if (proj) proj.status = payload.status;
+            } else if (payload.action === 'updateContract') {
+                const proj = data.find(p => Number(p.id) === Number(payload.projectId));
+                if (proj) proj.contract = Number(payload.contract);
+            } else if (payload.action === 'updatePaid') {
+                const proj = data.find(p => Number(p.id) === Number(payload.projectId));
+                if (proj) proj.paid = Number(payload.paid);
+            } else if (payload.action === 'updateTodo') {
+                const proj = data.find(p => Number(p.id) === Number(payload.projectId));
+                if (proj) proj.todo = payload.todo;
+            } else if (payload.action === 'updateAccess') {
+                const proj = data.find(p => Number(p.id) === Number(payload.projectId));
+                if (proj) proj.partnerAccess = payload.partnerAccess;
+            } else if (payload.action === 'deleteExpense') {
+                const proj = data.find(p => Number(p.id) === Number(payload.projectId));
+                if (proj && proj.expenses) {
+                    const idx = proj.expenses.findIndex(e => e.date === payload.date && e.category === payload.category && Number(e.amount) === Number(payload.amount) && e.comment === payload.comment);
+                    if (idx !== -1) {
+                        proj.expenses.splice(idx, 1);
+                        proj.cost = proj.expenses.reduce((sum, e) => sum + e.amount, 0);
+                    }
+                }
+            }
+            renderTable();
+            renderCharts();
+            if (currentHistoryProjectId) {
+                renderHistoryTable(currentHistoryProjectId);
+            }
         }
 
         // Глобальная функция отправки данных на сервер Google Sheets
@@ -910,6 +1010,19 @@
                 return;
             }
             updateProjectStatus(id, value);
+        }
+
+        // Окончательное удаление строительного объекта
+        async function confirmDeleteProject(id) {
+            const origIdx = data.findIndex(p => Number(p.id) === Number(id));
+            if (origIdx === -1) return;
+
+            data.splice(origIdx, 1);
+            renderTable(); 
+            renderCharts();
+
+            await sendPost({ action: 'deleteProject', projectId: id }, false);
+            showNotification('Объект успешно удален', 'success');
         }
 
         function renderTable() {
@@ -1029,26 +1142,15 @@
             updateEditCategoryDatalist();
         }
 
-        async function confirmDeleteProject(id) {
-            const origIdx = data.findIndex(p => Number(p.id) === Number(id));
-            if (origIdx === -1) return;
-
-            data.splice(origIdx, 1);
-            renderTable(); renderCharts();
-
-            await sendPost({ action: 'deleteProject', projectId: id }, false);
-            showNotification('Объект успешно удален', 'success');
-        }
-
-        // Вспомогательная функция определения цвета инвестора (пастельные тона)
+        // Вспомогательная функция определения цвета инвестора (пастельные тона) с нормализацией имен
         function getInvestorColor(name, index) {
             if (name === 'Юнион Эскей') return COLORS.ue;
-            const cleanName = String(name || '').trim().toLowerCase();
-            if (cleanName === 'рома' || cleanName === 'роме') return COLORS.roma; // Цвет топленого масла
-            if (cleanName === 'коля') return COLORS.kolya; // Персик
+            const cleanName = normalizeName(name);
+            if (cleanName === 'рома' || cleanName === 'роме') return COLORS.roma; // Цвет топленого масла (светло-желтый)
+            if (cleanName === 'коля') return COLORS.kolya; // Пастельный персиковый
             for (const cfg of Object.values(PARTNER_CONFIG)) {
-                if (cfg.name.trim().toLowerCase() === cleanName) {
-                    if (cfg.name.trim().toLowerCase() === 'рома') return COLORS.roma;
+                if (normalizeName(cfg.name) === cleanName) {
+                    if (cleanName === 'рома' || cleanName === 'роме') return COLORS.roma;
                     return cfg.color;
                 }
             }
@@ -1161,7 +1263,7 @@
                         maintainAspectRatio: false, 
                         plugins: { 
                             legend: { display: false }, 
-                            datalabels: { display: false } 
+                            datalabels: { display: false }
                         } 
                     }
                 });
@@ -1232,7 +1334,7 @@
                     const card = document.createElement('div');
                     card.className = "bg-white p-6 rounded-3xl border border-gray-100 shadow-soft animate-fade-in";
                     
-                    // ДИНАМИЧЕСКИЙ СБОР ВСЕХ ИНВЕСТОРОВ ДЛЯ ТЕКУЩЕГО ПРОЕКТА
+                    // ДИНАМИЧЕСКИЙ СБОР ВСЕХ ИНВЕСТОРОВ ДЛЯ ТЕКУЩЕГО ПРОЕКТА С УМНЫМ СЛИЯНИЕМ ДУБЛИКАТОВ
                     const investorSums = {};
                     p.expenses.forEach(e => {
                         const rawInv = String(e.investor || 'Юнион Эскей').trim();
@@ -1240,10 +1342,9 @@
                         if (rawInv.toLowerCase() === 'юнион эскей') {
                             inv = 'Юнион Эскей';
                         } else {
-                            // Ищем совпадение в PARTNER_CONFIG, игнорируя регистр
                             for (const cfg of Object.values(PARTNER_CONFIG)) {
-                                if (cfg.name.trim().toLowerCase() === rawInv.toLowerCase()) {
-                                    inv = cfg.name; // Приводим к стандарту имени
+                                if (normalizeName(cfg.name) === normalizeName(rawInv)) {
+                                    inv = cfg.name; // Приводим к единому стандарту написания
                                     break;
                                 }
                             }
@@ -1542,13 +1643,13 @@
             const access = String(project.partnerAccess || '').trim().toLowerCase();
             let investorOptions = `<option value="Юнион Эскей" ${exp.investor==='Юнион Эскей'?'selected':''}>Юнион Эскей</option>`;
             
-            if (access === PARTNER_CONFIG.dima.name.toLowerCase()) {
+            if (normalizeName(access) === normalizeName(PARTNER_CONFIG.dima.name)) {
                 investorOptions += `<option value="${PARTNER_CONFIG.dima.name}" ${exp.investor===PARTNER_CONFIG.dima.name?'selected':''}>${PARTNER_CONFIG.dima.name}</option>`;
-            } else if (access === PARTNER_CONFIG.kolya.name.toLowerCase()) {
+            } else if (normalizeName(access) === normalizeName(PARTNER_CONFIG.kolya.name)) {
                 investorOptions += `<option value="${PARTNER_CONFIG.kolya.name}" ${exp.investor===PARTNER_CONFIG.kolya.name?'selected':''}>${PARTNER_CONFIG.kolya.name}</option>`;
-            } else if (access === PARTNER_CONFIG.partner3.name.toLowerCase()) {
+            } else if (normalizeName(access) === normalizeName(PARTNER_CONFIG.partner3.name)) {
                 investorOptions += `<option value="${PARTNER_CONFIG.partner3.name}" ${exp.investor===PARTNER_CONFIG.partner3.name?'selected':''}>${PARTNER_CONFIG.partner3.name}</option>`;
-            } else if (access === PARTNER_CONFIG.partner4.name.toLowerCase()) {
+            } else if (normalizeName(access) === normalizeName(PARTNER_CONFIG.partner4.name)) {
                 investorOptions += `<option value="${PARTNER_CONFIG.partner4.name}" ${exp.investor===PARTNER_CONFIG.partner4.name?'selected':''}>${PARTNER_CONFIG.partner4.name}</option>`;
             } else {
                 if (currentRole === 'director') {
@@ -1687,6 +1788,7 @@
 
         function openUniversalModal(type, pid) { 
             const projSelect = document.getElementById('uni-project');
+            if (!projSelect) return;
             projSelect.innerHTML = getFilteredProjects().map(p => `<option value="${p.id}">${p.name}</option>`).join('');
             if(pid) projSelect.value = pid;
             
@@ -1712,7 +1814,8 @@
             
             if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = "Отправка..."; }
             
-            const type = document.getElementById('uni-type').value;
+            const typeEl = document.getElementById('uni-type');
+            const type = typeEl ? typeEl.value : 'project';
             const categoryVal = document.getElementById('uni-category-input').value.trim() || 'Без категории';
             let p;
             
@@ -1752,45 +1855,203 @@
             initApp();
         }
 
-        // ---------- Моковые данные ----------
-        const mockData = [
-            { id: 1, name: 'Фундамент Т', status: 'В работе', todo: 'Залить 3-й сектор, вызвать миксеры на завтра', contract: 25000000, paid: 15000000, cost: 18500000, partnerAccess: 'Все', expenses: [{date: '2026-05-10', amount: 18500000, category: 'Материалы', comment: 'Закупка арматуры и бетона', investor: 'Юнион Эскей'} ] },
-            { id: 2, name: 'Депо Т', status: 'Согласование', todo: 'Подписать акт скрытых работ', contract: 12000000, paid: 6000000, cost: 1500000, partnerAccess: 'Дима', expenses: [{date: '2026-05-15', amount: 1500000, category: 'Спецтехника', comment: 'Аренда экскаватора', investor: 'Дима'}] },
-            { id: 3, name: 'Экспертиза Т', status: 'Завершено', todo: 'Ожидаем финальные документы от технадзора', contract: 3500000, paid: 3500000, cost: 2100000, partnerAccess: 'Дима', expenses: [{date: '2026-04-20', amount: 2100000, category: 'Налоги', comment: 'Оплата пошлин', investor: 'Юнион Эскей'} ] },
-            { id: 4, name: 'Генератор', status: 'В работе', todo: 'Оплатить счет логистической компании', contract: 18500000, paid: 12000000, cost: 14200000, partnerAccess: 'Коля', expenses: [{date: '2026-05-01', amount: 14200000, category: 'Материалы', comment: 'Аванс за генераторы', investor: 'Коля'}] }
-        ];
-
-        const mockCompanyTransactions = [
-            { id: 1, date: '2026-05-05', amount: 150000, type: 'general', category: 'Зарплата бухгалтера', comment: 'За апрель' },
-            { id: 2, date: '2026-05-20', amount: 500000, type: 'personal', category: 'Личный вывод', comment: 'На карту Тинькофф' }
-        ];
-
-        // Первичная инициализация при открытии страницы
-        let isDataLoaded = false;
-        let pendingPin = null;
-
-        window.onload = async () => { 
-            const pinEl = document.getElementById('pin-input');
-            if (pinEl) pinEl.focus(); 
-            loadConfig();       // Загрузка дефолтных паролей из кэша браузера
+        // ПЕРЕКЛЮЧЕНИЕ ОТОБРАЖЕНИЯ ПОЛЕЙ В УНИВЕРСАЛЬНОЙ МОДАЛКЕ
+        function toggleUniModalFields() {
+            const typeEl = document.getElementById('uni-type');
+            if (!typeEl) return;
+            const type = typeEl.value;
+            const isProj = type === 'project';
             
-            // Запускаем асинхронную фоновую загрузку актуальных паролей и данных
-            preFetchConfig().catch(e => {
-                console.warn("Фоновая загрузка при старте не удалась (ожидаем логина):", e);
-            });
-        };
+            const projWrapper = document.getElementById('uni-project-wrapper');
+            const invWrapper = document.getElementById('uni-investor-wrapper');
+            if (projWrapper) projWrapper.classList.toggle('hidden', !isProj);
+            if (invWrapper) invWrapper.classList.toggle('hidden', !isProj);
+            
+            updateCategoryDatalist();
+        }
 
-        // Закрытие выпадающих списков при клике в любое другое место экрана
-        window.addEventListener('click', function(event) {
-            const menus = document.querySelectorAll('[id^="access-dropdown-menu-"]');
-            menus.forEach(menu => {
-                const id = menu.id.replace('access-dropdown-menu-', '');
-                const container = document.getElementById(`access-dropdown-container-${id}`);
-                if (container && !container.contains(event.target)) {
-                    menu.classList.add('hidden');
+        // ОБНОВЛЕНИЕ СПИСКА КАТЕГОРИЙ В УНИВЕРСАЛЬНОЙ МОДАЛКЕ ДОБАВЛЕНИЯ
+        function updateCategoryDatalist() {
+            const typeEl = document.getElementById('uni-type');
+            if (!typeEl) return;
+            const type = typeEl.value;
+            const datalist = document.getElementById('category-options');
+            if (!datalist) return;
+
+            const usedCategories = new Set();
+            data.forEach(p => {
+                (p.expenses || []).forEach(e => {
+                    if (e.category) usedCategories.add(e.category.trim());
+                });
+            });
+
+            companyTransactions.forEach(t => {
+                if (t.category) usedCategories.add(t.category.trim());
+            });
+
+            let defaults = [];
+            if (type === 'project') {
+                defaults = ["Материалы", "Спецтехника", "Зарплата рабочим", "Логистика", "Документация", "Налоги"];
+            } else if (type === 'general') {
+                defaults = ["Аренда офиса", "Зарплата офиса", "Реклама", "Налоги", "Связь и интернет"];
+            } else if (type === 'personal') {
+                defaults = ["Дивиденды", "Личный вывод"];
+            }
+
+            const allOptions = [];
+            usedCategories.forEach(cat => allOptions.push(cat));
+            defaults.forEach(def => {
+                if (!allOptions.includes(def)) {
+                    allOptions.push(def);
                 }
             });
-        });
+
+            datalist.innerHTML = allOptions.map(opt => `<option value="${opt}">`).join('');
+        }
+
+        // ОБНОВЛЕНИЕ СПИСКА КАТЕГОРИЙ В МОДАЛКЕ РЕДАКТИРОВАНИЯ ИСТОРИИ
+        function updateEditCategoryDatalist() {
+            const datalist = document.getElementById('category-options-edit');
+            if (!datalist) return;
+
+            const usedCategories = new Set();
+            data.forEach(p => {
+                (p.expenses || []).forEach(e => {
+                    if (e.category) usedCategories.add(e.category.trim());
+                });
+            });
+            companyTransactions.forEach(t => {
+                if (t.category) usedCategories.add(t.category.trim());
+            });
+
+            const defaults = ["Материалы", "Спецтехника", "Зарплата рабочим", "Логистика", "Документация", "Налоги", "Аренда офиса", "Зарплата офиса", "Реклама", "Налоги", "Связь и интернет", "Дивиденды", "Личный вывод"];
+            
+            const allOptions = [];
+            usedCategories.forEach(cat => allOptions.push(cat)); // Исправлено: добавление в allOptions вместо usedCategories!
+            defaults.forEach(def => {
+                if (!allOptions.includes(def)) {
+                    allOptions.push(def);
+                }
+            });
+
+            datalist.innerHTML = allOptions.map(opt => `<option value="${opt}">`).join('');
+        }
+
+        // ДИНАМИЧЕСКИЙ ВЫВОД ИНВЕСТОРОВ С ПОДДЕРЖКОЙ СВОБОДНОГО ВВОДА
+        function updateInvestorDatalist() {
+            const datalist = document.getElementById('investor-options');
+            if (!datalist) return;
+
+            const projectIdSelect = document.getElementById('uni-project');
+            const projectId = projectIdSelect ? projectIdSelect.value : null;
+            const uniqueInvestors = new Set();
+            uniqueInvestors.add("Юнион Эскей");
+
+            for (const key in PARTNER_CONFIG) {
+                const partnerName = PARTNER_CONFIG[key].name;
+                if (partnerName && partnerName !== "Директор") {
+                    uniqueInvestors.add(partnerName.trim());
+                }
+            }
+
+            if (projectId) {
+                const p = data.find(x => x.id == projectId);
+                if (p && p.partnerAccess) {
+                    const accessList = p.partnerAccess.split(',').map(s => s.trim());
+                    accessList.forEach(name => {
+                        if (name && name.toLowerCase() !== 'нет' && name.toLowerCase() !== 'все') {
+                            uniqueInvestors.add(name);
+                        }
+                    });
+                }
+            }
+
+            data.forEach(proj => {
+                (proj.expenses || []).forEach(exp => {
+                    if (exp.investor) {
+                        uniqueInvestors.add(exp.investor.trim());
+                    }
+                });
+            });
+
+            datalist.innerHTML = Array.from(uniqueInvestors)
+                .map(name => `<option value="${name}">`)
+                .join('');
+                
+            const input = document.getElementById('uni-investor-input');
+            if (input && !input.value) {
+                input.value = "Юнион Эскей";
+            }
+        }
+
+        // --- ЛОГИКА ВЫБОРА НЕСКОЛЬКИХ ПАРТНЕРОВ (MULTI-SELECT DROPDOWN) ---
+        function toggleAccessDropdown(id, event) {
+            event.stopPropagation();
+            const menu = document.getElementById(`access-dropdown-menu-${id}`);
+            if (!menu) return;
+            
+            const allMenus = document.querySelectorAll('[id^="access-dropdown-menu-"]');
+            allMenus.forEach(m => {
+                if (m.id !== `access-dropdown-menu-${id}`) {
+                    m.classList.add('hidden');
+                }
+            });
+            menu.classList.toggle('hidden');
+        }
+
+        function handleAccessCheckboxChange(id, checkbox) {
+            const container = document.getElementById(`access-dropdown-menu-${id}`);
+            if (!container) return;
+            
+            const allChk = container.querySelector('input[value="Все"]');
+            const partnerChks = container.querySelectorAll(`.partner-chk-${id}`);
+            
+            if (checkbox.value === 'Все') {
+                partnerChks.forEach(chk => {
+                    chk.disabled = checkbox.checked;
+                    if (checkbox.checked) chk.checked = true;
+                });
+            }
+            
+            let selected = [];
+            if (allChk && allChk.checked) {
+                selected.push("Все");
+            } else {
+                partnerChks.forEach(chk => {
+                    if (chk.checked) selected.push(chk.value);
+                });
+            }
+            
+            const accessString = selected.length > 0 ? selected.join(', ') : 'Нет';
+            const label = document.getElementById(`access-label-${id}`);
+            if (label) label.innerText = accessString;
+            
+            updateAccess(id, accessString);
+        }
+
+        function logOut() {
+            authRole = null;
+            currentRole = null;
+            const pinEl = document.getElementById('pin-input');
+            if (pinEl) pinEl.value = '';
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('app-content').classList.add('hidden');
+            const demoBanner = document.getElementById('demo-banner');
+            if (demoBanner) demoBanner.classList.add('hidden');
+        }
+
+        function switchView(target) {
+            const btns = ['director', 'dima', 'kolya', 'partner3', 'partner4'];
+            btns.forEach(b => {
+                const el = document.getElementById(`btn-view-${b}`);
+                if (el) {
+                    el.className = b === target 
+                        ? 'px-6 py-2 rounded-xl text-xs font-bold bg-white shadow-sm transition-all whitespace-nowrap' 
+                        : 'px-6 py-2 rounded-xl text-xs font-bold text-gray-500 transition-all whitespace-nowrap';
+                }
+            });
+            setRole(target);
+        }
 
         // ВОССТАНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ КОРРЕКТНОЙ СМЕНЫ РОЛЕЙ И СКРЫТИЯ ДИРЕКТОРСКИХ ПАНЕЛЕЙ
         function setRole(role) {
