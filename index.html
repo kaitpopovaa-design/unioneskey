@@ -226,16 +226,20 @@
         </main>
     </div>
 
-    <!-- ИСТОРИЯ РАСХОДОВ ОБЪЕКТА -->
+    <!-- ИСТОРИЯ ОБЪЕКТА (РАСХОДЫ + ПОСТУПЛЕНИЯ) -->
     <div id="history-modal" class="fixed inset-0 bg-gray-950/50 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
         <!-- Высота h-[85vh] на мобильных для удобного скролла -->
         <div class="bg-white rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl w-full max-w-5xl h-[85vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden animate-fade-in">
             <div class="p-5 sm:p-6 border-b flex justify-between items-center bg-gray-50/50 shrink-0">
-                <div><h3 class="text-lg sm:text-xl font-bold text-brand-dark">История расходов</h3><p id="history-object-name" class="text-xs font-bold text-brand-purple mt-1"></p></div>
+                <div><h3 class="text-lg sm:text-xl font-bold text-brand-dark">История объекта</h3><p id="history-object-name" class="text-xs font-bold text-brand-purple mt-1"></p></div>
                 <button onclick="closeHistoryModal()" class="text-3xl leading-none hover:text-brand-purple transition-colors">&times;</button>
             </div>
+            <div class="px-5 sm:px-6 pt-3 flex gap-2 shrink-0 bg-gray-50/50 border-b">
+                <button id="history-tab-expenses" type="button" onclick="switchHistoryTab('expenses')" class="px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 border-brand-purple text-brand-purple transition-colors">Расходы</button>
+                <button id="history-tab-incomes" type="button" onclick="switchHistoryTab('incomes')" class="px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 border-transparent text-gray-400 transition-colors">Поступления</button>
+            </div>
             <div class="overflow-y-auto flex-1">
-                <table class="w-full text-left border-collapse">
+                <table id="history-table-expenses" class="w-full text-left border-collapse">
                     <thead class="bg-gray-50 sticky top-0 border-b text-[10px] uppercase text-gray-400 font-bold z-10">
                         <tr>
                             <th class="px-4 sm:px-6 py-4 whitespace-nowrap">Дата</th>
@@ -247,6 +251,19 @@
                         </tr>
                     </thead>
                     <tbody id="history-table-body" class="divide-y text-sm text-gray-700"></tbody>
+                </table>
+                <table id="history-table-incomes" class="w-full text-left border-collapse hidden">
+                    <thead class="bg-gray-50 sticky top-0 border-b text-[10px] uppercase text-gray-400 font-bold z-10">
+                        <tr>
+                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap">Дата</th>
+                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap">Основание</th>
+                            <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Сумма</th>
+                            <th class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">От кого</th>
+                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap">Комментарий</th>
+                            <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Действие</th>
+                        </tr>
+                    </thead>
+                    <tbody id="income-history-table-body" class="divide-y text-sm text-gray-700"></tbody>
                 </table>
             </div>
         </div>
@@ -282,7 +299,7 @@
     <div id="universal-modal" class="fixed inset-0 bg-gray-950/50 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target === this) closeUniversalModal()">
         <div class="bg-white rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl w-full max-w-lg animate-fade-in overflow-hidden border flex flex-col max-h-[95vh]">
             <div class="bg-brand-purple p-5 sm:p-6 text-white relative shrink-0">
-                <h3 class="text-xl font-bold">Новая операция</h3>
+                <h3 id="uni-modal-title" class="text-xl font-bold">Новая операция</h3>
                 <p class="text-xs text-purple-100 mt-1">Добавление затрат или поступлений</p>
                 <button type="button" onclick="closeUniversalModal()" class="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 text-white/80 hover:text-white text-3xl leading-none">&times;</button>
             </div>
@@ -292,6 +309,7 @@
                         <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Тип операции</label>
                         <select id="uni-type" onchange="toggleUniModalFields()" class="w-full h-14 bg-gray-50 border border-gray-200 rounded-2xl px-4 text-sm outline-none focus:border-brand-purple transition-all">
                             <option value="project">Расход по объекту</option>
+                            <option value="income">Поступление по объекту</option>
                             <option value="general">Общий расход компании</option>
                             <option value="personal">Личные траты</option>
                         </select>
@@ -303,7 +321,7 @@
                     
                     <!-- Текстовое поле ввода инвестора с datalist подсказками -->
                     <div id="uni-investor-wrapper" class="space-y-1.5">
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Кто оплатил / вложил</label>
+                        <label id="uni-investor-label" class="text-xs font-bold text-gray-400 uppercase tracking-wider">Кто оплатил / вложил</label>
                         <input type="text" id="uni-investor-input" list="investor-options" placeholder="Выберите партнера или введите другое имя..." class="w-full h-14 bg-gray-50 border border-gray-200 rounded-2xl px-4 text-sm outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
                         <datalist id="investor-options"></datalist>
                     </div>
@@ -320,7 +338,7 @@
                     </div>
                     
                     <div class="space-y-1.5">
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Категория / Назначение</label>
+                        <label id="uni-category-label" class="text-xs font-bold text-gray-400 uppercase tracking-wider">Категория / Назначение</label>
                         <input type="text" id="uni-category-input" list="category-options" placeholder="Выберите или введите свою..." class="w-full h-14 bg-gray-50 border border-gray-200 rounded-2xl px-4 text-sm outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
                         <datalist id="category-options"></datalist>
                     </div>
@@ -467,7 +485,7 @@
 
     <script>
         // Интегрированный API-адрес
-        const API_URL = "https://script.google.com/macros/s/AKfycbxPof6CcCPx1KS_pH0NmOVCiRKpvpf_2HnPtoiG_i9vKlJk1rh0YaBq3RvxnZlkwLX-Xw/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbzIuc7f3ZDx-hoJh5jcIHVY5Xow_DuXOtJ0nNsjxeYjH1DE24cP1ahf8VVFtx0zK-ik7g/exec"; 
 
         // Изначальный/глобальный конфиг партнеров (с исправленными дефолтами для Димы - 1010 и АВ-Промстрой - 1111)
         let PARTNER_CONFIG = {
@@ -736,7 +754,9 @@
                     if (jsonData && jsonData.projects) {
                         data = jsonData.projects.map(p => {
                             const parsedExpenses = (p.expenses || []).map(e => ({ date: e.date, category: e.category, amount: parseFormattedNumber(e.amount), comment: e.comment, investor: e.investor, rowIndex: e.rowIndex }));
-                            return { ...p, id: Number(p.id), contract: parseFormattedNumber(p.contract), paid: parseFormattedNumber(p.paid), cost: parsedExpenses.reduce((sum, e) => sum + e.amount, 0), expenses: parsedExpenses };
+                            const parsedIncomes = (p.incomes || []).map(i => ({ date: i.date, category: i.category, amount: parseFormattedNumber(i.amount), comment: i.comment, investor: i.investor, rowIndex: i.rowIndex }));
+                            const computedPaid = parsedIncomes.length > 0 ? parsedIncomes.reduce((sum, i) => sum + i.amount, 0) : parseFormattedNumber(p.paid);
+                            return { ...p, id: Number(p.id), contract: parseFormattedNumber(p.contract), paid: computedPaid, cost: parsedExpenses.reduce((sum, e) => sum + e.amount, 0), expenses: parsedExpenses, incomes: parsedIncomes };
                         });
                     }
 
@@ -904,6 +924,28 @@
                     });
                     proj.cost = proj.expenses.reduce((sum, e) => sum + e.amount, 0);
                 }
+            } else if (payload.action === 'addIncome') {
+                const proj = data.find(p => Number(p.id) === Number(payload.projectId));
+                if (proj) {
+                    if (!proj.incomes) proj.incomes = [];
+                    proj.incomes.push({
+                        date: payload.date,
+                        category: payload.category,
+                        amount: Number(payload.amount),
+                        comment: payload.comment || '',
+                        investor: payload.investor || 'Юнион Эскей'
+                    });
+                    proj.paid = proj.incomes.reduce((sum, i) => sum + i.amount, 0);
+                }
+            } else if (payload.action === 'deleteIncome') {
+                const proj = data.find(p => Number(p.id) === Number(payload.projectId));
+                if (proj && proj.incomes) {
+                    const idx = proj.incomes.findIndex(i => i.date === payload.date && i.category === payload.category && Number(i.amount) === Number(payload.amount) && i.comment === payload.comment);
+                    if (idx !== -1) {
+                        proj.incomes.splice(idx, 1);
+                        proj.paid = proj.incomes.reduce((sum, i) => sum + i.amount, 0);
+                    }
+                }
             } else if (payload.action === 'addCompanyExpense') {
                 companyTransactions.push({
                     date: payload.date,
@@ -954,6 +996,7 @@
             renderCharts();
             if (currentHistoryProjectId) {
                 renderHistoryTable(currentHistoryProjectId);
+                renderIncomeHistoryTable(currentHistoryProjectId);
             }
         }
 
@@ -1583,10 +1626,33 @@
             currentHistoryProjectId = id;
             document.getElementById('history-object-name').innerText = p.name;
             renderHistoryTable(id);
+            renderIncomeHistoryTable(id);
+            switchHistoryTab('expenses');
             document.getElementById('history-modal').classList.remove('hidden');
         }
 
         function closeHistoryModal() { currentHistoryProjectId = null; document.getElementById('history-modal').classList.add('hidden'); }
+
+        function switchHistoryTab(tab) {
+            const expBtn = document.getElementById('history-tab-expenses');
+            const incBtn = document.getElementById('history-tab-incomes');
+            const expTable = document.getElementById('history-table-expenses');
+            const incTable = document.getElementById('history-table-incomes');
+            if (!expBtn || !incBtn || !expTable || !incTable) return;
+
+            const activeClasses = ['border-brand-purple', 'text-brand-purple'];
+            const inactiveClasses = ['border-transparent', 'text-gray-400'];
+
+            if (tab === 'incomes') {
+                incBtn.classList.add(...activeClasses); incBtn.classList.remove(...inactiveClasses);
+                expBtn.classList.remove(...activeClasses); expBtn.classList.add(...inactiveClasses);
+                incTable.classList.remove('hidden'); expTable.classList.add('hidden');
+            } else {
+                expBtn.classList.add(...activeClasses); expBtn.classList.remove(...inactiveClasses);
+                incBtn.classList.remove(...activeClasses); incBtn.classList.add(...inactiveClasses);
+                expTable.classList.remove('hidden'); incTable.classList.add('hidden');
+            }
+        }
 
         function renderHistoryTable(projectId) {
             const p = data.find(x => x.id === projectId); const tbody = document.getElementById('history-table-body');
@@ -1611,6 +1677,36 @@
                         <td class="px-4 sm:px-6 py-4 text-right font-bold text-brand-purple whitespace-nowrap">${formatMoney(e.amount)}</td>
                         <td class="px-4 sm:px-6 py-4 text-center font-semibold whitespace-nowrap">${e.investor}</td>
                         <td class="px-4 sm:px-6 py-4 text-gray-500 min-w-[150px]">${e.comment || '-'}</td>
+                        <td class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">${actionHtml}</td>
+                    </tr>`;
+            });
+        }
+
+        function renderIncomeHistoryTable(projectId) {
+            const p = data.find(x => x.id === projectId); const tbody = document.getElementById('income-history-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            const incomes = (p && p.incomes) ? p.incomes : [];
+            if (!p || !incomes.length) { tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400 italic">Нет поступлений</td></tr>'; return; }
+
+            let sorted = [...incomes].sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+            sorted.forEach((inc, idx) => {
+                const canEdit = (currentRole === 'director');
+                const actionHtml = canEdit ? `
+                    <div id="income-actions-${p.id}-${idx}" class="flex justify-end gap-3 text-xs font-bold">
+                        <button onclick="startEditIncome(${p.id}, ${idx})" class="text-brand-purple hover:underline mr-1">Изменить</button>
+                        <button onclick="askDeleteIncome(${p.id}, ${idx})" class="text-red-500 hover:underline">Удалить</button>
+                    </div>
+                ` : ``;
+
+                tbody.innerHTML += `
+                    <tr id="income-row-${p.id}-${idx}" class="hover:bg-gray-50 transition-colors">
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap">${inc.date}</td>
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap">${inc.category}</td>
+                        <td class="px-4 sm:px-6 py-4 text-right font-bold text-green-600 whitespace-nowrap">${formatMoney(inc.amount)}</td>
+                        <td class="px-4 sm:px-6 py-4 text-center font-semibold whitespace-nowrap">${inc.investor}</td>
+                        <td class="px-4 sm:px-6 py-4 text-gray-500 min-w-[150px]">${inc.comment || '-'}</td>
                         <td class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">${actionHtml}</td>
                     </tr>`;
             });
@@ -1726,6 +1822,113 @@
             showNotification('Расход удален', 'success');
         }
 
+        // --- ПОСТУПЛЕНИЯ: РЕДАКТИРОВАНИЕ И УДАЛЕНИЕ (ПО АНАЛОГИИ С РАСХОДАМИ) ---
+        function askDeleteIncome(projectId, displayIdx) {
+            const container = document.getElementById(`income-actions-${projectId}-${displayIdx}`);
+            if (container) {
+                container.innerHTML = `
+                    <div class="flex items-center gap-1.5 bg-red-50 py-0.5 px-2 rounded-lg border border-red-100">
+                        <span class="text-[11px] font-semibold text-red-700">Удалить?</span>
+                        <button onclick="deleteIncome(${projectId}, ${displayIdx})" class="text-red-600 hover:text-red-800 transition-colors">Да</button>
+                        <span class="text-gray-300">|</span>
+                        <button onclick="renderIncomeHistoryTable(${projectId})" class="text-gray-500 hover:text-gray-700 transition-colors">Нет</button>
+                    </div>
+                `;
+            }
+        }
+
+        function startEditIncome(projectId, idx) {
+            const project = data.find(p => Number(p.id) === Number(projectId));
+            if (!project) return;
+
+            let sorted = [...(project.incomes || [])].sort((a,b) => new Date(b.date) - new Date(a.date));
+            const inc = sorted[idx];
+            const origIdx = project.incomes.findIndex(i => i.date === inc.date && i.category === inc.category && i.amount === inc.amount && i.comment === inc.comment);
+            const row = document.getElementById(`income-row-${projectId}-${idx}`);
+            if (!row) return;
+
+            const access = String(project.partnerAccess || '').trim().toLowerCase();
+            let investorOptions = `<option value="Юнион Эскей" ${inc.investor==='Юнион Эскей'?'selected':''}>Юнион Эскей</option>`;
+
+            if (normalizeName(access) === normalizeName(PARTNER_CONFIG.dima.name)) {
+                investorOptions += `<option value="${PARTNER_CONFIG.dima.name}" ${inc.investor===PARTNER_CONFIG.dima.name?'selected':''}>${PARTNER_CONFIG.dima.name}</option>`;
+            } else if (normalizeName(access) === normalizeName(PARTNER_CONFIG.kolya.name)) {
+                investorOptions += `<option value="${PARTNER_CONFIG.kolya.name}" ${inc.investor===PARTNER_CONFIG.kolya.name?'selected':''}>${PARTNER_CONFIG.kolya.name}</option>`;
+            } else if (normalizeName(access) === normalizeName(PARTNER_CONFIG.partner3.name)) {
+                investorOptions += `<option value="${PARTNER_CONFIG.partner3.name}" ${inc.investor===PARTNER_CONFIG.partner3.name?'selected':''}>${PARTNER_CONFIG.partner3.name}</option>`;
+            } else if (normalizeName(access) === normalizeName(PARTNER_CONFIG.partner4.name)) {
+                investorOptions += `<option value="${PARTNER_CONFIG.partner4.name}" ${inc.investor===PARTNER_CONFIG.partner4.name?'selected':''}>${PARTNER_CONFIG.partner4.name}</option>`;
+            } else {
+                if (currentRole === 'director') {
+                    investorOptions += `
+                        <option value="${PARTNER_CONFIG.dima.name}" ${inc.investor===PARTNER_CONFIG.dima.name?'selected':''}>${PARTNER_CONFIG.dima.name}</option>
+                        <option value="${PARTNER_CONFIG.kolya.name}" ${inc.investor===PARTNER_CONFIG.kolya.name?'selected':''}>${PARTNER_CONFIG.kolya.name}</option>
+                        <option value="${PARTNER_CONFIG.partner3.name}" ${inc.investor===PARTNER_CONFIG.partner3.name?'selected':''}>${PARTNER_CONFIG.partner3.name}</option>
+                        <option value="${PARTNER_CONFIG.partner4.name}" ${inc.investor===PARTNER_CONFIG.partner4.name?'selected':''}>${PARTNER_CONFIG.partner4.name}</option>
+                    `;
+                } else if (PARTNER_CONFIG[currentRole]) {
+                    investorOptions += `<option value="${PARTNER_CONFIG[currentRole].name}" ${inc.investor===PARTNER_CONFIG[currentRole].name?'selected':''}>${PARTNER_CONFIG[currentRole].name}</option>`;
+                }
+            }
+
+            row.innerHTML = `
+                <td class="px-3 py-2"><input type="date" id="edit-income-date-${projectId}-${idx}" value="${inc.date}" class="h-9 min-w-[120px] px-2 py-0 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
+                <td class="px-3 py-2">
+                    <input type="text" id="edit-income-category-${projectId}-${idx}" value="${inc.category}" list="category-options-edit" class="h-9 min-w-[140px] px-2 py-0 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru">
+                </td>
+                <td class="px-3 py-2"><input type="text" id="edit-income-amount-${projectId}-${idx}" value="${formatNumberWithSpaces(inc.amount)}" oninput="formatInputSpaces(this)" class="bg-gray-50 border border-gray-200 rounded-lg p-1.5 text-xs w-full text-right font-bold outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
+                <td class="px-3 py-2"><select id="edit-income-investor-${projectId}-${idx}" class="h-9 min-w-[110px] px-2 py-0 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple cursor-pointer">${investorOptions}</select></td>
+                <td class="px-3 py-2"><input type="text" id="edit-income-comment-${projectId}-${idx}" value="${inc.comment || ''}" class="bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
+                <td class="px-3 py-2 text-right whitespace-nowrap">
+                    <button onclick="saveEditIncome(${projectId}, ${origIdx}, ${idx})" class="text-green-600 hover:underline font-bold text-xs mr-3">ОК</button>
+                    <button onclick="renderIncomeHistoryTable(${projectId})" class="text-gray-400 hover:underline font-bold text-xs">Отмена</button>
+                </td>
+            `;
+        }
+
+        async function saveEditIncome(projectId, origIdx, displayIdx) {
+            const project = data.find(p => Number(p.id) === Number(projectId));
+            if (!project) return;
+
+            const oldInc = Object.assign({}, project.incomes[origIdx]);
+            const newDate = document.getElementById(`edit-income-date-${projectId}-${displayIdx}`).value;
+            const newCategory = document.getElementById(`edit-income-category-${projectId}-${displayIdx}`).value || 'Без категории';
+            const newAmount = parseFormattedNumber(document.getElementById(`edit-income-amount-${projectId}-${displayIdx}`).value);
+            const newInvestor = document.getElementById(`edit-income-investor-${projectId}-${displayIdx}`).value;
+            const newComment = document.getElementById(`edit-income-comment-${projectId}-${displayIdx}`).value;
+
+            if (!newAmount || newAmount <= 0) { showNotification('Сумма поступления должна быть больше нуля!', 'error'); return; }
+
+            project.incomes[origIdx] = { ...project.incomes[origIdx], date: newDate, category: newCategory, amount: newAmount, comment: newComment, investor: newInvestor };
+            project.paid = project.incomes.reduce((sum, i) => sum + i.amount, 0);
+
+            renderTable(); renderCharts(); renderIncomeHistoryTable(projectId);
+
+            await sendPost({
+                action: 'editIncome', projectId: projectId,
+                oldDate: oldInc.date, oldCategory: oldInc.category, oldAmount: oldInc.amount, oldComment: oldInc.comment, oldInvestor: oldInc.investor || 'Юнион Эскей',
+                newDate: newDate, newCategory: newCategory, newAmount: newAmount, newComment: newComment, newInvestor: newInvestor
+            }, false);
+            showNotification('Поступление изменено', 'success');
+        }
+
+        async function deleteIncome(projectId, displayIdx) {
+            const project = data.find(p => Number(p.id) === Number(projectId));
+            if (!project) return;
+            let sorted = [...(project.incomes || [])].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            const inc = sorted[displayIdx];
+            const origIdx = project.incomes.findIndex(i => i.date === inc.date && i.category === inc.category && i.amount === inc.amount && i.comment === inc.comment);
+            if (origIdx === -1) return;
+
+            project.incomes.splice(origIdx, 1);
+            project.paid = project.incomes.reduce((sum, i) => sum + i.amount, 0);
+            renderTable(); renderCharts(); renderIncomeHistoryTable(projectId);
+
+            await sendPost({ action: 'deleteIncome', projectId: projectId, date: inc.date, category: inc.category, amount: inc.amount, comment: inc.comment, investor: inc.investor || 'Юнион Эскей' }, false);
+            showNotification('Поступление удалено', 'success');
+        }
+
         async function updateProjectStatus(id, newStatus) {
             const project = data.find(p => Number(p.id) === Number(id));
             if (project) {
@@ -1830,6 +2033,17 @@
                     comment: document.getElementById('uni-comment').value, 
                     investor: investorVal 
                 };
+            } else if (type === 'income') {
+                const investorVal = document.getElementById('uni-investor-input').value.trim() || 'Юнион Эскей';
+                p = {
+                    action: 'addIncome',
+                    projectId: document.getElementById('uni-project').value,
+                    date: document.getElementById('uni-date').value,
+                    category: categoryVal,
+                    amount: parseFormattedNumber(document.getElementById('uni-amount').value),
+                    comment: document.getElementById('uni-comment').value,
+                    investor: investorVal
+                };
             } else {
                 p = {
                     action: 'addCompanyExpense',
@@ -1848,7 +2062,7 @@
             }, 1000);
             
             await sendPost(p, false); 
-            showNotification('Операция сохранена', 'success');
+            showNotification(type === 'income' ? 'Поступление сохранено' : 'Операция сохранена', 'success');
         }
 
         function retryConnection() {
@@ -1860,12 +2074,25 @@
             const typeEl = document.getElementById('uni-type');
             if (!typeEl) return;
             const type = typeEl.value;
-            const isProj = type === 'project';
+            const isProj = type === 'project' || type === 'income';
+            const isIncome = type === 'income';
             
             const projWrapper = document.getElementById('uni-project-wrapper');
             const invWrapper = document.getElementById('uni-investor-wrapper');
             if (projWrapper) projWrapper.classList.toggle('hidden', !isProj);
             if (invWrapper) invWrapper.classList.toggle('hidden', !isProj);
+
+            const invLabel = document.getElementById('uni-investor-label');
+            if (invLabel) invLabel.innerText = isIncome ? 'От кого поступление' : 'Кто оплатил / вложил';
+
+            const catLabel = document.getElementById('uni-category-label');
+            if (catLabel) catLabel.innerText = isIncome ? 'Основание поступления' : 'Категория / Назначение';
+
+            const modalTitle = document.getElementById('uni-modal-title');
+            if (modalTitle) modalTitle.innerText = isIncome ? 'Новое поступление' : 'Новая операция';
+
+            const submitBtn = document.getElementById('btn-save-universal');
+            if (submitBtn) submitBtn.innerText = isIncome ? 'Сохранить поступление' : 'Сохранить';
             
             updateCategoryDatalist();
         }
@@ -1883,6 +2110,9 @@
                 (p.expenses || []).forEach(e => {
                     if (e.category) usedCategories.add(e.category.trim());
                 });
+                (p.incomes || []).forEach(i => {
+                    if (i.category) usedCategories.add(i.category.trim());
+                });
             });
 
             companyTransactions.forEach(t => {
@@ -1892,6 +2122,8 @@
             let defaults = [];
             if (type === 'project') {
                 defaults = ["Материалы", "Спецтехника", "Зарплата рабочим", "Логистика", "Документация", "Налоги"];
+            } else if (type === 'income') {
+                defaults = ["Аванс по договору", "Оплата этапа", "Окончательный расчет", "Доплата"];
             } else if (type === 'general') {
                 defaults = ["Аренда офиса", "Зарплата офиса", "Реклама", "Налоги", "Связь и интернет"];
             } else if (type === 'personal') {
@@ -1970,6 +2202,11 @@
                 (proj.expenses || []).forEach(exp => {
                     if (exp.investor) {
                         uniqueInvestors.add(exp.investor.trim());
+                    }
+                });
+                (proj.incomes || []).forEach(inc => {
+                    if (inc.investor) {
+                        uniqueInvestors.add(inc.investor.trim());
                     }
                 });
             });
