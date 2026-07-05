@@ -928,7 +928,7 @@
                     if (jsonData && jsonData.projects) {
                         data = jsonData.projects.map(p => {
                             const parsedExpenses = (p.expenses || []).map(e => ({ date: e.date, category: e.category, amount: parseFormattedNumber(e.amount), comment: e.comment, investor: e.investor, rowIndex: e.rowIndex, settled: e.settled === true || e.settled === 'TRUE' || e.settled === 1 }));
-                            const parsedIncomes = (p.incomes || []).map(i => ({ date: i.date, category: i.category, amount: parseFormattedNumber(i.amount), comment: i.comment, investor: i.investor, rowIndex: i.rowIndex }));
+                            const parsedIncomes = (p.incomes || []).map(i => ({ date: i.date, category: i.category, amount: parseFormattedNumber(i.amount), comment: i.comment, investor: i.investor, rowIndex: i.rowIndex, settled: i.settled === true || i.settled === 'TRUE' || i.settled === 1 }));
                             const computedPaid = parsedIncomes.length > 0 ? parsedIncomes.reduce((sum, i) => sum + i.amount, 0) : parseFormattedNumber(p.paid);
                             return { ...p, id: Number(p.id), contract: parseFormattedNumber(p.contract), paid: computedPaid, cost: parsedExpenses.reduce((sum, e) => sum + e.amount, 0), expenses: parsedExpenses, incomes: parsedIncomes };
                         });
