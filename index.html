@@ -554,8 +554,13 @@
         };
         let currentChartMonth = getYearMonth(new Date().toISOString().slice(0,10));
         let generatorsView = 'month'; // 'month' | 'total'
-        let generatorsOverrideUnion = null;  // сумма вывода Юнион Эскей (редактируется)
-        let generatorsWithdrawalPartner = null; // сумма вывода Коли (независимо)
+        // Выводы по месяцам: { "2026-05": { union: 150000, partner: 80000 }, ... }
+        let generatorsWithdrawals = (function() {
+            try { return JSON.parse(localStorage.getItem('gen_withdrawals') || '{}'); } catch(e) { return {}; }
+        })();
+        function saveWithdrawals() {
+            try { localStorage.setItem('gen_withdrawals', JSON.stringify(generatorsWithdrawals)); } catch(e) {}
+        }
 
         function shiftChartMonth(delta) {
             const [y, m] = currentChartMonth.split('-').map(Number);
@@ -1636,8 +1641,10 @@
             const incSum = isMonth ? mIncSum : allIncSum;
             const expSum = isMonth ? mExpSum : allExpSum;
             const net    = isMonth ? mNet    : allNet;
-            const withdrawalUnion   = generatorsOverrideUnion !== null ? generatorsOverrideUnion : 0;
-            const withdrawalPartner = generatorsWithdrawalPartner !== null ? generatorsWithdrawalPartner : 0;
+            const mwKey = isMonth ? mk : 'total';
+            const mw = generatorsWithdrawals[mwKey] || {};
+            const withdrawalUnion   = mw.union   || 0;
+            const withdrawalPartner = mw.partner  || 0;
             const netCls = 'text-gray-800';
             const netBg  = 'bg-[#EDE9FE]';
 
@@ -1655,19 +1662,28 @@
                 </div>`;
             }).join('');
 
-            // Инвесторы (только для общего вида)
+            // Оплатил расходы (общие — кто внёс деньги за период)
+            // Всегда показываем для выбранного периода
             const investorSums = {};
-            if (!isMonth) {
-                genProj.expenses.forEach(e => {
-                    const inv = String(e.investor||'Юнион Эскей').trim();
-                    investorSums[inv] = (investorSums[inv]||0) + e.amount;
-                });
-            }
-            const invRows = Object.entries(investorSums).sort((a,b)=>b[1]-a[1]).map(([inv,sum]) =>
-                `<div class="flex justify-between text-xs text-gray-600 py-0.5">
-                    <span class="truncate pr-2">${inv}</span>
-                    <span class="font-semibold shrink-0">${formatMoney(sum)}</span>
-                 </div>`).join('');
+            expenses.forEach(e => {
+                const inv = String(e.investor||'Юнион Эскей').trim();
+                investorSums[inv] = (investorSums[inv]||0) + e.amount;
+            });
+            const invTotal = Object.values(investorSums).reduce((s,v)=>s+v, 0);
+            const invRows = Object.entries(investorSums).sort((a,b)=>b[1]-a[1]).map(([inv,sum]) => {
+                const pct = invTotal > 0 ? Math.round(sum / invTotal * 100) : 0;
+                const invColor = inv.toLowerCase().includes('коля') || inv.toLowerCase().includes('kolya')
+                    ? FALLBACK_COLORS[0]
+                    : inv.toLowerCase().includes('общ')
+                    ? FALLBACK_COLORS[6]   // мятный для «Общие»
+                    : FALLBACK_COLORS[1];
+                return `<div class="flex justify-between items-center text-xs py-0.5">
+                    <span class="flex items-center gap-1.5 text-gray-600 font-medium truncate pr-2">
+                        <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color:${invColor}"></span>${inv}
+                    </span>
+                    <span class="text-gray-500 shrink-0">${formatMoney(sum)} <span class="text-gray-400 text-[10px]">(${pct}%)</span></span>
+                </div>`;
+            }).join('');
 
             // Навигация по месяцам (только для месячного вида)
             const navHtml = isMonth ? `
@@ -1710,7 +1726,12 @@
                         <span class="font-bold text-gray-800">${formatMoney(expSum)}</span>
                     </div>
                 </div>
-                ${invRows ? `<div class="border-t border-gray-100 pt-2 mb-2 space-y-1"><div class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Доли вложений</div>${invRows}</div>` : ''}
+                ${invRows ? `<div class="border-t border-gray-100 pt-2 mb-2 space-y-1">
+                    <div class="mb-1">
+                        <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Доли вложений</span>
+                    </div>
+                    ${invRows}
+                </div>` : ''}
                 ${catRows ? `<div class="space-y-1 border-t border-gray-100 pt-2 mb-2">${catRows}</div>` : ''}
                 <div class="border-t border-gray-100 pt-2 space-y-1.5">
                     <div class="flex justify-between text-xs">
@@ -1759,13 +1780,19 @@
         }
 
         function setOverrideUnion(val) {
+            const key = generatorsView === 'month' ? currentChartMonth : 'total';
             const n = parseFormattedNumber(val);
-            generatorsOverrideUnion = (!val || val.trim() === '' || n === 0) ? null : n;
+            if (!generatorsWithdrawals[key]) generatorsWithdrawals[key] = {};
+            generatorsWithdrawals[key].union = (!val || val.trim() === '' || n === 0) ? null : n;
+            saveWithdrawals();
             refreshGeneratorsCard();
         }
         function setWithdrawalPartner(val) {
+            const key = generatorsView === 'month' ? currentChartMonth : 'total';
             const n = parseFormattedNumber(val);
-            generatorsWithdrawalPartner = (!val || val.trim() === '' || n === 0) ? null : n;
+            if (!generatorsWithdrawals[key]) generatorsWithdrawals[key] = {};
+            generatorsWithdrawals[key].partner = (!val || val.trim() === '' || n === 0) ? null : n;
+            saveWithdrawals();
             refreshGeneratorsCard();
         }
 
@@ -2092,10 +2119,7 @@
                             <button onclick="quickUnsettle(${p.id}, ${origExpIdx})" class="text-[10px] font-medium text-gray-300 hover:text-[#7C3AED] transition-colors shrink-0">↩ снять</button>
                         </div>`;
                     } else {
-                        settledColHtml = `<label class="flex items-center gap-1.5 cursor-pointer select-none group justify-center py-1">
-                            <input type="checkbox" class="expense-settle-cb" data-orig-idx="${origExpIdx}" onclick="toggleSettleBtns(${p.id})">
-                            <span class="settle-label-text text-[10px] text-gray-400 group-hover:text-[#7C3AED]">учтено</span>
-                        </label>`;
+                        settledColHtml = `<button onclick="quickSettleExpense(${p.id}, ${origExpIdx})" class="text-[11px] font-semibold text-gray-400 hover:text-[#7C3AED] hover:bg-[#F5F3FF] px-2 py-1 rounded-lg transition-all w-full">учтено</button>`;
                     }
                 } else {
                     settledColHtml = e.settled ? '<span class="text-xs font-medium text-gray-400 bg-[#FEFCE8] px-2 py-0.5 rounded-md border border-[#FEF08A]/30 whitespace-nowrap">✓ учтено</span>' : '';
@@ -2142,6 +2166,26 @@
             const inc = project.incomes[origIdx];
             sendPost({ action: 'markIncomesUnsettled', projectId, date: inc.date, category: inc.category, amount: inc.amount, comment: inc.comment }, false);
             showNotification('Отметка снята', 'success');
+        }
+
+        async function quickSettleExpense(projectId, origIdx) {
+            const project = data.find(p => Number(p.id) === Number(projectId));
+            if (!project || !project.expenses[origIdx]) return;
+            project.expenses[origIdx].settled = true;
+            renderHistoryTable(projectId);
+            const exp = project.expenses[origIdx];
+            await sendPost({ action: 'markExpensesSettled', projectId, expenses: [{ date: exp.date, category: exp.category, amount: exp.amount, comment: exp.comment, investor: exp.investor||'Юнион Эскей' }] }, false);
+            showNotification('Учтено', 'success');
+        }
+
+        async function quickSettleIncome(projectId, origIdx) {
+            const project = data.find(p => Number(p.id) === Number(projectId));
+            if (!project || !project.incomes || !project.incomes[origIdx]) return;
+            project.incomes[origIdx].settled = true;
+            renderIncomeHistoryTable(projectId);
+            const inc = project.incomes[origIdx];
+            await sendPost({ action: 'markIncomesSettled', projectId, incomes: [{ date: inc.date, category: inc.category, amount: inc.amount, comment: inc.comment }] }, false);
+            showNotification('Учтено', 'success');
         }
 
         function quickUnsettle(projectId, origIdx) {
@@ -2372,7 +2416,7 @@
             if (!row) return;
 
             const access = String(project.partnerAccess || '').trim().toLowerCase();
-            let investorOptions = `<option value="Юнион Эскей" ${exp.investor==='Юнион Эскей'?'selected':''}>Юнион Эскей</option>`;
+            let investorOptions = `<option value="Общие" ${exp.investor==='Общие'?'selected':''}>Общие</option><option value="Юнион Эскей" ${exp.investor==='Юнион Эскей'?'selected':''}>Юнион Эскей</option>`;
             
             if (normalizeName(access) === normalizeName(PARTNER_CONFIG.dima.name)) {
                 investorOptions += `<option value="${PARTNER_CONFIG.dima.name}" ${exp.investor===PARTNER_CONFIG.dima.name?'selected':''}>${PARTNER_CONFIG.dima.name}</option>`;
@@ -2484,7 +2528,7 @@
             if (!row) return;
 
             const access = String(project.partnerAccess || '').trim().toLowerCase();
-            let investorOptions = `<option value="Юнион Эскей" ${inc.investor==='Юнион Эскей'?'selected':''}>Юнион Эскей</option>`;
+            let investorOptions = `<option value="Общие" ${inc.investor==='Общие'?'selected':''}>Общие</option><option value="Юнион Эскей" ${inc.investor==='Юнион Эскей'?'selected':''}>Юнион Эскей</option>`;
 
             if (normalizeName(access) === normalizeName(PARTNER_CONFIG.dima.name)) {
                 investorOptions += `<option value="${PARTNER_CONFIG.dima.name}" ${inc.investor===PARTNER_CONFIG.dima.name?'selected':''}>${PARTNER_CONFIG.dima.name}</option>`;
@@ -2817,6 +2861,7 @@
             const projectId = projectIdSelect ? projectIdSelect.value : null;
             const uniqueInvestors = new Set();
             uniqueInvestors.add("Юнион Эскей");
+            uniqueInvestors.add("Общие");
 
             for (const key in PARTNER_CONFIG) {
                 const partnerName = PARTNER_CONFIG[key].name;
