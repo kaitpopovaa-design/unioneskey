@@ -383,8 +383,7 @@
                     </div>
                     <div id="uni-investor-wrapper" class="space-y-1">
                         <label id="uni-investor-label" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Кто оплатил / вложил</label>
-                        <input type="text" id="uni-investor-input" list="investor-options" placeholder="Юнион Эскей / партнёр..." class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
-                        <datalist id="investor-options"></datalist>
+                        <select id="uni-investor-input" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-brand-purple transition-all cursor-pointer" required></select>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div class="space-y-1">
@@ -1779,16 +1778,16 @@
             refreshGeneratorsCard();
         }
 
-        function setOverrideUnion(val) {
-            const key = generatorsView === 'month' ? currentChartMonth : 'total';
+        function setOverrideUnion(val, monthKey) {
+            const key = monthKey || (generatorsView === 'month' ? currentChartMonth : 'total');
             const n = parseFormattedNumber(val);
             if (!generatorsWithdrawals[key]) generatorsWithdrawals[key] = {};
             generatorsWithdrawals[key].union = (!val || val.trim() === '' || n === 0) ? null : n;
             saveWithdrawals();
             refreshGeneratorsCard();
         }
-        function setWithdrawalPartner(val) {
-            const key = generatorsView === 'month' ? currentChartMonth : 'total';
+        function setWithdrawalPartner(val, monthKey) {
+            const key = monthKey || (generatorsView === 'month' ? currentChartMonth : 'total');
             const n = parseFormattedNumber(val);
             if (!generatorsWithdrawals[key]) generatorsWithdrawals[key] = {};
             generatorsWithdrawals[key].partner = (!val || val.trim() === '' || n === 0) ? null : n;
@@ -2683,7 +2682,7 @@
             document.getElementById('uni-comment').value = '';
             document.getElementById('uni-amount').value = '';
             document.getElementById('uni-category-input').value = '';
-            document.getElementById('uni-investor-input').value = ''; 
+            // investor select обновится в updateInvestorDatalist 
             
             document.getElementById('universal-modal').classList.remove('hidden'); 
             
@@ -2895,7 +2894,8 @@
                 });
             });
 
-            datalist.innerHTML = Array.from(uniqueInvestors)
+            const orderedInvestors = ["Общие", ...Array.from(uniqueInvestors)];
+            datalist.innerHTML = orderedInvestors
                 .map(name => `<option value="${name}">`)
                 .join('');
                 
