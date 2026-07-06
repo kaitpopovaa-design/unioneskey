@@ -61,6 +61,12 @@
         }
         .animate-fade-in { animation: fadeIn 0.25s ease-out; }
 
+        /* Выбранный элемент учтено — текст фиолетовый */
+        .expense-settle-cb:checked + .settle-label-text,
+        .income-settle-cb:checked + .settle-label-text {
+            color: #7C3AED !important;
+            background-color: #EDE9FE;
+        }
         /* Кастомные чекбоксы учтено — одинаковый вид в расходах и поступлениях */
         .expense-settle-cb, .income-settle-cb,
         .expense-unsettle-cb, .income-unsettle-cb {
@@ -532,7 +538,7 @@
 
     <script>
         // Интегрированный API-адрес
-        const API_URL = "https://script.google.com/macros/s/AKfycbyGdZvEPjRSh_bk9t7cgb5rjihrOIt4rKyvoXa0UX8ZZL7VVBUvwlmyd3HAnF87ftuRCA/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbyjxwtHoE7mFNC04iDusUxMtLarlY8UnMZOrwuUZiKB4gotWHgoZhhPTIH-mRSNWXJLEg/exec"; 
 
         // Изначальный/глобальный конфиг партнеров (с исправленными дефолтами для Димы - 1010 и АВ-Промстрой - 1111)
         let PARTNER_CONFIG = {
@@ -1179,34 +1185,25 @@
             if (!isLive()) return;
 
             try {
-                const details = {
-                    'jsonData': JSON.stringify(payload)
-                };
-                
+                const details = { 'jsonData': JSON.stringify(payload) };
                 let formBody = [];
                 for (let property in details) {
-                    let encodedKey = encodeURIComponent(property);
-                    let encodedValue = encodeURIComponent(details[property]);
-                    formBody.push(encodedKey + "=" + encodedValue);
+                    formBody.push(encodeURIComponent(property) + "=" + encodeURIComponent(details[property]));
                 }
                 formBody = formBody.join("&");
 
-                fetch(API_URL, { 
+                // Отправляем без no-cors чтобы видеть ошибки
+                const res = await fetch(API_URL, { 
                     method: 'POST', 
                     mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
-                    },
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
                     body: formBody 
-                }).catch(e => {
-                    console.log("Запрос отправлен.");
                 });
                 
-                if (reload) {
-                    setTimeout(initApp, 2500);
-                }
+                if (reload) setTimeout(initApp, 2500);
             } catch (e) { 
                 console.error("Ошибка при отправке POST:", e);
+                showNotification('Ошибка синхронизации с таблицей', 'error');
             }
         }
 
@@ -2094,7 +2091,7 @@
                     <th class="px-4 sm:px-6 py-4 text-left whitespace-nowrap">Комментарий</th>
                     <th class="px-3 py-4 text-center w-[96px]">
                         <div class="flex flex-col items-center gap-0.5">
-                            ${isDirector ? `<button id="settle-btn" onclick="settleCheckedExpenses(${projectId})" class="hidden text-[10px] font-bold bg-[#EDE9FE] text-[#7C3AED] hover:bg-[#DDD6FE] px-2 py-0.5 rounded-lg w-full">✓ Учтено</button>
+                            ${isDirector ? `<button id="settle-btn" onclick="settleCheckedExpenses(${projectId})" class="hidden text-[10px] font-bold bg-[#EDE9FE] text-[#7C3AED] hover:bg-[#DDD6FE] px-2 py-0.5 rounded-lg w-full">Учтено</button>
                             <button id="unsettle-btn" onclick="unsettleCheckedExpenses(${projectId})" class="hidden text-[10px] font-bold bg-[#F3F4F6] text-gray-500 hover:bg-gray-200 px-2 py-0.5 rounded-lg w-full">↩ Снять</button>` : ''}
                             <span class="settle-col-label text-[10px] text-gray-400 font-bold uppercase tracking-wider">Учтено</span>
                         </div>
@@ -2113,9 +2110,9 @@
                 let settledColHtml = '';
                 if (isDirector) {
                     if (e.settled) {
-                        settledColHtml = `<div class="flex items-center gap-1.5 justify-center py-1">
-                            <span class="text-xs font-medium text-gray-500 bg-[#FEFCE8] px-2.5 py-1 rounded-lg border border-[#FEF08A]/40 whitespace-nowrap">✓ учтено</span>
-                            <button onclick="quickUnsettle(${p.id}, ${origExpIdx})" class="text-[10px] font-medium text-gray-300 hover:text-[#7C3AED] transition-colors shrink-0">↩ снять</button>
+                        settledColHtml = `<div class="flex flex-col items-center gap-1 py-0.5">
+                            <span class="text-[10px] font-medium text-gray-500 bg-[#FEFCE8] px-2 py-0.5 rounded-md border border-[#FEF08A]/40 whitespace-nowrap">✓ учтено</span>
+                            <button onclick="quickUnsettle(${p.id}, ${origExpIdx})" class="text-[10px] text-gray-300 hover:text-[#7C3AED] transition-colors font-medium">↩ снять</button>
                         </div>`;
                     } else {
                         settledColHtml = `<button onclick="quickSettleExpense(${p.id}, ${origExpIdx})" class="text-[11px] font-semibold text-gray-400 hover:text-[#7C3AED] hover:bg-[#F5F3FF] px-2 py-1 rounded-lg transition-all w-full">учтено</button>`;
@@ -2215,10 +2212,7 @@
             if (settleBtn)   settleBtn.classList.toggle('hidden', settle === 0);
             if (unsettleBtn) unsettleBtn.classList.toggle('hidden', unsettle === 0);
             const anyChecked = settle > 0 || unsettle > 0;
-            // Скрываем метку «учтено» у чекбоксов и заголовок столбца
-            document.querySelectorAll('.settle-label-text').forEach(el => {
-                el.style.display = anyChecked ? 'none' : '';
-            });
+            // Скрываем только заголовок «УЧТЕНО» когда появляются кнопки
             const colLabel = document.querySelector('.settle-col-label');
             if (colLabel) colLabel.style.display = anyChecked ? 'none' : '';
         }
@@ -2296,7 +2290,7 @@
                     <th class="px-4 sm:px-6 py-4 text-left whitespace-nowrap">Комментарий</th>
                     <th class="px-4 sm:px-6 py-4 text-center w-[100px]">
                         ${isDirector ? `<div class="flex flex-col items-center gap-1">
-                            <button id="income-settle-btn"   onclick="settleCheckedIncomes(${projectId})"   class="hidden text-[10px] font-bold bg-[#EDE9FE] text-[#7C3AED] hover:bg-[#DDD6FE] px-2 py-0.5 rounded-lg transition-colors w-full">✓ Учтено</button>
+                            <button id="income-settle-btn"   onclick="settleCheckedIncomes(${projectId})"   class="hidden text-[10px] font-bold bg-[#EDE9FE] text-[#7C3AED] hover:bg-[#DDD6FE] px-2 py-0.5 rounded-lg transition-colors w-full">Учтено</button>
                             <button id="income-unsettle-btn" onclick="unsettleCheckedIncomes(${projectId})" class="hidden text-[10px] font-bold bg-[#F3F4F6] text-gray-500 hover:bg-gray-200 px-2 py-0.5 rounded-lg transition-colors w-full">↩ Снять</button>
                             <span class="settle-col-label text-[10px] text-gray-400 font-bold uppercase tracking-wider">Учтено</span>
                         </div>` : '<span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Учтено</span>'}
