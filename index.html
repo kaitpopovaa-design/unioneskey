@@ -6,9 +6,16 @@
     <meta name="google" content="notranslate">
     <title>UnionEskey — Управление строительными объектами</title>
     <!-- Подключение Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com" onerror="console.warn('Tailwind failed to load')"></script>
     <script>
-        tailwind.config = {
+    // Глобальный обработчик — показывает реальную ошибку
+    window.addEventListener('error', function(e) {
+        if (e.message && e.message !== 'Script error.') {
+            console.error('GLOBAL ERROR:', e.message, e.filename, e.lineno);
+        }
+    });
+    </script>
+    <script>try { tailwind.config = {
             theme: {
                 extend: {
                     colors: {
@@ -20,11 +27,11 @@
                             light: '#F9FAFB' 
                         },
                         investor: { 
-                            ue: '#FAF5FF',      // Ультра-нежная пастельная сирень
-                            dima: '#F0F9FF',    // Мягкий небесно-голубой
-                            kolya: '#FFEDD5',   // Ультра-нежный персиковый
-                            partner3: '#D1FAE5',// Нежнейшая пастельная мята
-                            partner4: '#FDF2F8' // Нежнейшая пастельная сакура
+                            ue: '#FAF5FF',
+                            dima: '#F0F9FF',
+                            kolya: '#FFEDD5',
+                            partner3: '#D1FAE5',
+                            partner4: '#FDF2F8'
                         },
                         pastel: { 
                             purple: '#F5F3FF', 
@@ -42,7 +49,7 @@
                     }
                 }
             }
-        }
+        }; } catch(e) { console.warn('Tailwind config error:', e); }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -60,6 +67,34 @@
             to   { opacity: 1; }
         }
         .animate-fade-in { animation: fadeIn 0.25s ease-out; }
+
+        /* Чекбоксы «За кем закреплён» */
+        input.access-chk,
+        input[type="checkbox"].access-chk {
+            display: inline-block !important;
+            appearance: none !important;
+            -webkit-appearance: none !important;
+            width: 18px !important;
+            height: 18px !important;
+            min-width: 18px !important;
+            border: 1.5px solid #C4B5FD !important;
+            border-radius: 5px !important;
+            cursor: pointer !important;
+            background: white !important;
+            flex-shrink: 0 !important;
+            transition: all 0.15s ease !important;
+            vertical-align: middle;
+        }
+        input.access-chk:checked,
+        input[type="checkbox"].access-chk:checked {
+            background-color: #7C3AED !important;
+            border-color: #7C3AED !important;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3E%3C/svg%3E") !important;
+            background-size: 12px !important;
+            background-repeat: no-repeat !important;
+            background-position: center !important;
+        }
+        input.access-chk:hover:not(:checked) { border-color: #A78BFA !important; }
 
         /* Выбранный элемент учтено — текст фиолетовый */
         .expense-settle-cb:checked + .settle-label-text,
@@ -132,7 +167,7 @@
 
     <!-- ЭКРАН ВХОДА -->
     <div id="login-screen" class="fixed inset-0 bg-gray-50 z-[100] flex items-center justify-center p-4">
-        <form onsubmit="event.preventDefault(); checkPin();" class="bg-white p-8 sm:p-10 rounded-3xl border border-gray-100 shadow-soft w-full max-w-sm text-center space-y-7 animate-fade-in">
+        <div class="bg-white p-8 sm:p-10 rounded-3xl border border-gray-100 shadow-soft w-full max-w-sm text-center space-y-7 animate-fade-in">
 
             <!-- Логотип + название в одну строку -->
             <div class="flex flex-col items-center space-y-4">
@@ -148,15 +183,17 @@
                 <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Введите PIN-код доступа</label>
                 <input type="password" id="pin-input" maxlength="4" placeholder="· · · ·"
                     class="w-full bg-gray-50 border-2 border-gray-200 rounded-2xl h-12 px-4 text-center text-2xl font-bold tracking-[0.6em] placeholder:tracking-[0.5em] placeholder:text-gray-300 focus:border-brand-purple focus:bg-white outline-none transition-all"
-                    translate="no" spellcheck="false" lang="ru">
+                    inputmode="numeric" autocomplete="off"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();checkPin();}"
+                    translate="no" spellcheck="false">
                 <p id="login-error" class="text-xs text-red-400 font-medium hidden">Неверный PIN-код</p>
             </div>
 
-            <!-- Кнопка в нашей стилистике -->
-            <button type="submit" class="w-full h-11 bg-transparent border-2 border-[#C4B5FD]/70 text-gray-800 hover:border-[#A78BFA] hover:bg-[#F5F3FF] hover:shadow-[0_0_12px_rgba(196,181,253,0.35)] rounded-xl font-semibold text-sm transition-all">
+            <!-- Кнопка -->
+            <button type="button" onclick="checkPin()" class="w-full h-11 bg-transparent border-2 border-[#C4B5FD]/70 text-gray-800 hover:border-[#A78BFA] hover:bg-[#F5F3FF] hover:shadow-[0_0_12px_rgba(196,181,253,0.35)] rounded-xl font-semibold text-sm transition-all">
                 Войти в систему
             </button>
-        </form>
+        </div>
     </div>
 
     <!-- ЭКРАН ЗАГРУЗКИ -->
@@ -389,13 +426,22 @@
                     </div>
                     <div id="uni-investor-wrapper" class="space-y-1">
                         <label id="uni-investor-label" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Кто оплатил / вложил</label>
-                        <select id="uni-investor-input" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-brand-purple transition-all cursor-pointer">
-                            <option value="Общие">Общие</option>
-                            <option value="Юнион Эскей" selected>Юнион Эскей</option>
-                            <option value="Дима">Дима</option>
-                            <option value="Коля">Коля</option>
-                            <option value="АВ-Промстрой">АВ-Промстрой</option>
-                        </select>
+                        <input type="text" id="uni-investor-input" list="investor-options"
+                            placeholder="Юнион Эскей / Дима / Заказчик..."
+                            class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-brand-purple transition-all"
+                            autocomplete="off" translate="no" spellcheck="false">
+                        <datalist id="expense-investor-options">
+                            <option value="Общие">
+                            <option value="Юнион Эскей">
+                            <option value="Дима">
+                            <option value="Коля">
+                            <option value="АВ-Промстрой">
+                        </datalist>
+                        <datalist id="income-investor-options">
+                            <option value="Урал Трансмаш">
+                            <option value="Заказчик">
+                        </datalist>
+                        <datalist id="investor-options"></datalist>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div class="space-y-1">
@@ -410,6 +456,29 @@
                     <div class="space-y-1">
                         <label id="uni-category-label" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Категория / Назначение</label>
                         <input type="text" id="uni-category-input" list="category-options" placeholder="Выберите или введите свою..." class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
+                        <datalist id="expense-category-options">
+                            <option value="Материалы">
+                            <option value="Зарплата">
+                            <option value="Зарплата рабочим">
+                            <option value="Топливо">
+                            <option value="Спецтехника">
+                            <option value="Логистика">
+                            <option value="Документация">
+                            <option value="Налоги">
+                            <option value="Обслуживание">
+                            <option value="Банковская комиссия">
+                            <option value="Связь">
+                            <option value="Реклама">
+                            <option value="Аренда">
+                        </datalist>
+                        <datalist id="income-category-options">
+                            <option value="Аванс по договору">
+                            <option value="Оплата этапа">
+                            <option value="Окончательный расчет">
+                            <option value="Частичная оплата">
+                            <option value="Стартовые вложения">
+                            <option value="Доп. соглашение">
+                        </datalist>
                         <datalist id="category-options"></datalist>
                     </div>
                     <div class="space-y-1">
@@ -544,7 +613,7 @@
 
     <script>
         // Интегрированный API-адрес
-        const API_URL = "https://script.google.com/macros/s/AKfycbyjxwtHoE7mFNC04iDusUxMtLarlY8UnMZOrwuUZiKB4gotWHgoZhhPTIH-mRSNWXJLEg/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbxa0OAm2XcEoGfAhdkO8Ydz21gSxnRA42IXl6Hz6BtjtNlhz6lJdwb-fQrRbQWbzVdn7w/exec"; 
 
         // Изначальный/глобальный конфиг партнеров (с исправленными дефолтами для Димы - 1010 и АВ-Промстрой - 1111)
         let PARTNER_CONFIG = {
@@ -963,63 +1032,54 @@
 
         // Умный вход: если PIN-код отсутствует в кэше, принудительно опрашиваем Google Таблицу на наличие обновлений
         async function checkPin() {
-            const pinVal = document.getElementById('pin-input').value.trim();
+            const inp = document.getElementById('pin-input');
+            const errEl = document.getElementById('login-error');
+            const pinVal = inp ? inp.value.trim() : '';
+
+            if (errEl) { errEl.classList.add('hidden'); errEl.textContent = 'Неверный PIN-код'; }
+
+            if (!pinVal) {
+                if (errEl) { errEl.textContent = 'Введите PIN'; errEl.classList.remove('hidden'); }
+                return;
+            }
+
             loadConfig();
 
             let foundRole = null;
             for (const [role, cfg] of Object.entries(PARTNER_CONFIG)) {
-                if (cfg.pin === pinVal) {
-                    foundRole = role;
-                    break;
+                if (String(cfg.pin || '').trim() === pinVal) { foundRole = role; break; }
+            }
+
+            if (!foundRole) {
+                const defaults = { director:'0942', dima:'1010', kolya:'8914', partner3:'3333', partner4:'4444' };
+                for (const [role, pin] of Object.entries(defaults)) {
+                    if (pin === pinVal) { foundRole = role; break; }
                 }
             }
 
-            // Если пароль не подошел, делаем принудительный синхронный запрос за свежими паролями
             if (!foundRole && isLive()) {
-                const btn = document.querySelector('#login-screen button[type="submit"]');
-                const originalText = btn ? btn.innerText : "Войти в систему";
-                if (btn) {
-                    btn.disabled = true;
-                    btn.innerText = "Проверка доступов...";
-                }
-
-                try {
-                    await preFetchConfig(); // Качаем актуальные PIN-коды прямо сейчас!
-                } catch(err) {
-                    console.warn("Не удалось обновить конфиг перед проверкой:", err);
-                }
-
-                // Проверяем введенный код повторно по свежей базе
+                const btn = document.querySelector('#login-screen button');
+                if (btn) { btn.disabled = true; btn.textContent = 'Проверка...'; }
+                try { await preFetchConfig(); } catch(e) {}
                 for (const [role, cfg] of Object.entries(PARTNER_CONFIG)) {
-                    if (cfg.pin === pinVal) {
-                        foundRole = role;
-                        break;
-                    }
+                    if (String(cfg.pin || '').trim() === pinVal) { foundRole = role; break; }
                 }
-
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerText = originalText;
-                }
+                if (btn) { btn.disabled = false; btn.textContent = 'Войти в систему'; }
             }
 
             if (foundRole) {
                 authRole = foundRole;
                 currentRole = authRole;
-                
-                // Плавно переключаем экраны
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('app-content').classList.remove('hidden');
-
-                // Инициализируем интерфейс
-                renderViewSwitcher();
-                updateAccessDropdowns();
-                
-                // Переходим к синхронизации данных в кабинете
-                initApp();
+                const ls = document.getElementById('login-screen');
+                const ac = document.getElementById('app-content');
+                if (ls) ls.classList.add('hidden');
+                if (ac) ac.classList.remove('hidden');
+                try { renderViewSwitcher(); } catch(e) { console.error('rVS', e); }
+                try { updateAccessDropdowns(); } catch(e) { console.error('uAD', e); }
+                try { initApp(); } catch(e) { console.error('iA', e); }
             } else {
-                const err = document.getElementById('login-error');
-                if (err) err.classList.remove('hidden');
+                if (errEl) errEl.classList.remove('hidden');
+                if (inp) { inp.value = ''; inp.focus(); }
             }
         }
 
@@ -1278,7 +1338,7 @@
                             </button>
                             <div id="access-dropdown-menu-${p.id}" class="hidden bg-white border border-gray-200 rounded-2xl shadow-xl p-2 space-y-0.5 text-xs min-w-[160px]">
                                 <label class="flex items-center gap-2 cursor-pointer px-2 py-1.5 hover:bg-[#F5F3FF] rounded-lg">
-                                    <input type="checkbox" value="Все" ${isAllChecked ? 'checked' : ''} onchange="handleAccessCheckboxChange(${p.id}, this)" class="w-3.5 h-3.5 rounded accent-[#7C3AED] cursor-pointer">
+                                    <input type="checkbox" value="Все" ${isAllChecked ? 'checked' : ''} onchange="handleAccessCheckboxChange(${p.id}, this)" class="access-chk">
                                     <span class="font-bold text-[#7C3AED]">Все</span>
                                 </label>
                                 <hr class="border-gray-100 my-1">
@@ -1295,7 +1355,7 @@
                         const isDisabled = isAllChecked ? 'disabled' : '';
                         accessCellHtml += `
                             <label class="flex items-center gap-2 cursor-pointer px-2 py-1.5 hover:bg-[#F5F3FF] rounded-lg">
-                                <input type="checkbox" value="${name}" ${isChecked ? 'checked' : ''} ${isDisabled} onchange="handleAccessCheckboxChange(${p.id}, this)" class="partner-chk-${p.id} expense-settle-cb">
+                                <input type="checkbox" value="${name}" ${isChecked ? 'checked' : ''} ${isDisabled} onchange="handleAccessCheckboxChange(${p.id}, this)" class="partner-chk-${p.id} access-chk">
                                 <span class="font-medium text-gray-700 whitespace-nowrap">${name}</span>
                             </label>
                         `;
@@ -1740,14 +1800,14 @@
                         <span class="text-gray-400 text-[9px] font-bold uppercase tracking-wider">Результат</span>
                         <span class="font-bold text-gray-800">${net>=0?'+':''}${formatMoney(net)}</span>
                     </div>
-                    <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wider pt-1">Выводы (независимо)</div>
+                    <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wider pt-2 border-t border-gray-100 mt-1">Выводы за период</div>
                     <div class="flex justify-between items-center text-xs text-gray-600">
                         <span>Юнион Эскей</span>
-                        <input type="text" id="gen-union-input" value="${withdrawalUnion > 0 ? formatNumberWithSpaces(withdrawalUnion) : ''}" oninput="formatInputSpaces(this)" placeholder="0" class="w-28 text-right text-xs font-semibold border-b border-dashed border-gray-300 bg-transparent outline-none focus:border-brand-purple px-1 transition-colors${currentRole !== 'director' ? ' pointer-events-none opacity-60' : ''}">
+                        <input type="text" id="gen-union-input" value="${withdrawalUnion > 0 ? formatNumberWithSpaces(withdrawalUnion) : ''}" oninput="formatInputSpaces(this)" placeholder="—" class="w-24 h-7 text-right text-xs font-semibold bg-gray-50 border border-gray-200 rounded-lg px-2 outline-none focus:border-brand-purple transition-all${currentRole !== 'director' ? ' pointer-events-none opacity-50' : ''}">
                     </div>
                     <div class="flex justify-between items-center text-xs text-gray-600">
                         <span>${genProj.partnerAccess && genProj.partnerAccess!=='Нет' ? genProj.partnerAccess : 'Партнёр'}</span>
-                        <input type="text" id="gen-partner-input" value="${withdrawalPartner > 0 ? formatNumberWithSpaces(withdrawalPartner) : ''}" oninput="formatInputSpaces(this)" placeholder="0" class="w-28 text-right text-xs font-semibold border-b border-dashed border-gray-300 bg-transparent outline-none focus:border-brand-purple px-1 transition-colors${currentRole !== 'director' ? ' pointer-events-none opacity-60' : ''}">
+                        <input type="text" id="gen-partner-input" value="${withdrawalPartner > 0 ? formatNumberWithSpaces(withdrawalPartner) : ''}" oninput="formatInputSpaces(this)" placeholder="—" class="w-24 h-7 text-right text-xs font-semibold bg-gray-50 border border-gray-200 rounded-lg px-2 outline-none focus:border-brand-purple transition-all${currentRole !== 'director' ? ' pointer-events-none opacity-50' : ''}">
                     </div>
                 </div>`;
 
@@ -1787,6 +1847,7 @@
             if (!generatorsWithdrawals[key]) generatorsWithdrawals[key] = {};
             generatorsWithdrawals[key].union = (!val || val.trim() === '' || n === 0) ? null : n;
             saveWithdrawals();
+            syncWithdrawal(key);
             refreshGeneratorsCard();
         }
         function setWithdrawalPartner(val, monthKey) {
@@ -1795,7 +1856,24 @@
             if (!generatorsWithdrawals[key]) generatorsWithdrawals[key] = {};
             generatorsWithdrawals[key].partner = (!val || val.trim() === '' || n === 0) ? null : n;
             saveWithdrawals();
+            syncWithdrawal(key);
             refreshGeneratorsCard();
+        }
+        function syncWithdrawal(key) {
+            const w = generatorsWithdrawals[key] || {};
+            sendPost({ action: 'saveWithdrawal', monthKey: key, union: w.union || 0, partner: w.partner || 0 }, false);
+        }
+        async function loadWithdrawalsFromGAS() {
+            if (!isLive()) return;
+            try {
+                const res = await fetch(API_URL + '?action=getWithdrawals');
+                const json = await res.json();
+                if (json && json.withdrawals) {
+                    generatorsWithdrawals = json.withdrawals;
+                    saveWithdrawals();
+                    refreshGeneratorsCard();
+                }
+            } catch(e) {}
         }
 
         // --- УПРАВЛЕНИЕ ИСТОРИЕЙ КОМПАНИИ ---
@@ -2685,7 +2763,9 @@
             document.getElementById('uni-comment').value = '';
             document.getElementById('uni-amount').value = '';
             document.getElementById('uni-category-input').value = '';
-            // investor select обновится в updateInvestorDatalist 
+            // Сбрасываем поле инвестора при открытии
+            const investorInput = document.getElementById('uni-investor-input');
+            if (investorInput) investorInput.value = ''; // пустое поле
             
             document.getElementById('universal-modal').classList.remove('hidden'); 
             
@@ -2781,6 +2861,30 @@
             if (submitBtn) submitBtn.innerText = isIncome ? 'Сохранить поступление' : 'Сохранить';
             
             updateCategoryDatalist();
+
+            // Переключаем списки категорий и инвесторов
+            const catInput = document.getElementById('uni-category-input');
+            if (catInput) {
+                if (type === 'income') {
+                    catInput.setAttribute('list', 'income-category-options');
+                    catInput.placeholder = 'Аванс, Оплата этапа, Окончательный...';
+                } else {
+                    catInput.setAttribute('list', 'expense-category-options');
+                    catInput.placeholder = 'Материалы, Зарплата, Топливо...';
+                }
+            }
+            const invInput = document.getElementById('uni-investor-input');
+            if (invInput) {
+                if (type === 'income') {
+                    invInput.setAttribute('list', 'income-investor-options');
+                    invInput.placeholder = 'Урал Трансмаш, Завод №9...';
+                    if (invLabel) invLabel.textContent = 'От кого поступление';
+                } else {
+                    invInput.setAttribute('list', 'expense-investor-options');
+                    invInput.placeholder = 'Общие / Юнион Эскей / Дима...';
+                    if (invLabel) invLabel.textContent = 'Кто оплатил / вложил';
+                }
+            }
         }
 
         // ОБНОВЛЕНИЕ СПИСКА КАТЕГОРИЙ В УНИВЕРСАЛЬНОЙ МОДАЛКЕ ДОБАВЛЕНИЯ
@@ -2865,6 +2969,7 @@
             const uniqueInvestors = new Set();
             uniqueInvestors.add("Юнион Эскей");
             uniqueInvestors.add("Общие");
+            uniqueInvestors.add("Заказчик");
 
             for (const key in PARTNER_CONFIG) {
                 const partnerName = PARTNER_CONFIG[key].name;
