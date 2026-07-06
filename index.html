@@ -389,7 +389,13 @@
                     </div>
                     <div id="uni-investor-wrapper" class="space-y-1">
                         <label id="uni-investor-label" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Кто оплатил / вложил</label>
-                        <select id="uni-investor-input" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-brand-purple transition-all cursor-pointer" required></select>
+                        <select id="uni-investor-input" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-brand-purple transition-all cursor-pointer">
+                            <option value="Общие">Общие</option>
+                            <option value="Юнион Эскей" selected>Юнион Эскей</option>
+                            <option value="Дима">Дима</option>
+                            <option value="Коля">Коля</option>
+                            <option value="АВ-Промстрой">АВ-Промстрой</option>
+                        </select>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div class="space-y-1">
@@ -2660,7 +2666,10 @@
                 if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = "Создать"; }
             }, 1000);
             
-            await sendPost(p, false); 
+            sendPost(p, false);
+            renderTable();
+            renderCharts();
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = "Создать"; }
             showNotification('Создан новый объект', 'success');
         }
 
@@ -2731,13 +2740,14 @@
                 };
             }
             
+            // Обновляем локальные данные сразу
+            sendPost(p, false);
+            
             closeUniversalModal();
+            renderTable();
+            renderCharts();
             
-            setTimeout(() => {
-                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = "Сохранить"; }
-            }, 1000);
-            
-            await sendPost(p, false); 
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = "Сохранить"; }
             showNotification(type === 'income' ? 'Поступление сохранено' : 'Операция сохранена', 'success');
         }
 
