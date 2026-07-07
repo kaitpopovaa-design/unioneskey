@@ -1037,6 +1037,12 @@
                     if (jsonData && jsonData.companyTransactions) {
                         companyTransactions = jsonData.companyTransactions.map(tx => ({ ...tx, amount: parseFormattedNumber(tx.amount) }));
                     }
+
+                    // Загружаем выводы Генераторов из GAS
+                    if (jsonData && jsonData.withdrawals && Object.keys(jsonData.withdrawals).length > 0) {
+                        generatorsWithdrawals = jsonData.withdrawals;
+                        saveWithdrawals();
+                    }
                     
                     return true;
                 } catch (e) {
