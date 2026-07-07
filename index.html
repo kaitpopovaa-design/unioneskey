@@ -270,7 +270,26 @@
             </div>
 
             <!-- КАРТОЧКИ СТАТИСТИКИ -->
-            <div id="director-cards" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+            <div class="flex items-center gap-2 mb-3 flex-wrap">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Период:</span>
+                    <button onclick="setDashPeriod('all')" id="dash-btn-all" class="px-3 py-1 rounded-lg text-[11px] font-semibold bg-[#EDE9FE] text-[#5B21B6] transition-all">Всё время</button>
+                    <button onclick="setDashPeriod('year')" id="dash-btn-year" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-gray-100 transition-all">Год</button>
+                    <button onclick="setDashPeriod('month')" id="dash-btn-month" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-gray-100 transition-all">Месяц</button>
+                    <div id="dash-period-controls" class="flex items-center gap-2 hidden">
+                        <select id="dash-year-sel" onchange="renderTable();renderCharts();" class="h-7 px-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:border-brand-purple cursor-pointer">
+                            <option value="2025">2025</option>
+                            <option value="2026" selected>2026</option>
+                            <option value="2027">2027</option>
+                        </select>
+                        <select id="dash-month-sel" onchange="renderTable();renderCharts();" class="h-7 px-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:border-brand-purple cursor-pointer hidden">
+                            <option value="1">Январь</option><option value="2">Февраль</option><option value="3">Март</option>
+                            <option value="4">Апрель</option><option value="5">Май</option><option value="6">Июнь</option>
+                            <option value="7">Июль</option><option value="8">Август</option><option value="9">Сентябрь</option>
+                            <option value="10">Октябрь</option><option value="11">Ноябрь</option><option value="12">Декабрь</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="director-cards" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
                 <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]">
                     <p class="text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1">Выручка (Факт)</p>
                     <p id="total-revenue" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
@@ -613,7 +632,7 @@
 
     <script>
         // Интегрированный API-адрес
-        const API_URL = "https://script.google.com/macros/s/AKfycbxa0OAm2XcEoGfAhdkO8Ydz21gSxnRA42IXl6Hz6BtjtNlhz6lJdwb-fQrRbQWbzVdn7w/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbxbhOHC8bNDREddmeFrZAtRsC5NeZD7g6pUqQnEKQ86jaY-Rag6E6l9ciwHOALJYmJacg/exec"; 
 
         // Изначальный/глобальный конфиг партнеров (с исправленными дефолтами для Димы - 1010 и АВ-Промстрой - 1111)
         let PARTNER_CONFIG = {
@@ -1413,14 +1432,25 @@
             document.querySelectorAll('.margin-col, .access-col').forEach(el => el.classList.toggle('hidden-role', currentRole !== 'director'));
 
             if (currentRole === 'director') {
-                const compGen = companyTransactions.filter(t => t.type === 'general').reduce((s,t) => s + t.amount, 0);
-                const compPers = companyTransactions.filter(t => t.type === 'personal').reduce((s,t) => s + t.amount, 0);
-                document.getElementById('total-revenue').innerText = formatMoney(totalFactPaid);
-                document.getElementById('planned-revenue').innerText = formatMoney(Math.max(0, totalContract - totalFactPaid));
-                document.getElementById('total-expense').innerText = formatMoney(totalFactCost);
-                document.getElementById('general-expense').innerText = formatMoney(compGen);
-                document.getElementById('net-profit').innerText = formatMoney(totalFactPaid - totalFactCost - compGen);
-                document.getElementById('personal-expense').innerText = formatMoney(compPers);
+                // Применяем фильтр по периоду
+                let filteredInc = [], filteredExp = [], filteredComp = [];
+                data.forEach(p => {
+                    filteredInc.push(...filterByPeriod(p.incomes || [], 'date'));
+                    filteredExp.push(...filterByPeriod(p.expenses || [], 'date'));
+                });
+                filteredComp = filterByPeriod(companyTransactions, 'date');
+                
+                const pFactPaid = filteredInc.reduce((s,i) => s + i.amount, 0);
+                const pFactCost = filteredExp.reduce((s,e) => s + e.amount, 0);
+                const pCompGen  = filteredComp.filter(t => t.type==='general').reduce((s,t) => s + t.amount, 0);
+                const pCompPers = filteredComp.filter(t => t.type==='personal').reduce((s,t) => s + t.amount, 0);
+                
+                document.getElementById('total-revenue').innerText = formatMoney(pFactPaid);
+                document.getElementById('planned-revenue').innerText = formatMoney(Math.max(0, totalContract - pFactPaid));
+                document.getElementById('total-expense').innerText = formatMoney(pFactCost);
+                document.getElementById('general-expense').innerText = formatMoney(pCompGen);
+                document.getElementById('net-profit').innerText = formatMoney(pFactPaid - pFactCost - pCompGen);
+                document.getElementById('personal-expense').innerText = formatMoney(pCompPers);
             }
             
             updateCategoryDatalist();
@@ -1440,6 +1470,52 @@
                 }
             }
             return FALLBACK_COLORS[index % FALLBACK_COLORS.length];
+        }
+
+        let dashPeriod = 'all'; // 'all' | 'year' | 'month'
+
+        function setDashPeriod(type) {
+            dashPeriod = type;
+            // Подсвечиваем активную кнопку
+            ['all','year','month'].forEach(t => {
+                const btn = document.getElementById('dash-btn-' + t);
+                if (btn) {
+                    if (t === type) { btn.className = 'px-3 py-1 rounded-lg text-[11px] font-semibold bg-[#EDE9FE] text-[#5B21B6] transition-all'; }
+                    else { btn.className = 'px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-gray-100 transition-all'; }
+                }
+            });
+            const ctrl = document.getElementById('dash-period-controls');
+            const msel = document.getElementById('dash-month-sel');
+            if (ctrl) ctrl.classList.toggle('hidden', type === 'all');
+            if (msel) msel.classList.toggle('hidden', type !== 'month');
+            // Устанавливаем текущий месяц/год по умолчанию
+            if (type !== 'all') {
+                const now = new Date();
+                const ySel = document.getElementById('dash-year-sel');
+                const mSel = document.getElementById('dash-month-sel');
+                if (ySel && !ySel.value) ySel.value = String(now.getFullYear());
+                if (mSel && !mSel.value) mSel.value = String(now.getMonth() + 1);
+            }
+            renderTable();
+            renderCharts();
+        }
+
+        function getDashPeriodFilter() {
+            if (dashPeriod === 'all') return null;
+            const y = parseInt(document.getElementById('dash-year-sel')?.value || new Date().getFullYear());
+            const m = parseInt(document.getElementById('dash-month-sel')?.value || (new Date().getMonth()+1));
+            return { type: dashPeriod, year: y, month: m };
+        }
+
+        function filterByPeriod(items, dateField) {
+            const pf = getDashPeriodFilter();
+            if (!pf) return items;
+            return items.filter(item => {
+                const d = new Date(item[dateField] || item.date);
+                if (isNaN(d)) return true;
+                if (pf.type === 'year') return d.getFullYear() === pf.year;
+                return d.getFullYear() === pf.year && (d.getMonth()+1) === pf.month;
+            });
         }
 
         function renderCharts() {
@@ -1806,7 +1882,16 @@
                         <input type="text" id="gen-union-input" value="${withdrawalUnion > 0 ? formatNumberWithSpaces(withdrawalUnion) : ''}" oninput="formatInputSpaces(this)" placeholder="—" class="w-24 h-7 text-right text-xs font-semibold bg-gray-50 border border-gray-200 rounded-lg px-2 outline-none focus:border-brand-purple transition-all${currentRole !== 'director' ? ' pointer-events-none opacity-50' : ''}">
                     </div>
                     <div class="flex justify-between items-center text-xs text-gray-600">
-                        <span>${genProj.partnerAccess && genProj.partnerAccess!=='Нет' ? genProj.partnerAccess : 'Партнёр'}</span>
+                        <span>${(() => {
+                            if (genProj.partnerAccess && genProj.partnerAccess !== 'Нет' && genProj.partnerAccess !== 'Все') {
+                                return genProj.partnerAccess.split(',')[0].trim();
+                            }
+                            // Берём первого партнёра (не директора) из конфига
+                            for (const key of ['kolya','dima','partner3','partner4']) {
+                                if (PARTNER_CONFIG[key] && PARTNER_CONFIG[key].name) return PARTNER_CONFIG[key].name;
+                            }
+                            return 'Партнёр';
+                        })()}</span>
                         <input type="text" id="gen-partner-input" value="${withdrawalPartner > 0 ? formatNumberWithSpaces(withdrawalPartner) : ''}" oninput="formatInputSpaces(this)" placeholder="—" class="w-24 h-7 text-right text-xs font-semibold bg-gray-50 border border-gray-200 rounded-lg px-2 outline-none focus:border-brand-purple transition-all${currentRole !== 'director' ? ' pointer-events-none opacity-50' : ''}">
                     </div>
                 </div>`;
