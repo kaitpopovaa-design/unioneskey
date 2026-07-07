@@ -436,6 +436,7 @@
                             <option value="project">Расход по объекту</option>
                             <option value="income">Поступление по объекту</option>
                             <option value="general">Общий расход компании</option>
+                            <option value="withdrawal">Вывод прибыли</option>
                             <option value="personal">Личные траты</option>
                         </select>
                     </div>
@@ -472,9 +473,9 @@
                             <input type="text" id="uni-amount" oninput="formatInputSpaces(this)" placeholder="0" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-bold outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
                         </div>
                     </div>
-                    <div class="space-y-1">
+                    <div class="space-y-1" id="uni-category-wrapper">
                         <label id="uni-category-label" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Категория / Назначение</label>
-                        <input type="text" id="uni-category-input" list="category-options" placeholder="Выберите или введите свою..." class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
+                        <input type="text" id="uni-category-input" list="category-options" placeholder="Выберите или введите свою..." class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru">
                         <datalist id="expense-category-options">
                             <option value="Материалы">
                             <option value="Зарплата">
@@ -507,7 +508,7 @@
                 </div>
                 <div class="px-6 pb-5 pt-2 flex gap-2 justify-end shrink-0">
                     <button type="button" onclick="closeUniversalModal()" class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors">Отмена</button>
-                    <button type="submit" id="btn-save-universal" class="px-5 py-2 rounded-xl text-sm font-bold text-white bg-brand-purple hover:bg-brand-purpleHover shadow-md transition-all">Сохранить</button>
+                    <button type="button" id="btn-save-universal" onclick="saveUniversalExpense()" class="px-5 py-2 rounded-xl text-sm font-bold text-white bg-brand-purple hover:bg-brand-purpleHover shadow-md transition-all">Сохранить</button>
                 </div>
             </form>
         </div>
@@ -1882,23 +1883,28 @@
                         <span class="text-gray-400 text-[9px] font-bold uppercase tracking-wider">Результат</span>
                         <span class="font-bold text-gray-800">${net>=0?'+':''}${formatMoney(net)}</span>
                     </div>
-                    <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wider pt-2 border-t border-gray-100 mt-1">Выводы за период</div>
-                    <div class="flex justify-between items-center text-xs text-gray-600">
-                        <span>Юнион Эскей</span>
-                        <input type="text" id="gen-union-input" value="${withdrawalUnion > 0 ? formatNumberWithSpaces(withdrawalUnion) : ''}" oninput="formatInputSpaces(this)" placeholder="—" class="w-24 h-7 text-right text-xs font-semibold bg-gray-50 border border-gray-200 rounded-lg px-2 outline-none focus:border-brand-purple transition-all${currentRole !== 'director' ? ' pointer-events-none opacity-50' : ''}">
-                    </div>
-                    <div class="flex justify-between items-center text-xs text-gray-600">
-                        <span>${(() => {
-                            if (genProj.partnerAccess && genProj.partnerAccess !== 'Нет' && genProj.partnerAccess !== 'Все') {
-                                return genProj.partnerAccess.split(',')[0].trim();
+                    <div class="border-t border-gray-100 mt-1 pt-2">
+                        <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Выводы за период</div>
+                        ${(() => {
+                            // Считаем выводы из Личных трат компании за выбранный период
+                            let withdrawalExp = (genProj.expenses||[]).filter(e => e.category === 'Вывод прибыли');
+                            if (isMonth) withdrawalExp = withdrawalExp.filter(e => e.date && e.date.startsWith(mk));
+                            if (withdrawalExp.length === 0) {
+                                return '<div class="text-xs text-gray-300 italic text-center py-1">—</div>';
                             }
-                            // Берём первого партнёра (не директора) из конфига
-                            for (const key of ['kolya','dima','partner3','partner4']) {
-                                if (PARTNER_CONFIG[key] && PARTNER_CONFIG[key].name) return PARTNER_CONFIG[key].name;
-                            }
-                            return 'Партнёр';
-                        })()}</span>
-                        <input type="text" id="gen-partner-input" value="${withdrawalPartner > 0 ? formatNumberWithSpaces(withdrawalPartner) : ''}" oninput="formatInputSpaces(this)" placeholder="—" class="w-24 h-7 text-right text-xs font-semibold bg-gray-50 border border-gray-200 rounded-lg px-2 outline-none focus:border-brand-purple transition-all${currentRole !== 'director' ? ' pointer-events-none opacity-50' : ''}">
+                            const byInvestor = {};
+                            withdrawalExp.forEach(e => {
+                                const inv = e.investor || e.comment || 'Юнион Эскей';
+                                byInvestor[inv] = (byInvestor[inv]||0) + e.amount;
+                            });
+                            return Object.entries(byInvestor).map(([inv, sum]) =>
+                                '<div class="flex justify-between items-center text-xs text-gray-600 py-0.5">' +
+                                '<span>' + inv + '</span>' +
+                                '<span class="font-semibold text-gray-800">' + formatMoney(sum) + '</span>' +
+                                '</div>'
+                            ).join('');
+                        })()}
+
                     </div>
                 </div>`;
 
@@ -1993,7 +1999,7 @@
 
             sorted.forEach((t, idx) => {
                 const isGeneral = t.type === 'general';
-                const typeStr = isGeneral ? 'Общий расход' : 'Личный вывод';
+                const typeStr = isGeneral ? 'Общий расход' : (t.type==='withdrawal' ? 'Вывод прибыли' : 'Личный вывод');
                 const canEdit = (currentRole === 'director');
 
                 const actionHtml = canEdit ? `
@@ -2889,6 +2895,17 @@
                     comment: document.getElementById('uni-comment').value, 
                     investor: investorVal 
                 };
+            } else if (type === 'withdrawal') {
+                const investorVal = document.getElementById('uni-investor-input').value.trim() || 'Юнион Эскей';
+                p = {
+                    action: 'addExpense',
+                    projectId: document.getElementById('uni-project').value,
+                    date: document.getElementById('uni-date').value,
+                    category: 'Вывод прибыли',
+                    amount: parseFormattedNumber(document.getElementById('uni-amount').value),
+                    comment: document.getElementById('uni-comment').value || investorVal,
+                    investor: investorVal
+                };
             } else if (type === 'income') {
                 const investorVal = document.getElementById('uni-investor-input').value.trim() || 'Юнион Эскей';
                 p = {
@@ -2931,51 +2948,56 @@
             const typeEl = document.getElementById('uni-type');
             if (!typeEl) return;
             const type = typeEl.value;
-            const isProj = type === 'project' || type === 'income';
-            const isIncome = type === 'income';
-            
+            const isIncome     = type === 'income';
+            const isWithdrawal = type === 'withdrawal';
+            const isProj       = type === 'project' || type === 'income';
+
+            // Объект — для расходов, поступлений и вывода прибыли
             const projWrapper = document.getElementById('uni-project-wrapper');
+            if (projWrapper) projWrapper.classList.toggle('hidden', !isProj && !isWithdrawal);
+
+            // Кто — всегда показываем (для всех типов нужно знать кто)
             const invWrapper = document.getElementById('uni-investor-wrapper');
-            if (projWrapper) projWrapper.classList.toggle('hidden', !isProj);
-            if (invWrapper) invWrapper.classList.toggle('hidden', !isProj);
+            if (invWrapper) invWrapper.classList.remove('hidden');
 
+            // Категория — скрываем для вывода прибыли
+            const catWrapper = document.getElementById('uni-category-wrapper');
+            if (catWrapper) catWrapper.classList.toggle('hidden', isWithdrawal);
+
+            // Лейблы и плейсхолдеры
             const invLabel = document.getElementById('uni-investor-label');
-            if (invLabel) invLabel.innerText = isIncome ? 'От кого поступление' : 'Кто оплатил / вложил';
-
-            const catLabel = document.getElementById('uni-category-label');
-            if (catLabel) catLabel.innerText = isIncome ? 'Основание поступления' : 'Категория / Назначение';
-
-            const modalTitle = document.getElementById('uni-modal-title');
-            if (modalTitle) modalTitle.innerText = isIncome ? 'Новое поступление' : 'Новая операция';
-
-            const submitBtn = document.getElementById('btn-save-universal');
-            if (submitBtn) submitBtn.innerText = isIncome ? 'Сохранить поступление' : 'Сохранить';
-            
-            updateCategoryDatalist();
-
-            // Переключаем списки категорий и инвесторов
-            const catInput = document.getElementById('uni-category-input');
-            if (catInput) {
-                if (type === 'income') {
-                    catInput.setAttribute('list', 'income-category-options');
-                    catInput.placeholder = 'Аванс, Оплата этапа, Окончательный...';
-                } else {
-                    catInput.setAttribute('list', 'expense-category-options');
-                    catInput.placeholder = 'Материалы, Зарплата, Топливо...';
-                }
-            }
             const invInput = document.getElementById('uni-investor-input');
-            if (invInput) {
-                if (type === 'income') {
-                    invInput.setAttribute('list', 'income-investor-options');
-                    invInput.placeholder = 'Урал Трансмаш, Завод №9...';
-                    if (invLabel) invLabel.textContent = 'От кого поступление';
-                } else {
-                    invInput.setAttribute('list', 'expense-investor-options');
-                    invInput.placeholder = 'Общие / Юнион Эскей / Дима...';
-                    if (invLabel) invLabel.textContent = 'Кто оплатил / вложил';
-                }
+            const catLabel = document.getElementById('uni-category-label');
+            const modalTitle = document.getElementById('uni-modal-title');
+            const submitBtn  = document.getElementById('btn-save-universal');
+
+            if (isIncome) {
+                if (invLabel) invLabel.textContent = 'От кого поступление';
+                if (invInput) { invInput.setAttribute('list','income-investor-options'); invInput.placeholder = 'Урал Трансмаш, Завод №9...'; }
+                if (catLabel) catLabel.textContent = 'Основание поступления';
+                if (catInput) { catInput.setAttribute('list','income-category-options'); catInput.placeholder = 'Аванс, Оплата этапа...'; }
+                if (modalTitle) modalTitle.textContent = 'Новое поступление';
+                if (submitBtn)  submitBtn.textContent = 'Сохранить поступление';
+            } else if (isWithdrawal) {
+                if (invLabel) invLabel.textContent = 'Кто выводит';
+                if (invInput) { invInput.setAttribute('list','expense-investor-options'); invInput.placeholder = 'Юнион Эскей / Коля...'; }
+                if (modalTitle) modalTitle.textContent = 'Вывод прибыли';
+                if (submitBtn)  submitBtn.textContent = 'Сохранить';
+            } else {
+                if (invLabel) invLabel.textContent = 'Кто оплатил / вложил';
+                if (invInput) { invInput.setAttribute('list','expense-investor-options'); invInput.placeholder = 'Общие / Юнион Эскей / Дима...'; }
+                if (catLabel) catLabel.textContent = 'Категория / Назначение';
+                if (modalTitle) modalTitle.textContent = 'Новая операция';
+                if (submitBtn)  submitBtn.textContent = 'Сохранить';
             }
+
+            const catInput = document.getElementById('uni-category-input');
+            if (catInput && !isIncome) {
+                catInput.setAttribute('list','expense-category-options');
+                catInput.placeholder = 'Материалы, Зарплата, Топливо...';
+            }
+
+            updateCategoryDatalist();
         }
 
         // ОБНОВЛЕНИЕ СПИСКА КАТЕГОРИЙ В УНИВЕРСАЛЬНОЙ МОДАЛКЕ ДОБАВЛЕНИЯ
