@@ -362,14 +362,14 @@
                         </div>
                     </div>
                     <div class="h-64 sm:h-72" id="barChart-wrapper"><canvas id="barChart"></canvas></div>
-                    <!-- Детализация по месяцу -->
+                    <!-- Детализация по месяцу — внутри карточки финансового потока -->
                     <div id="flow-detail" class="hidden mt-4 text-xs text-gray-600 border-t border-gray-100 pt-3">
                         <div id="flow-detail-content"></div>
                     </div>
                 </div>
                 
-                <!-- Правый график: Структура доходов -->
-                <div class="bg-white p-5 sm:p-6 rounded-[2rem] border shadow-soft flex flex-col justify-between lg:col-span-5">
+                <!-- Правый график: Структура доходов — align-self:start чтобы не растягивался -->
+                <div class="bg-white p-5 sm:p-6 rounded-[2rem] border shadow-soft flex flex-col justify-between lg:col-span-5" style="align-self:start;">
                     <h3 class="font-bold text-brand-dark mb-4 text-xs uppercase tracking-wider text-center border-b pb-2">Структура поступлений</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-4">
                         <div class="flex flex-col items-center border-b sm:border-b-0 sm:border-r border-gray-100 pb-4 sm:pb-0 sm:pr-3">
