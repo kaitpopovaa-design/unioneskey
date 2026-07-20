@@ -68,6 +68,35 @@
         }
         .animate-fade-in { animation: fadeIn 0.25s ease-out; }
 
+        /* Таблицы истории — принудительное центрирование */
+        #history-table-expenses td, #history-table-expenses th,
+        #history-table-incomes td, #history-table-incomes th,
+        #history-table-body td, #income-history-table-body td,
+        #company-history-table-body td, #history-modal table th,
+        #company-history-modal table th { text-align: center !important; }
+
+        /* Единый паддинг заголовков */
+        #history-modal thead th, #company-history-modal thead th {
+            padding: 12px 16px !important;
+            font-size: 10px !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.05em !important;
+            color: #9CA3AF !important;
+        }
+
+        /* Комментарий — шире */
+        #history-table-body td:nth-child(5),
+        #income-history-table-body td:nth-child(5),
+        #company-history-table-body td:nth-child(5) { min-width: 150px; white-space: normal !important; }
+
+        /* Drag & drop карточки */
+        .project-card { user-select: none; transition: opacity 0.2s, transform 0.15s; }
+        .project-card.drag-active { cursor: grab; }
+        .project-card.drag-active:active { cursor: grabbing; }
+        .project-card.dragging { opacity: 0.4; transform: scale(0.97); }
+        .project-card.drag-over { outline: 2px dashed #C4B5FD; outline-offset: 2px; }
+
         /* Детализация финансового потока */
         .flow-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         @media (max-width: 600px) { .flow-cols { grid-template-columns: 1fr; } }
@@ -327,8 +356,8 @@
                     <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
                         <h3 class="font-bold text-brand-dark text-sm">Финансовый поток</h3>
                         <div class="flex items-center gap-1.5" id="flow-year-btns">
-                            <button onclick="setFlowYear(2025)" id="flow-btn-2025" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-gray-100 transition-all">2025</button>
                             <button onclick="setFlowYear(2026)" id="flow-btn-2026" class="px-3 py-1 rounded-lg text-[11px] font-bold bg-[#EDE9FE] text-[#5B21B6] transition-all">2026</button>
+                            <button onclick="setFlowYear(2027)" id="flow-btn-2027" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-gray-100 transition-all">2027</button>
                             <button onclick="setFlowYear('all')" id="flow-btn-all" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-gray-100 transition-all">Всё</button>
                         </div>
                     </div>
@@ -358,6 +387,9 @@
             </div>
 
             <!-- МИНИ-КАРТОЧКИ ОБЪЕКТОВ С ДОЛЯМИ ВЛОЖЕНИЙ -->
+            <div class="flex items-center justify-end mb-2">
+                <button onclick="toggleDragMode()" id="drag-mode-btn" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-400 border border-gray-200 hover:border-[#C4B5FD] hover:text-[#7C3AED] transition-all">⠿ Перестановка</button>
+            </div>
             <div id="expense-charts-section" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"></div>
         </main>
     </div>
@@ -375,28 +407,28 @@
                 <button id="history-tab-incomes" type="button" onclick="switchHistoryTab('incomes')" class="px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 border-transparent text-gray-400 transition-colors">Поступления</button>
             </div>
             <div class="overflow-y-auto flex-1">
-                <table id="history-table-expenses" class="w-full text-left border-collapse">
-                    <thead class="bg-gray-50/80 sticky top-0 border-b text-[10px] uppercase text-gray-400 font-bold z-10">
+                <table id="history-table-expenses" class="w-full border-collapse">
+                    <thead class="bg-white border-b text-[10px] uppercase text-gray-400 font-bold">
                         <tr>
-                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap">Дата</th>
-                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap">Категория</th>
-                            <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Сумма</th>
-                            <th class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">Кто оплатил</th>
-                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap">Комментарий</th>
-                            <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Действия</th>
+                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap" style="text-align:center;">Дата</th>
+                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap" style="text-align:center;">Категория</th>
+                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap" style="text-align:center;">Сумма</th>
+                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap" style="text-align:center;">Кто оплатил</th>
+                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap" style="text-align:center;">Комментарий</th>
+                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap" style="text-align:center;">Действия</th>
                         </tr>
                     </thead>
-                    <tbody id="history-table-body" class="divide-y divide-gray-50 text-sm text-gray-700"></tbody>
+                    <tbody id="history-table-body" class="divide-y divide-gray-50 text-xs text-gray-700"></tbody>
                 </table>
-                <table id="history-table-incomes" class="w-full text-left border-collapse hidden">
-                    <thead class="bg-gray-50 sticky top-0 border-b text-[10px] uppercase text-gray-400 font-bold z-10">
+                <table id="history-table-incomes" class="w-full border-collapse hidden">
+                    <thead class="bg-white border-b text-[10px] uppercase text-gray-400 font-bold">
                         <tr>
-                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap">Дата</th>
-                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap">Основание</th>
-                            <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Сумма</th>
-                            <th class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">От кого</th>
-                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap">Комментарий</th>
-                            <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Действия</th>
+                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap" style="text-align:center;">Дата</th>
+                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap" style="text-align:center;">Основание</th>
+                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap" style="text-align:center;">Сумма</th>
+                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap" style="text-align:center;">От кого</th>
+                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap" style="text-align:center;">Комментарий</th>
+                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap" style="text-align:center;">Действия</th>
                         </tr>
                     </thead>
                     <tbody id="income-history-table-body" class="divide-y divide-gray-50 text-xs text-gray-700"></tbody>
@@ -416,15 +448,15 @@
                 <button onclick="closeCompanyHistoryModal()" class="text-gray-300 hover:text-gray-500 text-2xl leading-none transition-colors ml-4">&times;</button>
             </div>
             <div class="overflow-y-auto flex-1">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-gray-50/80 text-[10px] uppercase text-gray-400 font-bold border-b sticky top-0 z-10">
+                <table class="w-full border-collapse">
+                    <thead style="background:white;border-bottom:1px solid #F3F4F6;">
                         <tr>
-                            <th class="px-4 sm:px-6 py-4 text-left whitespace-nowrap">Дата</th>
-                            <th class="px-4 sm:px-6 py-4 text-left whitespace-nowrap">Тип</th>
-                            <th class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">Сумма</th>
-                            <th class="px-4 sm:px-6 py-4 text-left whitespace-nowrap">Назначение</th>
-                            <th class="px-4 sm:px-6 py-4 text-left whitespace-nowrap">Комментарий</th>
-                            <th class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">Действия</th>
+                            <th style="text-align:center;padding:10px 16px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9CA3AF;white-space:nowrap;">Дата</th>
+                            <th style="text-align:center;padding:10px 16px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9CA3AF;white-space:nowrap;">Тип</th>
+                            <th style="text-align:center;padding:10px 16px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9CA3AF;white-space:nowrap;">Сумма</th>
+                            <th style="text-align:center;padding:10px 16px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9CA3AF;white-space:nowrap;">Назначение</th>
+                            <th style="text-align:center;padding:10px 16px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9CA3AF;white-space:nowrap;">Комментарий</th>
+                            <th style="text-align:center;padding:10px 16px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9CA3AF;white-space:nowrap;">Действия</th>
                         </tr>
                     </thead>
                     <tbody id="company-history-table-body" class="divide-y divide-gray-50 text-xs text-gray-700"></tbody>
@@ -691,7 +723,16 @@
             const container = document.getElementById('expense-charts-section');
             if (!container) return;
             const genProj = getFilteredProjects().find(p => String(p.name).toLowerCase().includes('генератор'));
-            if (genProj) renderGeneratorsCard(container, genProj);
+            if (!genProj) return;
+            // Сохраняем позицию старой карточки
+            const old = document.getElementById('generators-monthly-card');
+            const oldIndex = old ? Array.from(container.children).indexOf(old) : -1;
+            renderGeneratorsCard(container, genProj);
+            // Возвращаем на ту же позицию
+            const newCard = document.getElementById('generators-monthly-card');
+            if (newCard && oldIndex >= 0 && oldIndex < container.children.length - 1) {
+                container.insertBefore(newCard, container.children[oldIndex]);
+            }
         }
 
         const MONTH_NAMES_RU_FULL = { '01':'Январь','02':'Февраль','03':'Март','04':'Апрель','05':'Май','06':'Июнь','07':'Июль','08':'Август','09':'Сентябрь','10':'Октябрь','11':'Ноябрь','12':'Декабрь' };
@@ -1161,8 +1202,17 @@
         }
 
         // Динамический фильтр по кураторам с мягким и гибким поиском совпадений (без дефисов, пробелов и регистра)
+        let dragModeActive = false;
+
+        // Порядок карточек — сохраняется в localStorage
+        let cardOrder = (function() {
+            try { return JSON.parse(localStorage.getItem('card_order') || '[]'); } catch(e) { return []; }
+        })();
+        function saveCardOrder() {
+            try { localStorage.setItem('card_order', JSON.stringify(cardOrder)); } catch(e) {} }
+
         function getFilteredProjects() {
-            return data.filter(p => {
+            const result = data.filter(p => {
                 const name = String(p.name || '').toLowerCase();
                 const accessRaw = String(p.partnerAccess || '').trim().toLowerCase();
                 
@@ -1192,6 +1242,24 @@
                 }
                 return true; 
             });
+
+            // Завершённые — вниз
+            const active = result.filter(p => p.status !== 'Завершено');
+            const done   = result.filter(p => p.status === 'Завершено');
+
+            // Пользовательский порядок для активных
+            if (cardOrder.length) {
+                active.sort((a, b) => {
+                    const ai = cardOrder.indexOf(Number(a.id));
+                    const bi = cardOrder.indexOf(Number(b.id));
+                    if (ai === -1 && bi === -1) return 0;
+                    if (ai === -1) return 1;
+                    if (bi === -1) return -1;
+                    return ai - bi;
+                });
+            }
+
+            return [...active, ...done];
         }
 
         // СИМУЛЯЦИЯ И ОПТИМИСТИЧНОЕ ОБНОВЛЕНИЕ ДАННЫХ В ОФФЛАЙН-РЕЖИМЕ
@@ -1540,10 +1608,26 @@
             });
         }
 
+        function toggleDragMode() {
+            dragModeActive = !dragModeActive;
+            const btn = document.getElementById('drag-mode-btn');
+            if (btn) {
+                btn.className = dragModeActive
+                    ? 'px-3 py-1 rounded-lg text-[11px] font-bold bg-[#EDE9FE] text-[#5B21B6] border border-[#C4B5FD] transition-all'
+                    : 'px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-400 border border-gray-200 hover:border-[#C4B5FD] hover:text-[#7C3AED] transition-all';
+                btn.textContent = dragModeActive ? '✓ Перестановка (вкл)' : '⠿ Перестановка';
+            }
+            // Обновляем cursor на всех карточках
+            document.querySelectorAll('.project-card, #generators-monthly-card').forEach(el => {
+                el.classList.toggle('drag-active', dragModeActive);
+            });
+            renderCharts();
+        }
+
         function setFlowYear(year) {
             window._flowYear = year;
             // Подсвечиваем активную кнопку
-            ['2025','2026','all'].forEach(y => {
+            ['2026','2027','all'].forEach(y => {
                 const btn = document.getElementById('flow-btn-' + y);
                 if (btn) {
                     btn.className = String(year) === String(y)
@@ -1584,7 +1668,8 @@
                         for (let mo = 1; mo <= 12; mo++) targetMonths.push(`2026-${String(mo).padStart(2,'0')}`);
                     }
                 } else {
-                    for (let mo = 1; mo <= 12; mo++) targetMonths.push(`${flowYear}-${String(mo).padStart(2,'0')}`);
+                    const startMo = flowYear === 2026 ? 5 : 1; // 2026 начинаем с мая
+                    for (let mo = startMo; mo <= 12; mo++) targetMonths.push(`${flowYear}-${String(mo).padStart(2,'0')}`);
                 }
 
                 const monthlyData = {};
@@ -1646,23 +1731,23 @@
                             </div>
                             <div class="flow-cols">
                                 <div>
-                                    <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Поступило <span class="font-normal">${formatMoney(totalIn)}</span></div>
-                                    ${Object.entries(byProject).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
-                                        const pct = totalIn>0 ? Math.round(v/totalIn*100) : 0;
-                                        return `<div style="display:grid;grid-template-columns:1fr 60px 30px;align-items:center;margin-bottom:2px;">
+                                    <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Расходы <span class="font-semibold text-gray-600">${formatMoney(totalOut)}</span></div>
+                                    ${Object.entries(byCategory).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
+                                        const pct = totalOut>0 ? Math.round(v/totalOut*100) : 0;
+                                        return `<div style="display:grid;grid-template-columns:1fr 74px 36px;align-items:center;gap:2px;margin-bottom:2px;">
                                             <span style="font-size:11px;color:#4B5563;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;" title="${k}">${k}</span>
-                                            <span style="text-align:right;font-size:11px;font-weight:600;color:#1F2937;">${formatMoney(v)}</span>
+                                            <span style="text-align:right;font-size:11px;font-weight:600;color:#1F2937;white-space:nowrap;">${formatMoney(v)}</span>
                                             <span style="text-align:right;font-size:10px;color:#9CA3AF;">(${pct}%)</span>
                                         </div>`;
                                     }).join('') || '<div style="font-size:11px;color:#D1D5DB;font-style:italic;">—</div>'}
                                 </div>
                                 <div>
-                                    <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Расходы <span class="font-normal">${formatMoney(totalOut)}</span></div>
-                                    ${Object.entries(byCategory).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
-                                        const pct = totalOut>0 ? Math.round(v/totalOut*100) : 0;
-                                        return `<div style="display:grid;grid-template-columns:1fr 60px 30px;align-items:center;margin-bottom:2px;">
+                                    <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Поступило <span class="font-semibold text-gray-600">${formatMoney(totalIn)}</span></div>
+                                    ${Object.entries(byProject).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
+                                        const pct = totalIn>0 ? Math.round(v/totalIn*100) : 0;
+                                        return `<div style="display:grid;grid-template-columns:1fr 74px 36px;align-items:center;gap:2px;margin-bottom:2px;">
                                             <span style="font-size:11px;color:#4B5563;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;" title="${k}">${k}</span>
-                                            <span style="text-align:right;font-size:11px;font-weight:600;color:#1F2937;">${formatMoney(v)}</span>
+                                            <span style="text-align:right;font-size:11px;font-weight:600;color:#1F2937;white-space:nowrap;">${formatMoney(v)}</span>
                                             <span style="text-align:right;font-size:10px;color:#9CA3AF;">(${pct}%)</span>
                                         </div>`;
                                     }).join('') || '<div style="font-size:11px;color:#D1D5DB;font-style:italic;">—</div>'}
@@ -1732,11 +1817,42 @@
             if (container) {
                 container.innerHTML = '';
                 filtered.forEach(p => {
-                    // Генераторы выводятся отдельной карточкой с месячным срезом — пропускаем здесь
-                    if (String(p.name).toLowerCase().includes('генератор')) return;
+                    // Генераторы рендерятся на своём месте в порядке cardOrder
+                    if (String(p.name).toLowerCase().includes('генератор')) {
+                        renderGeneratorsCard(container, p);
+                        return;
+                    }
 
                     const card = document.createElement('div');
-                    card.className = "bg-white p-6 rounded-3xl border border-gray-100 shadow-soft animate-fade-in";
+                    card.className = "project-card bg-white p-6 rounded-3xl border border-gray-100 shadow-soft animate-fade-in" + (dragModeActive ? " drag-active" : "");
+                    card.setAttribute('draggable', 'true');
+                    card.dataset.projectId = p.id;
+                    card.addEventListener('dragstart', e => {
+                        if (!dragModeActive) { e.preventDefault(); return; }
+                        e.dataTransfer.setData('text/plain', String(p.id));
+                        setTimeout(() => card.classList.add('dragging'), 0);
+                    });
+                    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+                    card.addEventListener('dragover', e => { if (dragModeActive) { e.preventDefault(); card.classList.add('drag-over'); } });
+                    card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+                    card.addEventListener('drop', e => {
+                        if (!dragModeActive) return;
+                        e.preventDefault();
+                        card.classList.remove('drag-over');
+                        const fromId = Number(e.dataTransfer.getData('text/plain'));
+                        const toId = Number(p.id);
+                        if (fromId === toId) return;
+                        const currentFiltered = getFilteredProjects().filter(x => x.status !== 'Завершено');
+                        const ids = currentFiltered.map(x => Number(x.id));
+                        const fi = ids.indexOf(fromId), ti = ids.indexOf(toId);
+                        if (fi !== -1 && ti !== -1) {
+                            ids.splice(fi, 1);
+                            ids.splice(ti, 0, fromId);
+                            cardOrder = ids;
+                            saveCardOrder();
+                            renderCharts();
+                        }
+                    });
                     
                     // ДИНАМИЧЕСКИЙ СБОР ВСЕХ ИНВЕСТОРОВ ДЛЯ ТЕКУЩЕГО ПРОЕКТА С УМНЫМ СЛИЯНИЕМ ДУБЛИКАТОВ
                     // Исключаем «Вывод прибыли» из операционных расходов
@@ -1839,7 +1955,7 @@
                                 ${catListHtml || '<div class="text-xs text-gray-400 italic">Нет расходов</div>'}
                             </div>
                             <div class="border-t border-gray-100 pt-3">
-                                <div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;">
+                                <div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:6px 0;">
                                     <span class="text-[9px] font-bold uppercase text-gray-400 tracking-wider">Результат</span>
                                     <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;">${(() => { const inc=(p.incomes||[]).reduce((s,i)=>s+i.amount,0); const exp=operationalExpenses.reduce((s,e)=>s+e.amount,0); const n=inc-exp; return (n>=0?'+':'')+formatMoney(n); })()}</span>
                                     <span></span>
@@ -1870,11 +1986,8 @@
                         },
                         options: { cutout: '58%', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
                     });
+                // конец цикла карточек
                 });
-
-                // Карточка «Генераторы — месячный срез» после всех донатов
-                const genProj = filtered.find(p => String(p.name).toLowerCase().includes('генератор'));
-                if (genProj) renderGeneratorsCard(container, genProj);
             }
         }
 
@@ -1885,7 +1998,26 @@
 
             const card = document.createElement('div');
             card.id = 'generators-monthly-card';
-            card.className = 'bg-white p-6 rounded-3xl border border-gray-100 shadow-soft animate-fade-in';
+            card.className = 'project-card bg-white p-6 rounded-3xl border border-gray-100 shadow-soft animate-fade-in' + (dragModeActive ? ' drag-active' : '');
+            card.setAttribute('draggable', 'true');
+            card.addEventListener('dragstart', e => {
+                if (!dragModeActive) { e.preventDefault(); return; }
+                e.dataTransfer.setData('text/plain', String(genProj.id));
+                setTimeout(() => card.classList.add('dragging'), 0);
+            });
+            card.addEventListener('dragend', () => card.classList.remove('dragging'));
+            card.addEventListener('dragover', e => { if (dragModeActive) { e.preventDefault(); card.classList.add('drag-over'); } });
+            card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+            card.addEventListener('drop', e => {
+                if (!dragModeActive) return;
+                e.preventDefault(); card.classList.remove('drag-over');
+                const fromId = Number(e.dataTransfer.getData('text/plain'));
+                const toId = Number(genProj.id);
+                if (fromId === toId) return;
+                const ids = getFilteredProjects().filter(x => x.status !== 'Завершено').map(x => Number(x.id));
+                const fi = ids.indexOf(fromId), ti = ids.indexOf(toId);
+                if (fi !== -1 && ti !== -1) { ids.splice(fi,1); ids.splice(ti,0,fromId); cardOrder=ids; saveCardOrder(); renderCharts(); }
+            });
 
             const mk = currentChartMonth;
             const [year, month] = mk.split('-');
@@ -1960,7 +2092,7 @@
             const navHtml = isMonth ? `
                 <div class="flex items-center gap-1.5">
                     <button onclick="shiftChartMonth(-1)" class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-purple-100 text-gray-500 hover:text-brand-purple transition-all font-bold text-base leading-none">‹</button>
-                    <span class="text-xs font-bold text-brand-purple w-20 text-center">${MONTH_NAMES_RU_FULL[month]||month} ${year}</span>
+                    <span class="text-xs font-bold text-brand-purple text-center whitespace-nowrap">${MONTH_NAMES_RU_FULL[month]?.slice(0,3)||month} ${year}</span>
                     <button onclick="shiftChartMonth(1)" class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-purple-100 text-gray-500 hover:text-brand-purple transition-all font-bold text-base leading-none ${mk>=nowKey?'opacity-30 pointer-events-none':''}">›</button>
                 </div>` : `<span class="text-xs text-gray-400 font-semibold">Всё время</span>`;
 
@@ -1973,24 +2105,21 @@
             const donutColors = genActiveCats.length ? genActiveCats.map((k,i)=>CAT_COLORS[k]||FALLBACK_COLORS[i%FALLBACK_COLORS.length]) : [COLORS.residual];
 
             card.innerHTML = `
-                <div class="flex items-start justify-between mb-4">
-                    <div>
-                        <h4 class="font-bold text-brand-dark text-sm">${genProj.name}</h4>
-                        
-                    </div>
-                    <div class="flex flex-col items-end gap-2">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="font-bold text-brand-dark text-sm">${genProj.name}</h4>
+                    <div class="flex items-center gap-2">
+                        ${navHtml}
                         <div class="flex bg-gray-100 rounded-xl p-0.5 text-[10px] font-bold">
-                            <button onclick="setGeneratorsView('month')" class="px-2.5 py-1 rounded-lg transition-all ${isMonth ? 'bg-white shadow text-brand-purple' : 'text-gray-400 hover:text-gray-600'}">По месяцу</button>
+                            <button onclick="setGeneratorsView('month')" class="px-2.5 py-1 rounded-lg transition-all ${isMonth ? 'bg-white shadow text-brand-purple' : 'text-gray-400 hover:text-gray-600'}">По мес.</button>
                             <button onclick="setGeneratorsView('total')" class="px-2.5 py-1 rounded-lg transition-all ${!isMonth ? 'bg-white shadow text-brand-purple' : 'text-gray-400 hover:text-gray-600'}">Общее</button>
                         </div>
-                        ${navHtml}
                     </div>
                 </div>
-                <div class="h-36 mb-4 flex justify-center"><canvas id="gen-donut-chart"></canvas></div>
-                <div style="display:grid;grid-template-columns:1fr 80px 42px;row-gap:2px;align-items:center;margin-top:8px;">
+                <div class="h-40 mb-4 flex justify-center"><canvas id="gen-donut-chart"></canvas></div>
+                <div style="display:grid;grid-template-columns:1fr 80px 42px;row-gap:5px;align-items:center;margin-top:8px;">
 
                     <!-- Разделитель -->
-                    <span style="grid-column:1/4;border-top:1px solid #F3F4F6;margin:4px 0 2px;"></span>
+                    <span style="grid-column:1/4;border-top:1px solid #F3F4F6;margin:6px 0 4px;"></span>
 
                     <!-- Поступило -->
                     <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Поступило</span>
@@ -2003,7 +2132,7 @@
                     <span style="text-align:right;font-size:10px;color:#9CA3AF;">${incSum>0?'('+Math.round(genExpSum/incSum*100)+'%)':''}</span>
 
                     ${invRows ? `
-                    <span style="grid-column:1/4;border-top:1px solid #F3F4F6;margin:4px 0 2px;"></span>
+                    <span style="grid-column:1/4;border-top:1px solid #F3F4F6;margin:10px 0 4px;"></span>
                     <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider" style="grid-column:1/4;">Доли вложений</span>
                     ${Object.entries((() => { const s={}; expenses.forEach(e=>{const inv=String(e.investor||'Юнион Эскей').trim(); s[inv]=(s[inv]||0)+e.amount;}); return s; })()).sort((a,b)=>b[1]-a[1]).map(([inv,sum])=>{
                         const invTotal2=expenses.reduce((t,e)=>t+e.amount,0);
@@ -2015,7 +2144,7 @@
                     }).join('')}` : ''}
 
                     ${catRows ? `
-                    <span style="grid-column:1/4;border-top:1px solid #F3F4F6;margin:4px 0 2px;"></span>
+                    <span style="grid-column:1/4;border-top:1px solid #F3F4F6;margin:10px 0 6px;"></span>
                     <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider" style="grid-column:1/4;">По категориям затрат</span>
                     ${Object.entries(catSums).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([cat,sum])=>{
                         const col2=CAT_COLORS[cat]||FALLBACK_COLORS[Object.keys(catSums).indexOf(cat)%FALLBACK_COLORS.length];
@@ -2025,28 +2154,28 @@
                                '<span style="text-align:right;font-size:10px;color:#9CA3AF;">('+pct2+'%)</span>';
                     }).join('')}` : ''}
 
-                    <!-- Результат -->
-                    <span style="grid-column:1/4;border-top:1px solid #F3F4F6;margin:4px 0 2px;"></span>
+                </div>
+                <div style="border-top:1px solid #F3F4F6;margin-top:16px;padding-top:12px;display:grid;grid-template-columns:1fr 80px 42px;align-items:center;">
                     <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Результат</span>
                     <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;">${net>=0?'+':''}${formatMoney(net)}</span>
                     <span></span>
-
-                    <!-- Выведено прибыли -->
-                    <span style="grid-column:1/4;border-top:1px solid #F3F4F6;margin:4px 0 2px;"></span>
-                    <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider" style="grid-column:1/4;">Выведено прибыли</span>
+                </div>
+                <div style="border-top:1px solid #F3F4F6;margin-top:12px;padding-top:8px;">
+                    <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Выведено прибыли</div>
                     ${(() => {
                         let wExp = (genProj.expenses||[]).filter(e => e.category === 'Вывод прибыли');
                         if (isMonth) wExp = wExp.filter(e => e.date && e.date.startsWith(mk));
-                        if (wExp.length === 0) return '<span style="grid-column:1/4;font-size:12px;color:#D1D5DB;font-style:italic;">—</span>';
+                        if (wExp.length === 0) return '<div style="font-size:12px;color:#D1D5DB;font-style:italic;">—</div>';
                         const byInv = {};
                         wExp.forEach(e => { const inv = e.investor||e.comment||'Юнион Эскей'; byInv[inv]=(byInv[inv]||0)+e.amount; });
                         return Object.entries(byInv).map(([inv,sum]) =>
+                            '<div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;margin-bottom:2px;">' +
                             '<span class="text-xs text-gray-600 font-medium" style="overflow:hidden;white-space:nowrap;">'+inv+'</span>'+
                             '<span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;">'+formatMoney(sum)+'</span>'+
-                            '<span></span>'
+                            '<span></span>' +
+                            '</div>'
                         ).join('');
                     })()}
-
                 </div>
             `;
 
@@ -2153,11 +2282,11 @@
 
                 tbody.innerHTML += `
                     <tr id="company-row-${idx}" class="hover:bg-gray-50/80 transition-colors border-b border-gray-50">
-                        <td class="px-4 sm:px-6 py-3 whitespace-nowrap text-xs text-gray-500">${t.date}</td>
-                        <td class="px-4 sm:px-6 py-3 text-xs font-medium text-gray-700 whitespace-nowrap">${typeStr}</td>
-                        <td class="px-4 sm:px-6 py-3 text-center font-semibold text-gray-800 whitespace-nowrap text-xs">${formatMoney(t.amount)}</td>
-                        <td class="px-4 sm:px-6 py-3 text-xs text-gray-700 max-w-[130px]"><span class="block truncate" title="${t.category}">${t.category}</span></td>
-                        <td class="px-4 sm:px-6 py-3 text-gray-400 min-w-[120px] text-xs">${t.comment || '—'}</td>
+                        <td class="px-4 sm:px-6 py-3 text-xs text-gray-500 whitespace-nowrap" style="text-align:center;">${t.date}</td>
+                        <td class="px-4 sm:px-6 py-3 text-xs font-medium text-gray-700 whitespace-nowrap" style="text-align:center;">${typeStr}</td>
+                        <td class="px-4 sm:px-6 py-3 text-xs font-semibold text-gray-800 whitespace-nowrap" style="text-align:center;">${formatMoney(t.amount)}</td>
+                        <td class="px-4 sm:px-6 py-3 text-xs text-gray-700" style="text-align:center;"><span title="${t.category}">${t.category}</span></td>
+                        <td class="px-4 sm:px-6 py-3 text-xs text-gray-400" style="text-align:center;min-width:140px;max-width:240px;white-space:normal;">${t.comment || '—'}</td>
                         <td class="px-4 sm:px-6 py-3 text-center whitespace-nowrap">${actionHtml}</td>
                     </tr>
                 `;
@@ -2409,9 +2538,9 @@
                 thead.innerHTML = `
                     <th class="px-4 sm:px-6 py-4 whitespace-nowrap text-left">Дата</th>
                     <th class="px-4 sm:px-6 py-4 text-left max-w-[140px]">Категория</th>
-                    <th class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">Сумма</th>
-                    <th class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">Кто оплатил</th>
-                    <th class="px-4 sm:px-6 py-4 text-left whitespace-nowrap">Комментарий</th>
+                    <th class="px-4 sm:px-6 py-4 whitespace-nowrap" style="text-align:center;">Сумма</th>
+                    <th class="px-4 sm:px-6 py-4 whitespace-nowrap" style="text-align:center;">Кто оплатил</th>
+                    <th class="px-4 sm:px-6 py-4 whitespace-nowrap" style="text-align:center;">Комментарий</th>
                     <th class="px-3 py-4 text-center w-[96px]">
                         <div class="flex flex-col items-center gap-0.5">
                             ${isDirector ? `<button id="settle-btn" onclick="settleCheckedExpenses(${projectId})" class="hidden text-[10px] font-bold bg-[#EDE9FE] text-[#7C3AED] hover:bg-[#DDD6FE] px-2 py-0.5 rounded-lg w-full">Учтено</button>
@@ -2453,11 +2582,11 @@
 
                 tbody.innerHTML += `
                     <tr id="history-row-${p.id}-${idx}" class="transition-colors border-b border-gray-50 hover:bg-gray-50/80">
-                        <td class="px-4 sm:px-6 py-3 whitespace-nowrap text-xs text-gray-500">${e.date}</td>
-                        <td class="px-4 sm:px-6 py-3 text-xs font-medium text-gray-800 max-w-[130px]"><span class="block truncate" title="${e.category}">${e.category}</span></td>
-                        <td class="px-4 sm:px-6 py-3 text-center font-semibold text-gray-800 whitespace-nowrap text-xs">${formatMoney(e.amount)}</td>
-                        <td class="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-600 whitespace-nowrap">${e.investor}</td>
-                        <td class="px-4 sm:px-6 py-3 text-gray-400 min-w-[120px] text-xs">${e.comment || '—'}</td>
+                        <td class="px-4 sm:px-6 py-3 text-xs text-gray-500 whitespace-nowrap" style="text-align:center;">${e.date}</td>
+                        <td class="px-4 sm:px-6 py-3 text-xs font-medium text-gray-700" style="text-align:center;"><span title="${e.category}">${e.category}</span></td>
+                        <td class="px-4 sm:px-6 py-3 text-xs font-semibold text-gray-800 whitespace-nowrap" style="text-align:center;">${formatMoney(e.amount)}</td>
+                        <td class="px-4 sm:px-6 py-3 text-xs text-gray-600 whitespace-nowrap" style="text-align:center;">${e.investor}</td>
+                        <td class="px-4 sm:px-6 py-3 text-xs text-gray-400" style="text-align:center;min-width:140px;max-width:240px;white-space:normal;">${e.comment || '—'}</td>
                         <td class="px-3 py-3.5 text-center w-[96px]">${settledColHtml}</td>
                         ${isDirector ? `<td class="px-4 sm:px-6 py-3.5 text-center whitespace-nowrap">${actionHtml}</td>` : ''}
                     </tr>`;
@@ -2606,11 +2735,11 @@
             const thead = document.querySelector('#history-table-incomes thead tr');
             if (thead) {
                 thead.innerHTML = `
-                    <th class="px-4 sm:px-6 py-4 text-left whitespace-nowrap">Дата</th>
+                    <th class="px-4 sm:px-6 py-4 whitespace-nowrap" style="text-align:center;">Дата</th>
                     <th class="px-4 sm:px-6 py-4 text-left max-w-[140px]">Основание</th>
-                    <th class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">Сумма</th>
-                    <th class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">От кого</th>
-                    <th class="px-4 sm:px-6 py-4 text-left whitespace-nowrap">Комментарий</th>
+                    <th class="px-4 sm:px-6 py-4 whitespace-nowrap" style="text-align:center;">Сумма</th>
+                    <th class="px-4 sm:px-6 py-4 whitespace-nowrap" style="text-align:center;">От кого</th>
+                    <th class="px-4 sm:px-6 py-4 whitespace-nowrap" style="text-align:center;">Комментарий</th>
                     <th class="px-4 sm:px-6 py-4 text-center w-[100px]">
                         ${isDirector ? `<div class="flex flex-col items-center gap-1">
                             <button id="income-settle-btn"   onclick="settleCheckedIncomes(${projectId})"   class="hidden text-[10px] font-bold bg-[#EDE9FE] text-[#7C3AED] hover:bg-[#DDD6FE] px-2 py-0.5 rounded-lg transition-colors w-full">Учтено</button>
@@ -2634,7 +2763,7 @@
                             <button onclick="quickUnsettleIncome(${p.id}, ${origIncIdx})" class="text-[10px] font-medium text-gray-300 hover:text-[#7C3AED] transition-colors" style="flex-shrink:0;">↩ снять</button>
                         </div>`;
                     } else {
-                        incSettledColHtml = `<label style="display:block;text-align:center;cursor:pointer;"><span style="display:inline-flex;align-items:center;gap:5px;"><input type="checkbox" class="income-settle-cb" style="flex-shrink:0!important;" data-orig-idx="${origIncIdx}" onclick="toggleIncomeSettleBtns(${p.id})"><span class="settle-label-text text-[10px] text-gray-400">учтено</span></span></label>`;
+                        incSettledColHtml = `<button onclick="quickSettleIncome(${p.id}, ${origIncIdx})" class="text-[11px] font-semibold text-gray-400 hover:text-[#7C3AED] hover:bg-[#F5F3FF] px-2 py-1 rounded-lg transition-all w-full">учтено</button>`;
                     }
                 } else {
                     incSettledColHtml = inc.settled ? '<span class="text-xs font-medium text-gray-400 bg-[#FEFCE8] px-2 py-0.5 rounded-md border border-[#FEF08A]/30 whitespace-nowrap">✓ учтено</span>' : '';
@@ -2650,11 +2779,11 @@
 
                 tbody.innerHTML += `
                     <tr id="income-row-${p.id}-${idx}" class="hover:bg-gray-50/80 transition-colors border-b border-gray-50">
-                        <td class="px-4 sm:px-6 py-3 whitespace-nowrap text-xs text-gray-500">${inc.date}</td>
-                        <td class="px-4 sm:px-6 py-3 text-xs font-medium text-gray-800 max-w-[130px]"><span class="block truncate" title="${inc.category}">${inc.category}</span></td>
-                        <td class="px-4 sm:px-6 py-3 text-center font-semibold text-gray-800 whitespace-nowrap text-xs">${formatMoney(inc.amount)}</td>
-                        <td class="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-600 whitespace-nowrap">${inc.investor}</td>
-                        <td class="px-4 sm:px-6 py-3 text-gray-400 min-w-[120px] text-xs">${inc.comment || '—'}</td>
+                        <td class="px-4 sm:px-6 py-3 text-xs text-gray-500 whitespace-nowrap" style="text-align:center;">${inc.date}</td>
+                        <td class="px-4 sm:px-6 py-3 text-xs font-medium text-gray-700" style="text-align:center;"><span title="${inc.category}">${inc.category}</span></td>
+                        <td class="px-4 sm:px-6 py-3 text-xs font-semibold text-gray-800 whitespace-nowrap" style="text-align:center;">${formatMoney(inc.amount)}</td>
+                        <td class="px-4 sm:px-6 py-3 text-xs text-gray-600 whitespace-nowrap" style="text-align:center;">${inc.investor}</td>
+                        <td class="px-4 sm:px-6 py-3 text-xs text-gray-400" style="text-align:center;min-width:140px;max-width:240px;white-space:normal;">${inc.comment || '—'}</td>
                         <td class="px-2 py-3 text-center w-[130px]">${incSettledColHtml}</td>
                         ${isDirector ? `<td class="px-4 sm:px-6 py-3 text-center whitespace-nowrap">${actionHtml}</td>` : ''}
                     </tr>`;
