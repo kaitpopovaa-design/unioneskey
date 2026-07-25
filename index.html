@@ -91,6 +91,9 @@
         #company-history-table-body td:nth-child(5) { min-width: 150px; white-space: normal !important; }
 
         /* Drag & drop карточки */
+        @media (max-width:480px) {
+            #uni-form .date-sum-grid { grid-template-columns:1fr !important; }
+        }
         /* Кастомные дропдауны в модалке */
         .modal-dd { position: relative; }
         .modal-dd-btn { width:100%; height:40px; background:white; border:1px solid #E5E7EB; border-radius:12px; padding:0 14px 0 14px; text-align:left; font-size:14px; font-weight:600; color:#374151; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:8px; transition:border-color 0.15s; }
@@ -550,7 +553,7 @@
                 </div>
                 <p class="text-xs text-gray-400 mt-1">Добавление затрат или поступлений</p>
             </div>
-            <form onsubmit="event.preventDefault(); saveUniversalExpense();" class="flex flex-col" style="overflow-y:auto;overflow-x:visible;" id="uni-form">
+            <form onsubmit="event.preventDefault(); saveUniversalExpense();" class="flex flex-col" style="overflow-y:auto;overflow-x:hidden;" id="uni-form">
                 <div class="px-6 py-4 space-y-3" translate="no">
                     <div class="space-y-1">
                         <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Тип операции</label>
@@ -607,7 +610,7 @@
                         </datalist>
                         <datalist id="investor-options"></datalist>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="grid gap-3 date-sum-grid" style="grid-template-columns:1fr 1fr;">
                         <div class="space-y-1">
                             <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Дата</label>
                             <input type="date" id="uni-date" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
@@ -649,7 +652,7 @@
                     </div>
                     <div class="space-y-1">
                         <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Комментарий</label>
-                        <input type="text" id="uni-comment" placeholder="Описание (необязательно)" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru">
+                        <input type="text" id="uni-comment" placeholder="Описание (необязательно)" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" autocomplete="off" name="cmnt_x8k3" translate="no" spellcheck="false" lang="ru">
                     </div>
                 </div>
                 <div class="px-6 pb-5 pt-2 flex gap-2 justify-end shrink-0">
