@@ -91,7 +91,60 @@
         #company-history-table-body td:nth-child(5) { min-width: 150px; white-space: normal !important; }
 
         /* Drag & drop карточки */
-        .project-card { user-select: none; transition: opacity 0.2s, transform 0.15s; }
+        /* Кастомные дропдауны в модалке */
+        .modal-dd { position: relative; }
+        .modal-dd-btn { width:100%; height:40px; background:white; border:1px solid #E5E7EB; border-radius:12px; padding:0 14px 0 14px; text-align:left; font-size:14px; font-weight:600; color:#374151; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:8px; transition:border-color 0.15s; }
+        .modal-dd-btn:hover, .modal-dd-btn.open { border-color:#7C3AED; }
+        .modal-dd-btn span:first-child { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .modal-dd-btn svg { flex-shrink:0; }
+        .modal-dd-menu { background:white; border:1px solid #E5E7EB; border-radius:16px; box-shadow:0 10px 25px rgba(0,0,0,0.15); padding:8px; z-index:9999; display:none; max-height:200px; overflow-y:auto; }
+        #dd-year-menu .modal-dd-item, #dd-month-menu .modal-dd-item { font-size:11px; padding:5px 10px; }
+        .modal-dd-menu.open { display:block; }
+        .modal-dd-item { width:100%; text-align:left; padding:8px 12px; border-radius:10px; font-size:13px; font-weight:500; color:#374151; background:none; border:none; cursor:pointer; display:block; }
+        .modal-dd-item:hover { background:#F5F3FF; color:#5B21B6; }
+        .modal-dd-item.selected { color:#7C3AED; font-weight:700; }
+
+        /* Кастомная стрелка на select — как у статуса и доступа */
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 30px !important;
+        }
+
+        /* Глобально убираем текстовый курсор на всех не-редактируемых элементах */
+        body, h1, h2, h3, h4, p, span, div, td, th, label, li, section, main, nav, header {
+            cursor: default;
+        }
+        /* Поля ввода — возвращаем текстовый курсор */
+        input, textarea, [contenteditable] { cursor: text; }
+        /* Кнопки — пальчик */
+        button, a, select, [onclick], [role="button"] { cursor: pointer !important; }
+        button *, a *, select *, [onclick] *, [role="button"] * { cursor: pointer !important; }
+        /* Кнопки статуса в таблице — пальчик включая текст внутри */
+        #table-body td span[class*="border"] { cursor: pointer !important; user-select: none; }
+        #table-body td span[class*="border"] * { cursor: pointer !important; }
+
+        /* Убираем текстовый курсор везде где он не нужен */
+        .project-card { user-select: none; }
+        .project-card * { cursor: default; }
+        .project-card.drag-active { cursor: grab !important; }
+        .project-card.drag-active * { cursor: grab !important; }
+        .project-card.drag-active:active, .project-card.drag-active:active * { cursor: grabbing !important; }
+
+        /* Информационная панель — таблица */
+        #table-body tr, #table-body td,
+        #table-body td span { cursor: default; }
+        #table-body td span[class*="border"] { user-select: none; }
+
+        /* Структура поступлений */
+        #received-legend, #expected-legend,
+        #received-legend *, #expected-legend * { cursor: default; user-select: none; }
+
+        .project-card { transition: opacity 0.2s, transform 0.15s; }
         .project-card.drag-active { cursor: grab; }
         .project-card.drag-active:active { cursor: grabbing; }
         .project-card.dragging { opacity: 0.4; transform: scale(0.97); }
@@ -303,47 +356,69 @@
             </div>
 
             <!-- КАРТОЧКИ СТАТИСТИКИ -->
-            <div class="flex items-center gap-2 mb-3 flex-wrap">
+            <div id="period-filter-row" class="flex items-center gap-2 mb-3 flex-wrap">
                     <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Период:</span>
-                    <button onclick="setDashPeriod('all')" id="dash-btn-all" class="px-3 py-1 rounded-lg text-[11px] font-semibold bg-[#EDE9FE] text-[#5B21B6] transition-all">Всё время</button>
+                    <button onclick="setDashPeriod('all')" id="dash-btn-all" class="px-3 py-1 rounded-lg text-[11px] font-semibold bg-[#EDE9FE] text-[#5B21B6] transition-all">Все время</button>
                     <button onclick="setDashPeriod('year')" id="dash-btn-year" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-gray-100 transition-all">Год</button>
                     <button onclick="setDashPeriod('month')" id="dash-btn-month" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-gray-100 transition-all">Месяц</button>
                     <div id="dash-period-controls" class="flex items-center gap-2 hidden">
-                        <select id="dash-year-sel" onchange="renderTable();renderCharts();" class="h-7 px-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:border-brand-purple cursor-pointer">
-                            <option value="2025">2025</option>
-                            <option value="2026" selected>2026</option>
-                            <option value="2027">2027</option>
-                        </select>
-                        <select id="dash-month-sel" onchange="renderTable();renderCharts();" class="h-7 px-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:border-brand-purple cursor-pointer hidden">
-                            <option value="1">Январь</option><option value="2">Февраль</option><option value="3">Март</option>
-                            <option value="4">Апрель</option><option value="5">Май</option><option value="6">Июнь</option>
-                            <option value="7">Июль</option><option value="8">Август</option><option value="9">Сентябрь</option>
-                            <option value="10">Октябрь</option><option value="11">Ноябрь</option><option value="12">Декабрь</option>
-                        </select>
+                        <div class="modal-dd" id="dd-year" style="width:80px;position:relative;">
+                            <button type="button" class="modal-dd-btn" style="height:32px;font-size:11px;font-weight:600;padding:0 8px;justify-content:center;gap:4px;" onclick="toggleModalDD('dd-year')">
+                                <span id="dd-year-label">2026</span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            <div class="modal-dd-menu" id="dd-year-menu">
+                                <button class="modal-dd-item" onclick="selectPeriodDD('year','2025','2025')" type="button">2025</button>
+                                <button class="modal-dd-item selected" onclick="selectPeriodDD('year','2026','2026')" type="button">2026</button>
+                                <button class="modal-dd-item" onclick="selectPeriodDD('year','2027','2027')" type="button">2027</button>
+                            </div>
+                            <input type="hidden" id="dash-year-sel" value="2026">
+                        </div>
+                        <div class="modal-dd hidden" id="dd-month" style="width:100px;position:relative;">
+                            <button type="button" class="modal-dd-btn" style="height:32px;font-size:11px;font-weight:600;padding:0 8px;justify-content:center;gap:4px;" onclick="toggleModalDD('dd-month')">
+                                <span id="dd-month-label">Июль</span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            <div class="modal-dd-menu" id="dd-month-menu">
+                                <button class="modal-dd-item" onclick="selectPeriodDD('month','1','Январь')" type="button">Январь</button>
+                                <button class="modal-dd-item" onclick="selectPeriodDD('month','2','Февраль')" type="button">Февраль</button>
+                                <button class="modal-dd-item" onclick="selectPeriodDD('month','3','Март')" type="button">Март</button>
+                                <button class="modal-dd-item" onclick="selectPeriodDD('month','4','Апрель')" type="button">Апрель</button>
+                                <button class="modal-dd-item" onclick="selectPeriodDD('month','5','Май')" type="button">Май</button>
+                                <button class="modal-dd-item" onclick="selectPeriodDD('month','6','Июнь')" type="button">Июнь</button>
+                                <button class="modal-dd-item selected" onclick="selectPeriodDD('month','7','Июль')" type="button">Июль</button>
+                                <button class="modal-dd-item" onclick="selectPeriodDD('month','8','Август')" type="button">Август</button>
+                                <button class="modal-dd-item" onclick="selectPeriodDD('month','9','Сентябрь')" type="button">Сентябрь</button>
+                                <button class="modal-dd-item" onclick="selectPeriodDD('month','10','Октябрь')" type="button">Октябрь</button>
+                                <button class="modal-dd-item" onclick="selectPeriodDD('month','11','Ноябрь')" type="button">Ноябрь</button>
+                                <button class="modal-dd-item" onclick="selectPeriodDD('month','12','Декабрь')" type="button">Декабрь</button>
+                            </div>
+                            <input type="hidden" id="dash-month-sel" value="7">
+                        </div>
                     </div>
                 </div>
                 <div id="director-cards" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
-                <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]">
+                <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
                     <p class="text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1">Выручка (Факт)</p>
                     <p id="total-revenue" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
                 </div>
-                <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]">
-                    <p class="text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1">Ожид. поступления</p>
+                <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
+                    <p class="text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1">Сумма договоров</p>
                     <p id="planned-revenue" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
                 </div>
-                <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]">
+                <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
                     <p class="text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1">Затраты объектов</p>
                     <p id="total-expense" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
                 </div>
-                <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]">
+                <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
                     <p class="text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1">Траты компании</p>
                     <p id="general-expense" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
                 </div>
-                <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]">
+                <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
                     <p class="text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1">Прибыль (Факт)</p>
                     <p id="net-profit" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
                 </div>
-                <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]">
+                <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
                     <p class="text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1">Личный вывод</p>
                     <p id="personal-expense" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
                 </div>
@@ -358,7 +433,7 @@
                         <div class="flex items-center gap-1.5" id="flow-year-btns">
                             <button onclick="setFlowYear(2026)" id="flow-btn-2026" class="px-3 py-1 rounded-lg text-[11px] font-bold bg-[#EDE9FE] text-[#5B21B6] transition-all">2026</button>
                             <button onclick="setFlowYear(2027)" id="flow-btn-2027" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-gray-100 transition-all">2027</button>
-                            <button onclick="setFlowYear('all')" id="flow-btn-all" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-gray-100 transition-all">Всё</button>
+                            <button onclick="setFlowYear('all')" id="flow-btn-all" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-gray-100 transition-all">Все</button>
                         </div>
                     </div>
                     <div class="h-64 sm:h-72" id="barChart-wrapper"><canvas id="barChart"></canvas></div>
@@ -373,7 +448,7 @@
                     <h3 class="font-bold text-brand-dark mb-4 text-xs uppercase tracking-wider text-center border-b pb-2">Структура поступлений</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-4">
                         <div class="flex flex-col items-center border-b sm:border-b-0 sm:border-r border-gray-100 pb-4 sm:pb-0 sm:pr-3">
-                            <span class="text-[9px] uppercase font-bold text-brand-gray mb-2 text-center h-6 flex items-center justify-center">Уже поступило</span>
+                            <span class="text-[9px] uppercase font-bold text-brand-gray mb-2 text-center h-6 flex items-center justify-center">Поступило</span>
                             <div class="h-40 w-full flex items-center justify-center"><canvas id="receivedPieChart"></canvas></div>
                             <div id="received-legend" class="w-full mt-3 space-y-1"></div>
                         </div>
@@ -467,7 +542,7 @@
 
     <!-- УНИВЕРСАЛЬНАЯ МОДАЛКА ОПЕРАЦИИ (ФИКСИРОВАННАЯ ВЫСОТА ПОЛЕЙ + COMBOBOX) -->
     <div id="universal-modal" class="fixed inset-0 bg-gray-950/50 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target === this) closeUniversalModal()">
-        <div class="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-md animate-fade-in overflow-hidden border flex flex-col max-h-[92vh]">
+        <div class="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-md animate-fade-in border flex flex-col max-h-[92vh]" style="overflow:visible;">
             <div class="px-6 pt-6 pb-4 border-b border-gray-100 shrink-0">
                 <div class="flex justify-between items-center">
                     <h3 id="uni-modal-title" class="text-xl font-bold text-brand-dark">Новая операция</h3>
@@ -475,34 +550,56 @@
                 </div>
                 <p class="text-xs text-gray-400 mt-1">Добавление затрат или поступлений</p>
             </div>
-            <form onsubmit="event.preventDefault(); saveUniversalExpense();" class="overflow-y-auto flex flex-col">
+            <form onsubmit="event.preventDefault(); saveUniversalExpense();" class="flex flex-col" style="overflow-y:auto;overflow-x:visible;" id="uni-form">
                 <div class="px-6 py-4 space-y-3" translate="no">
                     <div class="space-y-1">
                         <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Тип операции</label>
-                        <select id="uni-type" onchange="toggleUniModalFields()" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-brand-purple transition-all cursor-pointer">
-                            <option value="project">Расход по объекту</option>
-                            <option value="income">Поступление по объекту</option>
-                            <option value="general">Общий расход компании</option>
-                            <option value="withdrawal">Вывод прибыли</option>
-                            <option value="personal">Личные траты</option>
-                        </select>
+                        <div class="modal-dd" id="dd-type">
+                            <button type="button" class="modal-dd-btn" style="font-weight:400;" onclick="toggleModalDD('dd-type')">
+                                <span id="dd-type-label">Расход по объекту</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            <div class="modal-dd-menu" id="dd-type-menu">
+                                <button class="modal-dd-item selected" onclick="selectModalDD('dd-type','project','Расход по объекту')">Расход по объекту</button>
+                                <button class="modal-dd-item" onclick="selectModalDD('dd-type','income','Поступление по объекту')">Поступление по объекту</button>
+                                <button class="modal-dd-item" onclick="selectModalDD('dd-type','general','Общий расход компании')">Общий расход компании</button>
+                                <button class="modal-dd-item" onclick="selectModalDD('dd-type','withdrawal','Вывод прибыли')">Вывод прибыли</button>
+                                <button class="modal-dd-item" onclick="selectModalDD('dd-type','personal','Личные траты')">Личные траты</button>
+                            </div>
+                            <input type="hidden" id="uni-type" value="project">
+                        </div>
                     </div>
                     <div id="uni-project-wrapper" class="space-y-1">
                         <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Объект</label>
-                        <select id="uni-project" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-brand-purple transition-all cursor-pointer"></select>
+                        <div class="modal-dd" id="dd-project">
+                            <button type="button" class="modal-dd-btn" style="font-weight:400;" onclick="toggleModalDD('dd-project')">
+                                <span id="dd-project-label">Выберите объект</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            <div class="modal-dd-menu" id="dd-project-menu"></div>
+                            <input type="hidden" id="uni-project" value="">
+                        </div>
                     </div>
                     <div id="uni-investor-wrapper" class="space-y-1">
                         <label id="uni-investor-label" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Кто оплатил / вложил</label>
-                        <input type="text" id="uni-investor-input" list="investor-options"
-                            placeholder="Юнион Эскей / Дима / Заказчик..."
-                            class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-brand-purple transition-all"
-                            autocomplete="off" translate="no" spellcheck="false">
+                        <div class="modal-dd" id="dd-investor">
+                            <button type="button" class="modal-dd-btn" style="font-weight:400;" onclick="toggleModalDD('dd-investor')">
+                                <span id="dd-investor-label">Юнион Эскей</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            <div class="modal-dd-menu" id="dd-investor-menu">
+                                <button class="modal-dd-item" onclick="selectModalDD('dd-investor','Общие','Общие')" type="button">Общие</button>
+                                <button class="modal-dd-item selected" onclick="selectModalDD('dd-investor','Юнион Эскей','Юнион Эскей')" type="button">Юнион Эскей</button>
+                                <button class="modal-dd-item" onclick="selectModalDD('dd-investor','Дима','Дима')" type="button">Дима</button>
+                                <button class="modal-dd-item" onclick="selectModalDD('dd-investor','Коля','Коля')" type="button">Коля</button>
+                                <button class="modal-dd-item" onclick="selectModalDD('dd-investor','АВ-Промстрой','АВ-Промстрой')" type="button">АВ-Промстрой</button>
+                                <button class="modal-dd-item" id="dd-investor-partner4" onclick="selectModalDD('dd-investor','Партнёр 4','Партнёр 4')" type="button">Партнёр 4</button>
+                            </div>
+                            <input type="hidden" id="uni-investor-input" value="Юнион Эскей">
+                        </div>
                         <datalist id="expense-investor-options">
                             <option value="Общие">
                             <option value="Юнион Эскей">
-                            <option value="Дима">
-                            <option value="Коля">
-                            <option value="АВ-Промстрой">
                         </datalist>
                         <datalist id="income-investor-options">
                             <option value="Урал Трансмаш">
@@ -510,19 +607,19 @@
                         </datalist>
                         <datalist id="investor-options"></datalist>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div class="space-y-1">
                             <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Дата</label>
-                            <input type="date" id="uni-date" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
+                            <input type="date" id="uni-date" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
                         </div>
                         <div class="space-y-1">
                             <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Сумма (₽)</label>
                             <input type="text" id="uni-amount" oninput="formatInputSpaces(this)" placeholder="0" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-bold outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
                         </div>
                     </div>
-                    <div class="space-y-1" id="uni-category-wrapper">
+                    <div class="space-y-1" id="uni-category-wrapper" style="position:relative;">
                         <label id="uni-category-label" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Категория / Назначение</label>
-                        <input type="text" id="uni-category-input" list="category-options" placeholder="Выберите или введите свою..." class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru">
+                        <input type="text" id="uni-category-input" name="cat_x9z2" placeholder="Выберите или введите свою..." class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" autocomplete="off" x-autocomplete="off" translate="no" spellcheck="false" lang="ru" data-cattype="project" onclick="openCatDD(this)" oninput="openCatDD(this)">
                         <datalist id="expense-category-options">
                             <option value="Материалы">
                             <option value="Зарплата">
@@ -547,10 +644,12 @@
                             <option value="Доп. соглашение">
                         </datalist>
                         <datalist id="category-options"></datalist>
+                        <datalist id="general-category-options"></datalist>
+                        <datalist id="personal-category-options"></datalist>
                     </div>
                     <div class="space-y-1">
                         <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Комментарий</label>
-                        <input type="text" id="uni-comment" placeholder="Описание (необязательно)" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru">
+                        <input type="text" id="uni-comment" placeholder="Описание (необязательно)" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru">
                     </div>
                 </div>
                 <div class="px-6 pb-5 pt-2 flex gap-2 justify-end shrink-0">
@@ -573,10 +672,20 @@
             </div>
             <form onsubmit="event.preventDefault(); saveNewProject();">
                 <div class="px-6 py-5 space-y-3" translate="no">
-                    <input type="text" id="add-project-name" placeholder="Название объекта" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
-                    <input type="text" id="add-project-contract" oninput="formatInputSpaces(this)" placeholder="Сумма договора (₽)" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
-                    <input type="text" id="add-project-paid" oninput="formatInputSpaces(this)" placeholder="Уже поступило (₽)" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru">
-                    <select id="add-project-partner" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-brand-purple transition-all cursor-pointer"></select>
+                    <input type="text" id="add-project-name" placeholder="Название объекта" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
+                    <input type="text" id="add-project-contract" oninput="formatInputSpaces(this)" placeholder="Сумма договора (₽)" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
+                    <input type="text" id="add-project-paid" oninput="formatInputSpaces(this)" placeholder="Поступило (₽)" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru">
+                    <div class="modal-dd" id="dd-add-partner">
+                            <button type="button" class="modal-dd-btn" style="font-weight:400;" onclick="toggleModalDD('dd-add-partner')">
+                                <span id="dd-add-partner-label">Нет</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            <div class="modal-dd-menu" id="dd-add-partner-menu">
+                                <button class="modal-dd-item selected" onclick="selectModalDD('dd-add-partner','Нет','Нет')" type="button">Нет</button>
+                                <button class="modal-dd-item" onclick="selectModalDD('dd-add-partner','Все','Все')" type="button">Все</button>
+                            </div>
+                            <input type="hidden" id="add-project-partner" value="Нет">
+                        </div>
                 </div>
                 <div class="px-6 pb-5 flex gap-2 justify-end">
                     <button type="button" onclick="closeAddProjectModal()" class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors">Отмена</button>
@@ -602,7 +711,7 @@
                     <!-- Директор -->
                     <div class="space-y-1.5">
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Директор</p>
-                        <div class="grid grid-cols-2 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <input type="text" id="set-name-director" placeholder="Имя" class="h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-semibold outline-none focus:border-brand-purple w-full" disabled>
                             <input type="text" id="set-pin-director" maxlength="4" placeholder="PIN" class="h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-bold text-center tracking-widest outline-none focus:border-brand-purple w-full">
                         </div>
@@ -613,7 +722,7 @@
                     <!-- Партнёр 1 -->
                     <div class="space-y-1.5">
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Партнёр 1</p>
-                        <div class="grid grid-cols-2 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <input type="text" id="set-name-dima" placeholder="Имя" class="h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-semibold outline-none focus:border-brand-purple w-full">
                             <input type="text" id="set-pin-dima" maxlength="4" placeholder="PIN" class="h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-bold text-center tracking-widest outline-none focus:border-brand-purple w-full">
                         </div>
@@ -622,7 +731,7 @@
                     <!-- Партнёр 2 -->
                     <div class="space-y-1.5">
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Партнёр 2</p>
-                        <div class="grid grid-cols-2 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <input type="text" id="set-name-kolya" placeholder="Имя" class="h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-semibold outline-none focus:border-brand-purple w-full">
                             <input type="text" id="set-pin-kolya" maxlength="4" placeholder="PIN" class="h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-bold text-center tracking-widest outline-none focus:border-brand-purple w-full">
                         </div>
@@ -631,7 +740,7 @@
                     <!-- Партнёр 3 -->
                     <div class="space-y-1.5">
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Партнёр 3</p>
-                        <div class="grid grid-cols-2 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <input type="text" id="set-name-partner3" placeholder="Имя" class="h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-semibold outline-none focus:border-brand-purple w-full">
                             <input type="text" id="set-pin-partner3" maxlength="4" placeholder="PIN" class="h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-bold text-center tracking-widest outline-none focus:border-brand-purple w-full">
                         </div>
@@ -640,7 +749,7 @@
                     <!-- Партнёр 4 -->
                     <div class="space-y-1.5">
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Партнёр 4</p>
-                        <div class="grid grid-cols-2 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <input type="text" id="set-name-partner4" placeholder="Имя" class="h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-semibold outline-none focus:border-brand-purple w-full">
                             <input type="text" id="set-pin-partner4" maxlength="4" placeholder="PIN" class="h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-bold text-center tracking-widest outline-none focus:border-brand-purple w-full">
                         </div>
@@ -813,7 +922,7 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { position: 'bottom', labels: { font: { size: 10 } } },
-                        tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${formatMoney(c.raw)}` } }
+                        tooltip: { backgroundColor: 'white', borderColor: '#E5E7EB', borderWidth: 1, titleColor: '#6B7280', bodyColor: '#1F2937', padding: { x: 14, y: 10 }, displayColors: true, boxWidth: 10, boxHeight: 10, cornerRadius: 10, callbacks: { title: () => '', label: c => '  ' + c.dataset.label + '   ' + formatMoney(c.raw) } }
                     },
                     scales: {
                         y: { ticks: { font: { size: 10 }, callback: v => formatMoney(v) }, grid: { color: '#F3F4F6' } },
@@ -967,21 +1076,16 @@
 
         // Динамическое обновление выпадающего списка в модалке создания объекта (с дедупликацией)
         function updateAccessDropdowns() {
-            const addSelect = document.getElementById('add-project-partner');
-            if (addSelect) {
-                const addedOptions = new Set();
-                let optionsHtml = '<option value="Нет">Доступ: Никто</option>';
-                const partners = ['dima', 'kolya', 'partner3', 'partner4'];
-                partners.forEach(key => {
-                    const name = PARTNER_CONFIG[key].name;
-                    const lowName = name.trim().toLowerCase();
-                    if (!addedOptions.has(lowName)) {
-                        addedOptions.add(lowName);
-                        optionsHtml += `<option value="${name}">${name}</option>`;
-                    }
+            const addMenu = document.getElementById('dd-add-partner-menu');
+            if (addMenu) {
+                const partners = ['Нет', 'Все'];
+                ['dima','kolya','partner3','partner4'].forEach(key => {
+                    const name = PARTNER_CONFIG[key]?.name;
+                    if (name && name.trim()) partners.push(name);
                 });
-                optionsHtml += '<option value="Все">Все</option>';
-                addSelect.innerHTML = optionsHtml;
+                addMenu.innerHTML = partners.map(n =>
+                    `<button class="modal-dd-item${n==='Нет'?' selected':''}" onclick="selectModalDD('dd-add-partner','${n}','${n}')" type="button">${n}</button>`
+                ).join('');
             }
         }
 
@@ -1413,7 +1517,43 @@
             showNotification('Объект успешно удален', 'success');
         }
 
+        function initTodoSync() {
+            document.querySelectorAll('.todo-ta').forEach(ta => {
+                ta.removeEventListener('mousedown', ta._todoResizeHandler || (()=>{}));
+                ta._todoResizeHandler = function(e) {
+                    const r = ta.getBoundingClientRect();
+                    // Зона ручки resize — правый нижний угол 20×20px
+                    if (e.clientX < r.right - 20 || e.clientY < r.bottom - 20) return;
+                    e.preventDefault();
+                    const startX = e.clientX, startY = e.clientY;
+                    const startW = ta.offsetWidth, startH = ta.offsetHeight;
+                    const all = document.querySelectorAll('.todo-ta');
+                    document.body.style.cursor = 'se-resize';
+                    function onMove(ev) {
+                        const w = Math.max(100, Math.min(400, startW + ev.clientX - startX));
+                        const h = Math.max(40, Math.min(200, startH + ev.clientY - startY));
+                        all.forEach(t => { t.style.width = w + 'px'; t.style.height = h + 'px'; });
+                    }
+                    function onUp() {
+                        document.body.style.cursor = '';
+                        document.removeEventListener('mousemove', onMove);
+                        document.removeEventListener('mouseup', onUp);
+                    }
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onUp);
+                };
+                ta.addEventListener('mousedown', ta._todoResizeHandler);
+                // Курсор se-resize при наведении на угол
+                ta.addEventListener('mousemove', function(e) {
+                    const r = ta.getBoundingClientRect();
+                    ta.style.cursor = (e.clientX >= r.right-20 && e.clientY >= r.bottom-20) ? 'se-resize' : 'text';
+                });
+            });
+        }
+
         function renderTable() {
+            updatePeriodVisibility();
+            setTimeout(initTodoSync, 200);
             cleanupPortaledMenus();
             const tbody = document.getElementById('table-body');
             if (!tbody) return;
@@ -1426,6 +1566,7 @@
                 totalFactPaid += p.paid;
                 
                 const cost = p.expenses.reduce((s, e) => {
+                    if (e.category === 'Вывод прибыли') return s; // не входит в затраты
                     if (currentRole === 'dima' && e.investor === PARTNER_CONFIG.kolya.name) return s;
                     if (currentRole === 'kolya' && e.investor === PARTNER_CONFIG.dima.name) return s;
                     return s + e.amount;
@@ -1484,7 +1625,7 @@
                 if (authRole === 'director' && currentRole === 'director') {
                     statusCellHtml = `
                         <div class="relative inline-block w-full text-left" id="status-dropdown-container-${p.id}">
-                            <button type="button" onclick="toggleStatusDropdown(${p.id}, this)" class="bg-white border border-gray-200 text-xs font-semibold rounded-xl px-3 py-1.5 w-full text-left text-gray-700 shadow-sm flex justify-between items-center transition-all focus:border-brand-purple">
+                            <button type="button" onclick="toggleStatusDropdown(${p.id}, this)" class="bg-white border border-gray-200 text-xs font-semibold rounded-xl px-3 py-1.5 w-full text-left text-gray-700 shadow-sm flex justify-between items-center transition-all focus:border-brand-purple hover:border-[#C4B5FD] hover:shadow-[0_0_8px_rgba(196,181,253,0.3)]">
                                 <span id="status-label-${p.id}">${p.status}</span>
                                 <span class="text-[9px] text-gray-400">▼</span>
                             </button>
@@ -1504,7 +1645,7 @@
                 tbody.innerHTML += `<tr class="hover:bg-gray-50/70 transition-all">
                     <td class="px-6 py-4 font-bold text-brand-dark whitespace-nowrap" title="${p.name}">${p.name}</td>
                     <td class="px-6 py-4">
-                        <textarea onchange="updateTodo(${p.id}, this.value)" placeholder="Запишите задачи..." class="w-full bg-gray-50/50 hover:bg-gray-50 focus:bg-white border border-transparent focus:border-brand-purple focus:ring-4 focus:ring-brand-purple/10 rounded-2xl p-3 text-xs text-brand-dark outline-none transition-all leading-relaxed overflow-y-auto scrollbar-thin" style="resize: horizontal; height: 48px; min-height: 48px; min-width: 100%; display: block;" translate="no" spellcheck="false" lang="ru">${p.todo || ''}</textarea>
+                        <textarea onchange="updateTodo(${p.id}, this.value)" placeholder="Запишите задачи..." class="todo-ta w-full bg-gray-50/50 hover:bg-gray-50 focus:bg-white border border-transparent focus:border-brand-purple focus:ring-4 focus:ring-brand-purple/10 rounded-2xl p-3 text-xs text-brand-dark outline-none transition-all leading-relaxed" id="todo-ta-${p.id}" style="resize:both;height:54px;min-height:40px;width:220px;max-width:320px;min-width:100px;display:block;overflow:auto;box-sizing:border-box;" translate="no" spellcheck="false" lang="ru">${p.todo || ''}</textarea>
                     </td>
                     <td class="px-6 py-4 text-center"><span class="bg-transparent border-2 border-[#FEF08A]/70 rounded-xl px-2 py-0.5 font-semibold text-gray-700 text-xs transition-all hover:border-[#EAB308]/60 hover:shadow-[0_0_8px_rgba(234,179,8,0.2)] whitespace-nowrap">${formatMoney(p.contract)}</span></td>
                     <td class="px-6 py-4 text-center"><span class="bg-transparent border-2 border-[#C4B5FD]/70 rounded-xl px-2 py-0.5 font-semibold text-gray-700 text-xs transition-all hover:border-[#A78BFA]/70 hover:shadow-[0_0_8px_rgba(167,139,250,0.25)] whitespace-nowrap">${formatMoney(p.paid)}</span></td>
@@ -1526,7 +1667,17 @@
                 let filteredInc = [], filteredExp = [], filteredComp = [];
                 data.forEach(p => {
                     filteredInc.push(...filterByPeriod(p.incomes || [], 'date'));
-                    filteredExp.push(...filterByPeriod(p.expenses || [], 'date'));
+                    p.expenses.forEach(e => {
+                        const isWithdrawal = e.category === 'Вывод прибыли';
+                        const isUnionEscay = !e.investor ||
+                            e.investor.toLowerCase().includes('юнион') ||
+                            e.investor.toLowerCase().includes('union');
+                        // Вывод прибыли Юнион Эскей → не в затратах (это наша прибыль)
+                        // Вывод прибыли любого другого партнёра → в затраты объектов
+                        if (!isWithdrawal || !isUnionEscay) {
+                            filteredExp.push(...filterByPeriod([e], 'date'));
+                        }
+                    });
                 });
                 filteredComp = filterByPeriod(companyTransactions, 'date');
                 
@@ -1534,12 +1685,19 @@
                 const pFactCost = filteredExp.reduce((s,e) => s + e.amount, 0);
                 const pCompGen  = filteredComp.filter(t => t.type==='general').reduce((s,t) => s + t.amount, 0);
                 const pCompPers = filteredComp.filter(t => t.type==='personal').reduce((s,t) => s + t.amount, 0);
-                
+
+                // Ожидаемые = сумма всех договоров
+                const totalContractSum = data.reduce((s,p) => s + (p.contract||0), 0);
+
+                // Прибыль факт = Выручка − Затраты объектов − Траты компании
+                // Личный вывод и вывод Юнион Эскей не вычитаются — это наша прибыль
+                const netProfit = pFactPaid - pFactCost - pCompGen;
+
                 document.getElementById('total-revenue').innerText = formatMoney(pFactPaid);
-                document.getElementById('planned-revenue').innerText = formatMoney(Math.max(0, totalContract - pFactPaid));
+                document.getElementById('planned-revenue').innerText = formatMoney(totalContractSum);
                 document.getElementById('total-expense').innerText = formatMoney(pFactCost);
                 document.getElementById('general-expense').innerText = formatMoney(pCompGen);
-                document.getElementById('net-profit').innerText = formatMoney(pFactPaid - pFactCost - pCompGen);
+                document.getElementById('net-profit').innerText = formatMoney(netProfit);
                 document.getElementById('personal-expense').innerText = formatMoney(pCompPers);
             }
             
@@ -1564,6 +1722,11 @@
 
         let dashPeriod = 'all'; // 'all' | 'year' | 'month'
 
+        function updatePeriodVisibility() {
+            const row = document.getElementById('period-filter-row');
+            if (row) row.style.display = (currentRole === 'director') ? 'flex' : 'none';
+        }
+
         function setDashPeriod(type) {
             dashPeriod = type;
             // Подсвечиваем активную кнопку
@@ -1575,9 +1738,9 @@
                 }
             });
             const ctrl = document.getElementById('dash-period-controls');
-            const msel = document.getElementById('dash-month-sel');
+            const mdd = document.getElementById('dd-month');
             if (ctrl) ctrl.classList.toggle('hidden', type === 'all');
-            if (msel) msel.classList.toggle('hidden', type !== 'month');
+            if (mdd) mdd.classList.toggle('hidden', type !== 'month');
             // Устанавливаем текущий месяц/год по умолчанию
             if (type !== 'all') {
                 const now = new Date();
@@ -1759,7 +1922,7 @@
                             if (det && detC) { detC.innerHTML = html; det.classList.remove('hidden'); }
                         },
                         plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 12 } },
-                                   tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${formatMoney(ctx.raw)}` } } },
+                                   tooltip: { backgroundColor: 'white', borderColor: '#E5E7EB', borderWidth: 1, titleColor: '#6B7280', bodyColor: '#1F2937', padding: { x: 14, y: 10 }, displayColors: true, boxWidth: 10, boxHeight: 10, cornerRadius: 10, callbacks: { title: () => '', label: ctx => '  ' + ctx.dataset.label + '   ' + formatMoney(ctx.raw) } } },
                         scales: {
                             y: { ticks: { font: { size: 10 }, callback: v => formatMoney(v) }, grid: { color: '#F9FAFB' } },
                             x: { grid: { display: false }, ticks: { font: { size: 10 } } }
@@ -1770,10 +1933,10 @@
                 // ── Pie charts ──
                 const totalPaidSum = filtered.reduce((s, p) => s + p.paid, 0);
                 const receivedColors = ['#FEF0F5','#EDE9FE','#F0F9FF','#FDFDE8','#FFEDD5','#DCFCE7','#E0FDF4','#FAF5FF','#FEFCE8','#E0FAFB','#FDF2F8','#F7FEE7'];
-                chartsInstance.pieReceived = new Chart(document.getElementById('receivedPieChart'), {
+                chartsInstance.pieReceived = new Chart(document.getElementById('receivedPieChart'), {  // PIE_RECEIVED
                     type: 'doughnut',
                     data: { labels: filtered.map(p => p.name), datasets: [{ data: totalPaidSum > 0 ? filtered.map(p => p.paid) : filtered.map(() => 1), backgroundColor: receivedColors, borderWidth: 0 }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false } } }
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false }, tooltip: { backgroundColor: 'white', borderColor: '#E5E7EB', borderWidth: 1, titleColor: '#6B7280', bodyColor: '#1F2937', padding: { x: 14, y: 10 }, displayColors: true, boxWidth: 10, boxHeight: 10, cornerRadius: 10, callbacks: { title: () => '', label: ctx => { const total = ctx.dataset.data.reduce((s,v)=>s+v,0); const pct = total>0?Math.round(ctx.raw/total*100):0; return '  '+ctx.label+'   '+formatMoney(ctx.raw)+'  ('+pct+'%)'; } } } } }
                 });
                 const receivedLegend = document.getElementById('received-legend');
                 if (receivedLegend) {
@@ -1792,10 +1955,10 @@
                 const expectedData = filtered.map(p => Math.max(0, p.contract - p.paid));
                 const totalExpectedSum = expectedData.reduce((s, v) => s + v, 0);
                 const expectedColors = ['#FEF0F5','#EDE9FE','#F0F9FF','#FDFDE8','#FFEDD5','#DCFCE7','#E0FDF4','#FAF5FF','#FEFCE8','#E0FAFB','#FDF2F8','#F7FEE7'];
-                chartsInstance.pieExpected = new Chart(document.getElementById('expectedPieChart'), {
+                chartsInstance.pieExpected = new Chart(document.getElementById('expectedPieChart'), {  // PIE_EXPECTED
                     type: 'doughnut',
                     data: { labels: filtered.map(p => p.name), datasets: [{ data: totalExpectedSum > 0 ? expectedData : filtered.map(() => 1), backgroundColor: expectedColors, borderWidth: 0 }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false } } }
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false }, tooltip: { backgroundColor: 'white', borderColor: '#E5E7EB', borderWidth: 1, titleColor: '#6B7280', bodyColor: '#1F2937', padding: { x: 14, y: 10 }, displayColors: true, boxWidth: 10, boxHeight: 10, cornerRadius: 10, callbacks: { title: () => '', label: ctx => { const total = ctx.dataset.data.reduce((s,v)=>s+v,0); const pct = total>0?Math.round(ctx.raw/total*100):0; return '  '+ctx.label+'   '+formatMoney(ctx.raw)+'  ('+pct+'%)'; } } } } }
                 });
                 const expectedLegend = document.getElementById('expected-legend');
                 if (expectedLegend) {
@@ -1824,7 +1987,7 @@
                     }
 
                     const card = document.createElement('div');
-                    card.className = "project-card bg-white p-6 rounded-3xl border border-gray-100 shadow-soft animate-fade-in" + (dragModeActive ? " drag-active" : "");
+                    card.className = "project-card bg-white p-6 rounded-3xl border border-gray-100 shadow-soft animate-fade-in"; card.style.userSelect = "none"; + (dragModeActive ? " drag-active" : "");
                     card.setAttribute('draggable', 'true');
                     card.dataset.projectId = p.id;
                     card.addEventListener('dragstart', e => {
@@ -1946,6 +2109,15 @@
                         <h4 class="font-bold text-brand-dark mb-4 text-sm">${p.name}</h4>
                         <div class="h-40 mb-4 flex justify-center"><canvas id="donut_${p.id}"></canvas></div>
                         <div class="space-y-3 border-t border-gray-100 pt-3">
+                            <div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;row-gap:4px;">
+                                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Поступления</span>
+                                <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;">${formatMoney((p.incomes||[]).reduce((s,i)=>s+i.amount,0))}</span>
+                                <span></span>
+                                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Расходы</span>
+                                <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;">${formatMoney(operationalExpenses.reduce((s,e)=>s+e.amount,0))}</span>
+                                <span></span>
+                            </div>
+                            <div class="border-t border-gray-100"></div>
                             <div class="space-y-1.5">
                                 <div class="text-[9px] font-bold uppercase text-gray-400 tracking-wider mb-1.5">Доли вложений</div>
                                 ${legendHtml || '<div class="text-xs text-gray-400 italic">Нет вложений</div>'}
@@ -1955,10 +2127,15 @@
                                 ${catListHtml || '<div class="text-xs text-gray-400 italic">Нет расходов</div>'}
                             </div>
                             <div class="border-t border-gray-100 pt-3">
-                                <div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:6px 0;">
+                                <div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:3px 0 2px;">
                                     <span class="text-[9px] font-bold uppercase text-gray-400 tracking-wider">Результат</span>
-                                    <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;">${(() => { const inc=(p.incomes||[]).reduce((s,i)=>s+i.amount,0); const exp=operationalExpenses.reduce((s,e)=>s+e.amount,0); const n=inc-exp; return (n>=0?'+':'')+formatMoney(n); })()}</span>
+                                    <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;">${(() => { const inc=(p.incomes||[]).reduce((s,i)=>s+i.amount,0); const exp=operationalExpenses.reduce((s,e)=>s+e.amount,0); const n=inc-exp-Math.round(inc*0.06); return (n>=0?'+':'')+formatMoney(n); })()}</span>
                                     <span></span>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:2px 0 3px;">
+                                    <span class="text-[9px] font-bold uppercase text-gray-400 tracking-wider" title="НДС 5% + налог на прибыль 1%">Налог</span>
+                                    <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;">${(() => { const inc=(p.incomes||[]).reduce((s,i)=>s+i.amount,0); return '−'+formatMoney(Math.round(inc*0.06)); })()}</span>
+                                    <span style="text-align:right;font-size:10px;color:#9CA3AF;">(6%)</span>
                                 </div>
                             </div>
                             <div class="space-y-1.5 border-t border-gray-100 pt-3">
@@ -1984,7 +2161,26 @@
                                 borderWidth: 0 
                             }] 
                         },
-                        options: { cutout: '58%', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                        options: { cutout: '58%', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: {
+                                        backgroundColor: 'white',
+                                        borderColor: '#E5E7EB',
+                                        borderWidth: 1,
+                                        titleColor: '#6B7280',
+                                        bodyColor: '#1F2937',
+                                        padding: { x: 14, y: 10 },
+                                        displayColors: true,
+                                        boxWidth: 10,
+                                        boxHeight: 10,
+                                        cornerRadius: 10,
+                                        callbacks: {
+                                            title: () => '',
+                                            label: ctx => {
+                                                const total = ctx.dataset.data.reduce((s,v)=>s+v,0);
+                                                const pct = total > 0 ? Math.round(ctx.raw/total*100) : 0;
+                                                return '  ' + ctx.label + '   ' + formatMoney(ctx.raw) + '  (' + pct + '%)';
+                                            }
+                                        }
+                                    } } }
                     });
                 // конец цикла карточек
                 });
@@ -1998,7 +2194,7 @@
 
             const card = document.createElement('div');
             card.id = 'generators-monthly-card';
-            card.className = 'project-card bg-white p-6 rounded-3xl border border-gray-100 shadow-soft animate-fade-in' + (dragModeActive ? ' drag-active' : '');
+            card.className = 'project-card bg-white p-6 rounded-3xl border border-gray-100 shadow-soft animate-fade-in'; card.style.userSelect = 'none'; + (dragModeActive ? ' drag-active' : '');
             card.setAttribute('draggable', 'true');
             card.addEventListener('dragstart', e => {
                 if (!dragModeActive) { e.preventDefault(); return; }
@@ -2027,13 +2223,14 @@
             // ── Данные за месяц ──
             const monthIncomes  = (genProj.incomes || []).filter(i => getYearMonth(i.date) === mk);
             const monthExpenses = genProj.expenses.filter(e => getYearMonth(e.date) === mk);
+            const monthExpensesOp = monthExpenses.filter(e => e.category !== 'Вывод прибыли');
             const mIncSum  = monthIncomes.reduce((s,i)=>s+i.amount, 0);
-            const mExpSum  = monthExpenses.reduce((s,e)=>s+e.amount, 0);
+            const mExpSum  = monthExpensesOp.reduce((s,e)=>s+e.amount, 0);
             const mNet     = mIncSum - mExpSum;
 
             // ── Данные общие ──
             const allIncSum  = (genProj.incomes || []).reduce((s,i)=>s+i.amount, 0);
-            const allExpSum  = genProj.expenses.reduce((s,e)=>s+e.amount, 0);
+            const allExpSum  = genProj.expenses.filter(e => e.category !== 'Вывод прибыли').reduce((s,e)=>s+e.amount, 0);
             const allNet     = allIncSum - allExpSum;
 
             // Выбранные данные
@@ -2094,7 +2291,7 @@
                     <button onclick="shiftChartMonth(-1)" class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-purple-100 text-gray-500 hover:text-brand-purple transition-all font-bold text-base leading-none">‹</button>
                     <span class="text-xs font-bold text-brand-purple text-center whitespace-nowrap">${MONTH_NAMES_RU_FULL[month]?.slice(0,3)||month} ${year}</span>
                     <button onclick="shiftChartMonth(1)" class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-purple-100 text-gray-500 hover:text-brand-purple transition-all font-bold text-base leading-none ${mk>=nowKey?'opacity-30 pointer-events-none':''}">›</button>
-                </div>` : `<span class="text-xs text-gray-400 font-semibold">Всё время</span>`;
+                </div>` : `<span class="text-xs text-gray-400 font-semibold">Все время</span>`;
 
             // Донат Генераторов — категории расходов выбранного периода
             const genCatSums = {};
@@ -2105,14 +2302,14 @@
             const donutColors = genActiveCats.length ? genActiveCats.map((k,i)=>CAT_COLORS[k]||FALLBACK_COLORS[i%FALLBACK_COLORS.length]) : [COLORS.residual];
 
             card.innerHTML = `
-                <div class="flex items-center justify-between mb-4">
-                    <h4 class="font-bold text-brand-dark text-sm">${genProj.name}</h4>
-                    <div class="flex items-center gap-2">
+                <div class="flex items-center mb-4" style="gap:8px;">
+                    <h4 class="font-bold text-brand-dark text-sm whitespace-nowrap">${genProj.name}</h4>
+                    <div class="flex-1 flex justify-center">
                         ${navHtml}
-                        <div class="flex bg-gray-100 rounded-xl p-0.5 text-[10px] font-bold">
-                            <button onclick="setGeneratorsView('month')" class="px-2.5 py-1 rounded-lg transition-all ${isMonth ? 'bg-white shadow text-brand-purple' : 'text-gray-400 hover:text-gray-600'}">По мес.</button>
-                            <button onclick="setGeneratorsView('total')" class="px-2.5 py-1 rounded-lg transition-all ${!isMonth ? 'bg-white shadow text-brand-purple' : 'text-gray-400 hover:text-gray-600'}">Общее</button>
-                        </div>
+                    </div>
+                    <div class="flex bg-gray-100 rounded-xl p-0.5 text-[10px] font-bold">
+                        <button onclick="setGeneratorsView('month')" class="px-2 py-1 rounded-lg transition-all ${isMonth ? 'bg-white shadow text-brand-purple' : 'text-gray-400 hover:text-gray-600'}">Мес</button>
+                        <button onclick="setGeneratorsView('total')" class="px-2 py-1 rounded-lg transition-all ${!isMonth ? 'bg-white shadow text-brand-purple' : 'text-gray-400 hover:text-gray-600'}">Все</button>
                     </div>
                 </div>
                 <div class="h-40 mb-4 flex justify-center"><canvas id="gen-donut-chart"></canvas></div>
@@ -2121,15 +2318,15 @@
                     <!-- Разделитель -->
                     <span style="grid-column:1/4;border-top:1px solid #F3F4F6;margin:6px 0 4px;"></span>
 
-                    <!-- Поступило -->
-                    <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Поступило</span>
+                    <!-- Поступления -->
+                    <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Поступления</span>
                     <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;">${formatMoney(incSum)}</span>
-                    <span style="text-align:right;font-size:10px;color:#9CA3AF;">${genExpSum>0?"("+Math.round(incSum/genExpSum*100)+"%)" :""}</span>
+                    <span></span>
 
                     <!-- Расходы -->
                     <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Расходы</span>
                     <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;">${formatMoney(genExpSum)}</span>
-                    <span style="text-align:right;font-size:10px;color:#9CA3AF;">${incSum>0?'('+Math.round(genExpSum/incSum*100)+'%)':''}</span>
+                    <span></span>
 
                     ${invRows ? `
                     <span style="grid-column:1/4;border-top:1px solid #F3F4F6;margin:10px 0 4px;"></span>
@@ -2157,8 +2354,13 @@
                 </div>
                 <div style="border-top:1px solid #F3F4F6;margin-top:16px;padding-top:12px;display:grid;grid-template-columns:1fr 80px 42px;align-items:center;">
                     <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Результат</span>
-                    <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;">${net>=0?'+':''}${formatMoney(net)}</span>
+                    <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;">${((net-Math.round(incSum*0.06))>=0?'+':'')+formatMoney(net-Math.round(incSum*0.06))}</span>
                     <span></span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:2px 0;">
+                    <span class="text-[9px] font-bold uppercase text-gray-400 tracking-wider" title="НДС 5% + налог на прибыль 1%">Налог</span>
+                    <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;">−${formatMoney(Math.round(incSum*0.06))}</span>
+                    <span style="text-align:right;font-size:10px;color:#9CA3AF;">(6%)</span>
                 </div>
                 <div style="border-top:1px solid #F3F4F6;margin-top:12px;padding-top:8px;">
                     <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Выведено прибыли</div>
@@ -2199,7 +2401,26 @@
                 chartsInstance.donuts['gen_monthly'] = new Chart(genCtx, {
                     type: 'doughnut',
                     data: { labels: donutLabels_gen, datasets: [{ data: donutData, backgroundColor: donutColors, borderWidth: 0 }] },
-                    options: { cutout: '58%', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                    options: { cutout: '58%', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: {
+                                        backgroundColor: 'white',
+                                        borderColor: '#E5E7EB',
+                                        borderWidth: 1,
+                                        titleColor: '#6B7280',
+                                        bodyColor: '#1F2937',
+                                        padding: { x: 14, y: 10 },
+                                        displayColors: true,
+                                        boxWidth: 10,
+                                        boxHeight: 10,
+                                        cornerRadius: 10,
+                                        callbacks: {
+                                            title: () => '',
+                                            label: ctx => {
+                                                const total = ctx.dataset.data.reduce((s,v)=>s+v,0);
+                                                const pct = total > 0 ? Math.round(ctx.raw/total*100) : 0;
+                                                return '  ' + ctx.label + '   ' + formatMoney(ctx.raw) + '  (' + pct + '%)';
+                                            }
+                                        }
+                                    } } }
                 });
             }
         }
@@ -3086,6 +3307,12 @@
             document.getElementById('add-project-name').value = '';
             document.getElementById('add-project-contract').value = '';
             document.getElementById('add-project-paid').value = '';
+            updateAccessDropdowns();
+            // Сбрасываем выбор на "Нет"
+            const lbl = document.getElementById('dd-add-partner-label');
+            const hid = document.getElementById('add-project-partner');
+            if (lbl) lbl.textContent = 'Нет';
+            if (hid) hid.value = 'Нет';
             document.getElementById('add-project-modal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
@@ -3119,11 +3346,232 @@
             showNotification('Создан новый объект', 'success');
         }
 
-        function openUniversalModal(type, pid) { 
+        function toggleModalDD(id) {
+            const menu = document.getElementById(id + '-menu');
+            const btn = document.querySelector('#' + id + ' .modal-dd-btn');
+            if (!menu || !btn) return;
+            const isOpen = menu.style.display === 'block';
+            document.querySelectorAll('.modal-dd-menu').forEach(m => { m.style.display = 'none'; });
+            document.querySelectorAll('.modal-dd-btn.open').forEach(b => b.classList.remove('open'));
+            if (!isOpen) {
+                const isPeriod = (id === 'dd-year' || id === 'dd-month');
+                if (isPeriod) {
+                    const parent = document.getElementById(id);
+                    if (parent && menu.parentElement !== parent) parent.appendChild(menu);
+                    menu.style.position = 'absolute';
+                    menu.style.top = (btn.offsetHeight + 4) + 'px';
+                    menu.style.left = '0';
+                    menu.style.width = btn.offsetWidth + 'px';
+                } else {
+                    if (menu.parentElement !== document.body) document.body.appendChild(menu);
+                    const r = btn.getBoundingClientRect();
+                    menu.style.position = 'fixed';
+                    menu.style.top = (r.bottom + 4) + 'px';
+                    menu.style.left = r.left + 'px';
+                    menu.style.width = Math.max(r.width, 200) + 'px';
+                }
+                menu.style.display = 'block';
+                btn.classList.add('open');
+            }
+        }
+        function selectModalDD(ddId, value, label) {
+            const hiddenId = ddId === 'dd-type' ? 'uni-type' : ddId === 'dd-project' ? 'uni-project' : 'uni-investor-input';
+            const hidden = document.getElementById(hiddenId);
+            if (hidden) hidden.value = value;
+            const lbl = document.getElementById(ddId + '-label');
+            if (lbl) lbl.textContent = label;
+            document.querySelectorAll('#' + ddId + '-menu .modal-dd-item').forEach(i => i.classList.remove('selected'));
+            if (event && event.currentTarget) event.currentTarget.classList.add('selected');
+            const menu = document.getElementById(ddId + '-menu');
+            if (menu) menu.style.display = 'none';
+            const btn = document.querySelector('#' + ddId + ' .modal-dd-btn');
+            if (btn) btn.classList.remove('open');
+            if (ddId === 'dd-type') {
+                _currentModalType = value;
+                const catEl = document.getElementById('uni-category-input');
+                if (catEl) {
+                    catEl.dataset.cattype = value;
+                    const ph = {income:'Аванс по договору, Оплата этапа...', general:'Бухгалтерия, Налоги, Аренда...', personal:'Личный вывод, Дивиденды...'};
+                    catEl.placeholder = ph[value] || 'Материалы, Зарплата, Топливо...';
+                    catEl.value = '';
+                    // Safari: сбрасываем список и привязываем заново
+                    catEl._catListId = value==='income' ? 'income-category-options' : value==='general' ? 'general-category-options' : value==='personal' ? 'personal-category-options' : 'expense-category-options';
+                }
+                toggleUniModalFields();
+            }
+        }
+        // Закрывать при клике вне
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.modal-dd-btn') && !e.target.closest('.modal-dd-menu')) {
+                document.querySelectorAll('.modal-dd-menu').forEach(m => { m.style.display = 'none'; });
+                document.querySelectorAll('.modal-dd-btn.open').forEach(b => b.classList.remove('open'));
+            }
+        });
+
+        function updateInvestorDatalist(setVal) {
+            const menu = document.getElementById('dd-investor-menu');
+            const hidden = document.getElementById('uni-investor-input');
+            const label = document.getElementById('dd-investor-label');
+            if (!menu) return;
+            // Обновляем имена из PARTNER_CONFIG (на случай переименований)
+            const nameMap = {
+                'Юнион Эскей': PARTNER_CONFIG.director?.name || 'Юнион Эскей',
+                'Дима': PARTNER_CONFIG.dima?.name || 'Дима',
+                'Коля': PARTNER_CONFIG.kolya?.name || 'Коля',
+                'АВ-Промстрой': PARTNER_CONFIG.partner3?.name || 'АВ-Промстрой',
+                'Партнёр 4': PARTNER_CONFIG.partner4?.name || 'Партнёр 4'
+            };
+            menu.querySelectorAll('.modal-dd-item').forEach(btn => {
+                const oldName = btn.textContent.trim();
+                const newName = nameMap[oldName];
+                if (newName && newName !== oldName) {
+                    btn.textContent = newName;
+                    btn.setAttribute('onclick', `selectModalDD('dd-investor','${newName}','${newName}')`);
+                }
+            });
+            const selected = setVal || (hidden?.value) || 'Юнион Эскей';
+            if (hidden) hidden.value = selected;
+            if (label) label.textContent = selected;
+        }
+
+        const CAT_LISTS = { project: [], income: [], general: [], personal: [] };
+        let _currentModalType = 'project';
+
+        function buildCatLists() {
+            CAT_LISTS.project = [...new Set([...["Материалы","Зарплата рабочим","Топливо","Спецтехника","Логистика","Документация","Налоги","Обслуживание","Банковская комиссия","Связь","Реклама","Подарки"],
+                ...(data||[]).flatMap(p=>(p.expenses||[]).map(e=>e.category).filter(c=>c&&c!=='Вывод прибыли'))])];
+            CAT_LISTS.income = [...new Set([...["Аванс по договору","Оплата этапа","Окончательный расчет","Доплата","Доп. соглашение"],
+                ...(data||[]).flatMap(p=>(p.incomes||[]).map(i=>i.category).filter(Boolean))])];
+            CAT_LISTS.general = [...new Set([...["Бухгалтерия","Налоги","Аренда офиса","Зарплата офиса","Подарки","Реклама","Связь и интернет","Банковские услуги"],
+                ...(companyTransactions||[]).filter(t=>t.type==='general').map(t=>t.category).filter(Boolean)])];
+            CAT_LISTS.personal = [...new Set([...["Личный вывод","Дивиденды","Питание","Одежда","Транспорт"],
+                ...(companyTransactions||[]).filter(t=>t.type==='personal').map(t=>t.category).filter(Boolean)])];
+        }
+
+        function getCatType() {
+            const el = document.getElementById('uni-category-input');
+            return (el && el.dataset.cattype) || _currentModalType || 'project';
+        }
+
+        function showCatDropdown(inp) {
+            buildCatLists();
+            const type = getCatType();
+            const opts = CAT_LISTS[type] || CAT_LISTS.project;
+            renderCatDropdown(inp, opts);
+        }
+
+        function filterCatDropdown(inp) {
+            const type = getCatType();
+            const opts = (CAT_LISTS[type] || CAT_LISTS.project).filter(o => o.toLowerCase().includes(inp.value.toLowerCase()));
+            renderCatDropdown(inp, opts);
+        }
+
+        function renderCatDropdown(inp, opts) {
+            let dd = document.getElementById('cat-dropdown');
+            if (!dd) return;
+            if (dd.parentElement !== document.body) document.body.appendChild(dd);
+            if (!opts.length) { dd.style.display='none'; return; }
+            const r = inp.getBoundingClientRect();
+            dd.style.position = 'fixed';
+            dd.style.top = (r.bottom + 4) + 'px';
+            dd.style.left = r.left + 'px';
+            dd.style.width = r.width + 'px';
+            dd.innerHTML = opts.map(o=>`<button class="cat-option" type="button" onclick="selectCatOption('${o.replace(/'/g,"\'")}')">${o}</button>`).join('');
+            dd.style.display = 'block';
+        }
+
+        function selectCatOption(val) {
+            const inp = document.getElementById('uni-category-input');
+            if (inp) inp.value = val;
+            hideCatDropdown();
+        }
+
+        function hideCatDropdown() {
+            const dd = document.getElementById('cat-dropdown');
+            if (dd) dd.style.display = 'none';
+        }
+
+        document.addEventListener('click', e => {
+            if (!e.target.closest('#cat-dropdown') && !e.target.closest('#uni-category-input')) hideCatDropdown();
+        });
+
+        // Вешаем обработчики на категорию через JS
+        function openCatDD(inp) {
+            const listId = inp._catListId || inp.getAttribute('list') || 'expense-category-options';
+            const dl = listId ? document.getElementById(listId) : null;
+            if (!dl) return;
+            const query = inp.value.toLowerCase();
+            const opts = Array.from(dl.options).map(o=>o.value).filter(v=>v&&(!query||v.toLowerCase().includes(query)));
+            const dd = document.getElementById('cat-dd');
+            if (!dd || !opts.length) { if(dd) dd.style.display='none'; return; }
+            const r = inp.getBoundingClientRect();
+            dd.style.top = (r.bottom + 2) + 'px';
+            dd.style.left = r.left + 'px';
+            dd.style.width = r.width + 'px';
+            dd.innerHTML = opts.map(o=>`<div class="modal-dd-item" onmousedown="event.preventDefault();pickCatOpt('${o.replace(/'/g,"\'")}')">${o}</div>`).join('');
+            dd.style.display = 'block';
+        }
+
+        function filterCatDD(inp) { openCatDD(inp); }
+
+        function pickCatOpt(val, el) {
+            const inp = document.getElementById('uni-category-input');
+            if (inp) { inp.value = val; inp.blur(); }
+            const dd = document.getElementById('cat-dd');
+            if (dd) dd.style.display = 'none';
+        }
+
+        document.addEventListener('click', function(e) {
+            if (e.target.id !== 'uni-category-input' && !e.target.closest('#cat-dd')) {
+                const dd = document.getElementById('cat-dd');
+                if (dd) dd.style.display = 'none';
+            }
+        });
+
+
+
+        function initCatInput() {
+            const inp = document.getElementById('uni-category-input');
+            if (!inp || inp._catInited) return;
+            inp._catInited = true;
+            inp.addEventListener('click', function() { showCatDropdown(this); });
+            inp.addEventListener('input', function() { filterCatDropdown(this); });
+            inp.addEventListener('keydown', function(e) { if(e.key==='Escape') hideCatDropdown(); });
+        }
+
+        function openUniversalModal(type, pid) {
+            initCatInput(); 
+            _currentModalType = 'project';
+            const _catInp = document.getElementById('uni-category-input');
+            if (_catInp) { _catInp.dataset.cattype = 'project'; _catInp.value = ''; _catInp.placeholder = 'Материалы, Зарплата, Топливо...'; }
+            updateInvestorDatalist();
+            // Наполняем все datalist из реальной истории
+            const incCats = new Set(["Аванс по договору","Оплата этапа","Окончательный расчет","Доплата","Доп. соглашение"]);
+            const genCats = new Set(["Бухгалтерия","Налоги","Аренда офиса","Зарплата офиса","Подарки","Реклама","Связь"]);
+            const persCats = new Set(["Личный вывод","Дивиденды","Транспорт"]);
+            (data||[]).forEach(p => (p.incomes||[]).forEach(i => { if(i.category&&i.category.trim()) incCats.add(i.category.trim()); }));
+            (companyTransactions||[]).forEach(t => {
+                if (!t.category||!t.category.trim()) return;
+                if (t.type==='personal') persCats.add(t.category.trim());
+                else genCats.add(t.category.trim());
+            });
+            const dlFill = {'income-category-options':incCats,'general-category-options':genCats,'personal-category-options':persCats};
+            Object.entries(dlFill).forEach(([id,cats]) => {
+                const dl = document.getElementById(id);
+                if (dl) dl.innerHTML = [...cats].map(v=>`<option value="${v}">`).join('');
+            });
             const projSelect = document.getElementById('uni-project');
+            const projMenu = document.getElementById('dd-project-menu');
             if (!projSelect) return;
-            projSelect.innerHTML = getFilteredProjects().map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-            if(pid) projSelect.value = pid;
+            const projects = getFilteredProjects();
+            const firstId = pid ? pid : (projects[0]?.id || '');
+            const firstName = projects.find(p=>String(p.id)===String(firstId))?.name || (projects[0]?.name || 'Выберите объект');
+            projSelect.value = firstId;
+            const projLabel = document.getElementById('dd-project-label');
+            if (projLabel) projLabel.textContent = firstName;
+            if (projMenu) projMenu.innerHTML = projects.map(p =>
+                `<button class="modal-dd-item${String(p.id)===String(firstId)?' selected':''}" onclick="selectModalDD('dd-project','${p.id}','${p.name}')">${p.name}</button>`
+            ).join('');
             
             projSelect.onchange = updateInvestorDatalist;
             
@@ -3216,9 +3664,8 @@
 
         // ПЕРЕКЛЮЧЕНИЕ ОТОБРАЖЕНИЯ ПОЛЕЙ В УНИВЕРСАЛЬНОЙ МОДАЛКЕ
         function toggleUniModalFields() {
-            const typeEl = document.getElementById('uni-type');
-            if (!typeEl) return;
-            const type = typeEl.value;
+            // Используем _currentModalType (надёжнее чем DOM uni-type)
+            const type = _currentModalType || document.getElementById('uni-type')?.value || 'project';
             const isIncome     = type === 'income';
             const isWithdrawal = type === 'withdrawal';
             const isProj       = type === 'project' || type === 'income';
@@ -3244,28 +3691,33 @@
 
             if (isIncome) {
                 if (invLabel) invLabel.textContent = 'От кого поступление';
-                if (invInput) { invInput.setAttribute('list','income-investor-options'); invInput.placeholder = 'Урал Трансмаш, Завод №9...'; }
+                if (invInput) { invInput.innerHTML = '<option>Урал Трансмаш</option><option>Заказчик</option>'; invInput.placeholder = 'Урал Трансмаш, Завод №9...'; }
                 if (catLabel) catLabel.textContent = 'Основание поступления';
-                if (catInput) { catInput.setAttribute('list','income-category-options'); catInput.placeholder = 'Аванс, Оплата этапа...'; }
+                if (catInput) { catInput._catListId = 'income-category-options'; catInput.placeholder = 'Аванс по договору, Оплата этапа...'; }
                 if (modalTitle) modalTitle.textContent = 'Новое поступление';
                 if (submitBtn)  submitBtn.textContent = 'Сохранить поступление';
             } else if (isWithdrawal) {
                 if (invLabel) invLabel.textContent = 'Кто выводит';
-                if (invInput) { invInput.setAttribute('list','expense-investor-options'); invInput.placeholder = 'Юнион Эскей / Коля...'; }
+                if (invInput) { updateInvestorDatalist(); invInput.placeholder = 'Юнион Эскей / Коля...'; }
                 if (modalTitle) modalTitle.textContent = 'Вывод прибыли';
                 if (submitBtn)  submitBtn.textContent = 'Сохранить';
             } else {
                 if (invLabel) invLabel.textContent = 'Кто оплатил / вложил';
-                if (invInput) { invInput.setAttribute('list','expense-investor-options'); invInput.placeholder = 'Общие / Юнион Эскей / Дима...'; }
+                if (invInput) { updateInvestorDatalist(); invInput.placeholder = 'Общие / Юнион Эскей / Дима...'; }
                 if (catLabel) catLabel.textContent = 'Категория / Назначение';
                 if (modalTitle) modalTitle.textContent = 'Новая операция';
                 if (submitBtn)  submitBtn.textContent = 'Сохранить';
             }
 
             const catInput = document.getElementById('uni-category-input');
-            if (catInput && !isIncome) {
-                catInput.setAttribute('list','expense-category-options');
-                catInput.placeholder = 'Материалы, Зарплата, Топливо...';
+            if (catInput) {
+                const typeVal = _currentModalType || document.getElementById('uni-type')?.value || 'project';
+                const dlMap = { income:'income-category-options', general:'general-category-options', personal:'personal-category-options' };
+                catInput.removeAttribute('list');
+                if (!isIncome) {
+                    const phMap = { general:'Бухгалтерия, Налоги, Аренда офиса...', personal:'Личный вывод, Дивиденды, Транспорт...', withdrawal:'' };
+                    catInput.placeholder = phMap[_currentModalType] || 'Материалы, Зарплата, Топливо...';
+                }
             }
 
             updateCategoryDatalist();
@@ -3273,9 +3725,7 @@
 
         // ОБНОВЛЕНИЕ СПИСКА КАТЕГОРИЙ В УНИВЕРСАЛЬНОЙ МОДАЛКЕ ДОБАВЛЕНИЯ
         function updateCategoryDatalist() {
-            const typeEl = document.getElementById('uni-type');
-            if (!typeEl) return;
-            const type = typeEl.value;
+            const type = _currentModalType || document.getElementById('uni-type')?.value || 'project';
             const datalist = document.getElementById('category-options');
             if (!datalist) return;
 
@@ -3664,5 +4114,6 @@
             setTimeout(renderCharts, 100);
         }
     </script>
+    <div id="cat-dd" style="display:none;position:fixed;background:white;border:1px solid #E5E7EB;border-radius:16px;box-shadow:0 10px 25px rgba(0,0,0,0.15);z-index:99999;max-height:200px;overflow-y:auto;padding:8px;"></div>
 </body>
 </html>
