@@ -59,7 +59,154 @@
         ::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
         
         .hidden-role { display: none !important; }
+        .director-only.hidden-role { display: none !important; }
         input, select, textarea { transition: all 0.2s ease-in-out; }
+        /* Не даём главному экрану разъезжаться шире окна. Горизонтальная
+           прокрутка остаётся только у таблиц, где она нужна намеренно. */
+        html, body { max-width:100%; overflow-x:hidden; overscroll-behavior-x:none; }
+        #app-content { width:100%; max-width:100vw; overflow-x:hidden; }
+
+        /* Компактная геометрия восьми показателей: заголовок всегда занимает
+           две строки по высоте, а сумма стоит слева на одной линии. */
+        #cards-structure-row { align-items:start; }
+        #director-cards { align-self:start; }
+        #director-cards > div {
+            min-width:0;
+            min-height:94px;
+            padding:12px !important;
+            display:grid;
+            grid-template-rows:25px minmax(0, 1fr);
+        }
+        #director-cards .stat-card-label {
+            min-height:25px;
+            align-content:start;
+            font-size:9px !important;
+            line-height:1.25;
+            letter-spacing:0.065em;
+        }
+        #director-cards > div > p {
+            width:100%;
+            margin:0;
+            align-self:center;
+            text-align:left;
+            font-size:clamp(17px, 4.7vw, 20px) !important;
+            line-height:1.08;
+            letter-spacing:-0.025em;
+            font-weight:700;
+        }
+        @media (min-width:768px) {
+            #director-cards > div { min-height:98px; padding:13px !important; }
+            #director-cards .stat-card-label { font-size:10px !important; }
+            #director-cards > div > p { font-size:20px !important; }
+        }
+        @media (min-width:1024px) {
+            /* Запас на новые строки списка объектов без лишнего пустого поля. */
+            #structure-grid { min-height:336px; }
+        }
+
+        /* Видимую рамку даты рисует контейнер. На iOS сам input остаётся
+           кликабельным, но текст даты показывает наша ровная подпись: Safari
+           больше не может сдвинуть цифры вверх или изменить их размер. */
+        .date-input-frame {
+            position:relative;
+            box-sizing:border-box;
+            width:100%;
+            max-width:100%;
+            height:40px;
+            overflow:hidden;
+            background:#F9FAFB;
+            border:1px solid #E5E7EB;
+            border-radius:12px;
+            transition:border-color 0.2s ease-in-out;
+        }
+        .date-input-frame:focus-within { border-color:#8B5CF6; }
+        .date-input-frame input[type="date"] {
+            position:absolute !important;
+            inset:0 !important;
+            z-index:2 !important;
+            width:100% !important;
+            height:100% !important;
+            margin:0 !important;
+            padding:0 !important;
+            opacity:0 !important;
+            cursor:pointer;
+        }
+        .date-display {
+            display:flex;
+            align-items:center;
+            position:absolute;
+            inset:0;
+            z-index:1;
+            padding:0 12px;
+            color:#374151;
+            font-size:14px;
+            font-weight:400;
+            height:100%;
+            line-height:1;
+            text-align:left;
+            pointer-events:none;
+        }
+
+        /* Редактирование строк в истории объектов: единая форма для расходов
+           и поступлений, включая одинаковый вид выпадающего списка. */
+        .history-edit-control {
+            box-sizing:border-box !important;
+            height:40px !important;
+            border-radius:10px !important;
+            font-size:13px !important;
+        }
+        .history-edit-select {
+            appearance:none;
+            -webkit-appearance:none;
+            padding-right:30px !important;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat:no-repeat;
+            background-position:right 10px center;
+            background-size:14px 14px;
+        }
+
+        /* Safari на iPhone/iPad увеличивает страницу при фокусе на поле,
+           если размер текста меньше 16px. На мобильных оставляем поля
+           читабельными и не блокируем ручное увеличение страницы. */
+        @media (max-width: 767px) {
+            input, select, textarea { font-size: 16px !important; }
+            .modal-dd-btn { height:44px; font-size:16px; }
+            .modal-dd-item { padding:11px 14px; font-size:16px; }
+            .history-edit-control { font-size:16px !important; }
+            /* Задачи в таблице должны оставаться компактными. */
+            textarea.todo-ta { font-size: 12px !important; }
+        }
+
+        /* Окна «Изменить» повторяют поля «Новой операции»: одинаковая
+           высота, шрифт, дата и выпадающие списки на компьютере. */
+        @media (min-width: 768px) {
+            html #uni-amount,
+            html #uni-category-input,
+            html #uni-comment,
+            html #edit-withdrawal-modal input:not([type="hidden"]),
+            html #edit-operation-modal input:not([type="hidden"]),
+            html #add-project-modal input:not([type="hidden"]) {
+                font-size: 12px !important;
+                line-height: 16px !important;
+                height: 36px !important;
+            }
+            html #universal-modal .date-input-frame,
+            html #edit-withdrawal-modal .date-input-frame,
+            html #edit-operation-modal .date-input-frame { height:36px !important; }
+            html #universal-modal .date-display,
+            html #edit-withdrawal-modal .date-display,
+            html #edit-operation-modal .date-display {
+                font-size: 12px !important;
+                line-height: 16px !important;
+            }
+            html #universal-modal .modal-dd-btn,
+            html #add-project-modal .modal-dd-btn,
+            html #edit-withdrawal-modal .modal-dd-btn,
+            html #edit-operation-modal .modal-dd-btn {
+                font-size: 12px !important;
+                height: 36px !important;
+            }
+        }
         
         /* Анимация плавного появления */
         @keyframes fadeIn {
@@ -85,25 +232,65 @@
             color: #9CA3AF !important;
         }
 
-        /* Комментарий — шире */
-        #history-table-body td:nth-child(5),
-        #income-history-table-body td:nth-child(5),
-        #company-history-table-body td:nth-child(5) { min-width: 150px; white-space: normal !important; }
+        /* Комментарии получают собственную широкую колонку. На телефоне
+           таблица прокручивается горизонтально, поэтому текст не сжимается
+           в несколько коротких слов на каждой строке. */
+        #history-table-expenses,
+        #history-table-incomes { min-width:940px; }
+        #history-table-withdrawals { min-width:760px; }
+        #history-table-expenses th:nth-child(5),
+        #history-table-expenses td:nth-child(5),
+        #history-table-incomes th:nth-child(5),
+        #history-table-incomes td:nth-child(5),
+        #company-history-modal th:nth-child(5),
+        #company-history-modal td:nth-child(5) {
+            width:260px !important;
+            min-width:260px !important;
+            max-width:320px !important;
+            white-space:normal !important;
+            line-height:1.45 !important;
+        }
+        #history-table-withdrawals th:nth-child(4),
+        #history-table-withdrawals td:nth-child(4) {
+            width:280px !important;
+            min-width:280px !important;
+            max-width:340px !important;
+            white-space:normal !important;
+            line-height:1.45 !important;
+        }
 
         /* Drag & drop карточки */
-        @media (max-width:480px) {
-            #uni-form .date-sum-grid { grid-template-columns:1fr !important; }
+        @media (max-width:768px) {
+            #structure-grid { grid-template-columns: 1fr !important; }
+            #structure-grid > div { border-right: none !important; padding-right: 0 !important; }
+            #structure-grid > div:first-child { border-bottom: 1px solid #F3F4F6; padding-bottom: 12px; margin-bottom: 4px; }
+        }
+        @media (max-width:767px) {
+            .date-display { font-size:16px; }
+        }
+        @media (max-width:640px) {
+            /* Safari держит у поля даты собственную минимальную ширину.
+               На телефонах поэтому дата и сумма идут по одной строке. */
+            #uni-form .date-sum-grid,
+            #edit-operation-modal .date-sum-grid,
+            #edit-withdrawal-modal .date-sum-grid { grid-template-columns:minmax(0, 1fr) !important; width:100% !important; max-width:100% !important; }
+            #uni-form .date-sum-grid > *,
+            #edit-operation-modal .date-sum-grid > *,
+            #edit-withdrawal-modal .date-sum-grid > * { min-width:0 !important; width:100% !important; max-width:100% !important; }
+            #uni-form .date-input-frame,
+            #edit-operation-modal .date-input-frame,
+            #edit-withdrawal-modal .date-input-frame { width:100% !important; max-width:100% !important; }
         }
         /* Кастомные дропдауны в модалке */
         .modal-dd { position: relative; }
-        .modal-dd-btn { width:100%; height:40px; background:white; border:1px solid #E5E7EB; border-radius:12px; padding:0 14px 0 14px; text-align:left; font-size:14px; font-weight:600; color:#374151; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:8px; transition:border-color 0.15s; }
+        .modal-dd-btn { width:100%; height:42px; background:white; border:1px solid #E5E7EB; border-radius:12px; padding:0 14px 0 14px; text-align:left; font-size:15px; font-weight:600; color:#374151; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:8px; transition:border-color 0.15s; }
         .modal-dd-btn:hover, .modal-dd-btn.open { border-color:#7C3AED; }
         .modal-dd-btn span:first-child { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .modal-dd-btn svg { flex-shrink:0; }
         .modal-dd-menu { background:white; border:1px solid #E5E7EB; border-radius:16px; box-shadow:0 10px 25px rgba(0,0,0,0.15); padding:8px; z-index:9999; display:none; max-height:200px; overflow-y:auto; }
         #dd-year-menu .modal-dd-item, #dd-month-menu .modal-dd-item { font-size:11px; padding:5px 10px; }
         .modal-dd-menu.open { display:block; }
-        .modal-dd-item { width:100%; text-align:left; padding:8px 12px; border-radius:10px; font-size:13px; font-weight:500; color:#374151; background:none; border:none; cursor:pointer; display:block; }
+        .modal-dd-item { width:100%; text-align:left; padding:10px 14px; border-radius:10px; font-size:14px; font-weight:500; color:#374151; background:none; border:none; cursor:pointer; display:block; }
         .modal-dd-item:hover { background:#F5F3FF; color:#5B21B6; }
         .modal-dd-item.selected { color:#7C3AED; font-weight:700; }
 
@@ -156,6 +343,16 @@
         /* Детализация финансового потока */
         .flow-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         @media (max-width: 600px) { .flow-cols { grid-template-columns: 1fr; } }
+        .flow-detail-title { font-size:12px; font-weight:700; color:#374151; }
+        .flow-detail-heading { margin-bottom:3px; font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.04em; }
+        .flow-detail-heading strong { color:#4B5563; font-weight:700; }
+        .flow-detail-row { display:grid; grid-template-columns:minmax(0, 1fr) 74px 36px; align-items:center; gap:2px; margin-bottom:2px; }
+        .flow-detail-name { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:11px; font-weight:500; color:#6B7280; }
+        .flow-detail-value { text-align:right; white-space:nowrap; font-size:12px; font-weight:600; color:#1F2937; }
+        .flow-detail-percent { text-align:right; font-size:10px; color:#9CA3AF; }
+        @media (max-width:600px) {
+            .flow-detail-row { grid-template-columns:minmax(0, 1fr) 74px 36px; }
+        }
 
         /* Чекбоксы «За кем закреплён» */
         input.access-chk,
@@ -241,6 +438,61 @@
         [id^="status-dropdown-menu-"].hidden {
             pointer-events: none !important;
             display: none !important;
+        }
+
+        /* Подсказки финансовых плашек: работают и при наведении, и по нажатию на телефоне. */
+        .stat-card-label {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            max-width: 100%;
+            outline: none;
+        }
+        .stat-card-label:focus-visible { border-radius: 4px; box-shadow: 0 0 0 2px #C4B5FD; }
+        .stat-card-help-icon {
+            width: 15px;
+            height: 15px;
+            flex: 0 0 15px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #C4B5FD;
+            border-radius: 50%;
+            color: #7C3AED;
+            font-size: 9px;
+            font-weight: 800;
+            line-height: 1;
+        }
+        .stat-card-hint {
+            position: absolute;
+            z-index: 120;
+            left: 0;
+            top: calc(100% + 8px);
+            width: min(260px, calc(100vw - 48px));
+            padding: 9px 10px;
+            border: 1px solid #DDD6FE;
+            border-radius: 10px;
+            background: #fff;
+            box-shadow: 0 10px 24px rgba(55, 48, 163, 0.16);
+            color: #4B5563;
+            font-size: 11px;
+            font-weight: 500;
+            line-height: 1.4;
+            text-transform: none;
+            letter-spacing: normal;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-3px);
+            transition: opacity .15s ease, transform .15s ease, visibility .15s ease;
+            pointer-events: none;
+        }
+        .stat-card-label:hover .stat-card-hint,
+        .stat-card-label:focus .stat-card-hint,
+        .stat-card-label.is-open .stat-card-hint {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
         }
     </style>
 </head>
@@ -329,6 +581,7 @@
                 <div id="top-actions" class="flex gap-3 w-full sm:w-auto">
                     <button id="btn-company-history" onclick="openCompanyHistoryModal()" class="flex-1 sm:flex-none px-4 py-2 bg-transparent border-2 border-[#C4B5FD]/60 text-gray-800 hover:border-[#A78BFA] rounded-xl text-sm font-semibold transition-all hover:shadow-[0_0_8px_rgba(196,181,253,0.35)]">История</button>
                     <button onclick="openUniversalModal()" class="flex-1 sm:flex-none px-4 py-2 bg-transparent border-2 border-[#C4B5FD]/60 text-gray-800 hover:border-[#A78BFA] rounded-xl text-sm font-semibold transition-all hover:shadow-[0_0_8px_rgba(196,181,253,0.35)]">+ Операция</button>
+                    <button onclick="openTrash()" class="px-3 py-2 bg-transparent border-2 border-gray-200 text-gray-400 rounded-xl text-sm transition-all hover:border-red-200 hover:text-red-400 director-only" title="Корзина удалённых объектов">🗑</button>
                 </div>
             </div>
 
@@ -336,7 +589,9 @@
             <div class="bg-white rounded-[2rem] border border-gray-100 shadow-soft animate-fade-in">
                 <div class="p-5 sm:p-6 border-b flex justify-between items-center">
                     <h3 class="text-base font-bold text-brand-dark">Информационная панель</h3>
-                    <button id="btn-add-project" onclick="openAddProjectModal()" class="px-4 py-2 bg-transparent border-2 border-[#C4B5FD]/60 text-gray-800 font-semibold rounded-xl text-sm hidden transition-all hover:border-[#A78BFA] hover:shadow-[0_0_8px_rgba(196,181,253,0.35)]">+ Новый объект</button>
+                    <div class="flex items-center gap-2">
+                        <button id="btn-add-project" onclick="openAddProjectModal()" class="px-4 py-2 bg-transparent border-2 border-[#C4B5FD]/60 text-gray-800 font-semibold rounded-xl text-sm hidden transition-all hover:border-[#A78BFA] hover:shadow-[0_0_8px_rgba(196,181,253,0.35)]">+ Объект</button>
+                    </div>
                 </div>
                 <div class="overflow-x-auto scrollbar-thin" style="overflow-y:visible;overflow-x:auto">
                     <table class="w-full text-left border-collapse min-w-[1250px] table-auto">
@@ -347,7 +602,7 @@
                                 <th class="px-6 py-4 text-center min-w-[130px] whitespace-nowrap">Сумма договора</th>
                                 <th class="px-6 py-4 text-center min-w-[110px]">Поступило</th>
                                 <th class="px-6 py-4 text-center min-w-[110px]">Затраты</th>
-                                <th class="px-6 py-4 text-center min-w-[120px] margin-col">Маржа</th>
+                                <th class="px-6 py-4 text-center min-w-[120px] margin-col" title="Общая прибыль проекта: Юнион Эскей и партнеров">Маржа</th>
                                 <th class="px-4 py-4 text-center min-w-[190px] w-[190px] access-col">За кем закреплен</th>
                                 <th class="px-4 py-4 text-center min-w-[170px] w-[170px]">Статус работы</th>
                                 <th class="px-4 py-4 text-center min-w-[100px]">Действия</th>
@@ -363,6 +618,7 @@
                     <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Период:</span>
                     <button onclick="setDashPeriod('all')" id="dash-btn-all" class="px-3 py-1 rounded-lg text-[11px] font-semibold bg-[#EDE9FE] text-[#5B21B6] transition-all">Все время</button>
                     <button onclick="setDashPeriod('year')" id="dash-btn-year" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-gray-100 transition-all">Год</button>
+                    <button onclick="setDashPeriod('quarter')" id="dash-btn-quarter" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-gray-100 transition-all">Квартал</button>
                     <button onclick="setDashPeriod('month')" id="dash-btn-month" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-gray-100 transition-all">Месяц</button>
                     <div id="dash-period-controls" class="flex items-center gap-2 hidden">
                         <div class="modal-dd" id="dd-year" style="width:80px;position:relative;">
@@ -398,39 +654,104 @@
                             </div>
                             <input type="hidden" id="dash-month-sel" value="7">
                         </div>
+                        <div class="modal-dd hidden" id="dd-quarter" style="width:112px;position:relative;">
+                            <button type="button" class="modal-dd-btn" style="height:32px;font-size:11px;font-weight:600;padding:0 8px;justify-content:center;gap:4px;" onclick="toggleModalDD('dd-quarter')">
+                                <span id="dd-quarter-label">III квартал</span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            <div class="modal-dd-menu" id="dd-quarter-menu">
+                                <button class="modal-dd-item" onclick="selectPeriodDD('quarter','1','I квартал')" type="button">I квартал</button>
+                                <button class="modal-dd-item" onclick="selectPeriodDD('quarter','2','II квартал')" type="button">II квартал</button>
+                                <button class="modal-dd-item selected" onclick="selectPeriodDD('quarter','3','III квартал')" type="button">III квартал</button>
+                                <button class="modal-dd-item" onclick="selectPeriodDD('quarter','4','IV квартал')" type="button">IV квартал</button>
+                            </div>
+                            <input type="hidden" id="dash-quarter-sel" value="3">
+                        </div>
                     </div>
                 </div>
-                <div id="director-cards" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
-                <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
-                    <p class="text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1">Выручка (Факт)</p>
-                    <p id="total-revenue" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
-                </div>
-                <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
-                    <p class="text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1">Сумма договоров</p>
-                    <p id="planned-revenue" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
-                </div>
-                <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
-                    <p class="text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1">Затраты объектов</p>
-                    <p id="total-expense" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
-                </div>
-                <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
-                    <p class="text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1">Траты компании</p>
-                    <p id="general-expense" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
-                </div>
-                <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
-                    <p class="text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1">Прибыль (Факт)</p>
-                    <p id="net-profit" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
-                </div>
-                <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
-                    <p class="text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1">Личный вывод</p>
-                    <p id="personal-expense" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
-                </div>
-            </div>
+                <!-- КОМПОНОВКА: финансовые плашки слева + Структура поступлений справа (только директор) -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="cards-structure-row">
+                    <!-- 8 плашек в два столбика -->
+                    <div id="director-cards" class="grid grid-cols-2 gap-3">
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
+                        <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
+                            <span>Ожидаемые поступления</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
+                            <span class="stat-card-hint" role="tooltip">Сколько денег еще должно поступить по заключенным договорам: сумма договора минус уже поступившие деньги. Это остаток на сегодня, поэтому он не делится по прошлым периодам.</span>
+                        </div>
+                        <p id="planned-revenue" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
+                    </div>
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
+                        <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
+                            <span>Выручка (факт)</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
+                            <span class="stat-card-hint" role="tooltip">Все поступления по объектам за выбранный период.</span>
+                        </div>
+                        <p id="total-revenue" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
+                    </div>
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
+                        <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
+                            <span>Прямые затраты</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
+                            <span class="stat-card-hint" role="tooltip">Материалы, работы, техника, логистика и прочие расходы объектов. Без вывода прибыли партнерам и без общих трат компании.</span>
+                        </div>
+                        <p id="direct-expense" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
+                    </div>
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
+                        <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
+                            <span>Вложено партнерами</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
+                            <span class="stat-card-hint" role="tooltip">Часть прямых затрат объектов, которую оплатили партнеры, а не Юнион Эскей.</span>
+                        </div>
+                        <p id="partner-investment" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
+                    </div>
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
+                        <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
+                            <span>Выведено партнерами</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
+                            <span class="stat-card-hint" role="tooltip">Уже выплаченная партнерам прибыль по объектам. Это не их вложения, а деньги, которые они получили.</span>
+                        </div>
+                        <p id="partner-profit-paid" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
+                    </div>
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
+                        <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
+                            <span>Траты компании</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
+                            <span class="stat-card-hint" role="tooltip">Налоги, бухгалтерия, реклама, офис и другие траты Юнион Эскей, не привязанные к конкретному объекту.</span>
+                        </div>
+                        <p id="general-expense" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
+                    </div>
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
+                        <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
+                            <span>Юнион Эскей</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
+                            <span class="stat-card-hint" role="tooltip">Поступления минус затраты объектов, которые оплатила Юнион Эскей, минус выплаченная партнерам прибыль и общие траты компании. Вложения партнеров и личный вывод сюда не входят.</span>
+                        </div>
+                        <p id="net-profit" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
+                    </div>
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
+                        <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
+                            <span>Личный вывод</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
+                            <span class="stat-card-hint" role="tooltip">Сколько прибыли Юнион Эскей уже выведено на личные цели. Это распоряжение прибылью, а не расход компании.</span>
+                        </div>
+                        <p id="personal-expense" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
+                    </div>
+                    </div>
 
-            <!-- ГРАФИКИ -->
-            <div id="main-charts-wrapper" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <!-- Левый график: Финансовый поток по месяцам -->
-                <div class="bg-white p-5 sm:p-6 rounded-[2rem] border shadow-soft lg:col-span-7">
+                    <!-- Структура поступлений справа -->
+                    <div class="bg-white p-5 sm:p-6 rounded-[2rem] border shadow-soft flex flex-col overflow-hidden director-only">
+                        <h3 class="font-bold text-brand-dark mb-4 text-xs uppercase tracking-wider text-center border-b pb-2">Структура поступлений</h3>
+                        <div class="grid gap-4 flex-1" id="structure-grid" style="grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));">
+                            <div class="flex flex-col items-center border-r border-gray-100 pr-3 min-w-0" style="overflow:hidden;">
+                                <span class="text-[9px] uppercase font-bold text-brand-gray mb-2 text-center">Поступило</span>
+                                <div class="h-36 w-full flex items-center justify-center" style="max-width:100%;"><canvas id="receivedPieChart"></canvas></div>
+                                <div id="received-legend" class="w-full mt-2 space-y-1" style="overflow:hidden;"></div>
+                            </div>
+                            <div class="flex flex-col items-center pl-3 min-w-0" style="overflow:hidden;">
+                                <span class="text-[9px] uppercase font-bold text-brand-gray mb-2 text-center">Ожидается</span>
+                                <div class="h-36 w-full flex items-center justify-center" style="max-width:100%;"><canvas id="expectedPieChart"></canvas></div>
+                                <div id="expected-legend" class="w-full mt-2 space-y-1" style="overflow:hidden;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            <!-- ГРАФИКИ: Финансовый поток — полная ширина -->
+            <div id="main-charts-wrapper">
+                <div class="bg-white p-5 sm:p-6 rounded-[2rem] border shadow-soft">
                     <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
                         <h3 class="font-bold text-brand-dark text-sm">Финансовый поток</h3>
                         <div class="flex items-center gap-1.5" id="flow-year-btns">
@@ -439,27 +760,9 @@
                             <button onclick="setFlowYear('all')" id="flow-btn-all" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-gray-100 transition-all">Все</button>
                         </div>
                     </div>
-                    <div class="h-64 sm:h-72" id="barChart-wrapper"><canvas id="barChart"></canvas></div>
-                    <!-- Детализация по месяцу — внутри карточки финансового потока -->
-                    <div id="flow-detail" class="hidden mt-4 text-xs text-gray-600 border-t border-gray-100 pt-3">
+                    <div class="h-64 sm:h-80" id="barChart-wrapper"><canvas id="barChart"></canvas></div>
+                    <div id="flow-detail" class="hidden mt-4 border-t border-gray-100 pt-3">
                         <div id="flow-detail-content"></div>
-                    </div>
-                </div>
-                
-                <!-- Правый график: Структура доходов — align-self:start чтобы не растягивался -->
-                <div class="bg-white p-5 sm:p-6 rounded-[2rem] border shadow-soft flex flex-col justify-between lg:col-span-5" style="align-self:start;">
-                    <h3 class="font-bold text-brand-dark mb-4 text-xs uppercase tracking-wider text-center border-b pb-2">Структура поступлений</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-4">
-                        <div class="flex flex-col items-center border-b sm:border-b-0 sm:border-r border-gray-100 pb-4 sm:pb-0 sm:pr-3">
-                            <span class="text-[9px] uppercase font-bold text-brand-gray mb-2 text-center h-6 flex items-center justify-center">Поступило</span>
-                            <div class="h-40 w-full flex items-center justify-center"><canvas id="receivedPieChart"></canvas></div>
-                            <div id="received-legend" class="w-full mt-3 space-y-1"></div>
-                        </div>
-                        <div class="flex flex-col items-center sm:pl-3">
-                            <span class="text-[9px] uppercase font-bold text-brand-gray mb-2 text-center h-6 flex items-center justify-center">Ожидается</span>
-                            <div class="h-40 w-full flex items-center justify-center"><canvas id="expectedPieChart"></canvas></div>
-                            <div id="expected-legend" class="w-full mt-3 space-y-1"></div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -483,8 +786,9 @@
             <div class="px-5 sm:px-6 pt-3 flex gap-2 shrink-0 bg-gray-50/50 border-b">
                 <button id="history-tab-expenses" type="button" onclick="switchHistoryTab('expenses')" class="px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 border-brand-purple text-brand-purple transition-colors">Расходы</button>
                 <button id="history-tab-incomes" type="button" onclick="switchHistoryTab('incomes')" class="px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 border-transparent text-gray-400 transition-colors">Поступления</button>
+                <button id="history-tab-withdrawals" type="button" onclick="switchHistoryTab('withdrawals')" class="px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 border-transparent text-gray-400 transition-colors">Выводы</button>
             </div>
-            <div class="overflow-y-auto flex-1">
+            <div class="overflow-y-auto overflow-x-auto flex-1">
                 <table id="history-table-expenses" class="w-full border-collapse">
                     <thead class="bg-white border-b text-[10px] uppercase text-gray-400 font-bold">
                         <tr>
@@ -511,13 +815,126 @@
                     </thead>
                     <tbody id="income-history-table-body" class="divide-y divide-gray-50 text-xs text-gray-700"></tbody>
                 </table>
+                <table id="history-table-withdrawals" class="w-full border-collapse hidden">
+                    <thead class="bg-white border-b text-[10px] uppercase text-gray-400 font-bold">
+                        <tr>
+                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap text-center">Дата</th>
+                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap text-center">Кто вывел</th>
+                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap text-center">Сумма</th>
+                            <th class="px-4 sm:px-6 py-4 text-center">Комментарий</th>
+                            <th class="px-4 sm:px-6 py-4 whitespace-nowrap text-center">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="withdrawal-history-table-body" class="divide-y divide-gray-50 text-xs text-gray-700"></tbody>
+                </table>
             </div>
+        </div>
+    </div>
+
+    <!-- РЕДАКТИРОВАНИЕ ВЫВОДА — В ЕДИНОМ СТИЛЕ С «НОВОЙ ОПЕРАЦИЕЙ» -->
+    <div id="edit-withdrawal-modal" class="fixed inset-0 bg-gray-950/50 backdrop-blur-sm z-[60] hidden flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target === this) closeEditWithdrawalModal()">
+        <div class="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-md animate-fade-in border flex flex-col max-h-[92vh]">
+            <div class="px-6 pt-6 pb-4 border-b border-gray-100 flex justify-between items-start shrink-0">
+                <div>
+                    <h3 class="text-xl font-bold text-brand-dark">Изменить вывод</h3>
+                    <p class="text-xs text-gray-400 mt-1">Изменения сохранятся в истории объекта</p>
+                </div>
+                <button type="button" onclick="closeEditWithdrawalModal()" class="text-gray-300 hover:text-gray-500 text-2xl leading-none transition-colors ml-4">&times;</button>
+            </div>
+            <form onsubmit="event.preventDefault(); saveEditWithdrawal();" class="px-6 pt-4 pb-5 space-y-3 overflow-y-auto overflow-x-hidden" translate="no">
+                <div class="grid grid-cols-2 gap-3 date-sum-grid" style="grid-template-columns:1fr 1fr;">
+                    <div class="space-y-1 min-w-0">
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Дата</label>
+                        <div class="date-input-frame">
+                            <span id="edit-withdrawal-date-display" class="date-display">Выберите дату</span>
+                            <input type="date" id="edit-withdrawal-date" class="outline-none" onchange="syncDateDisplay('edit-withdrawal-date')" oninput="syncDateDisplay('edit-withdrawal-date')" aria-label="Дата вывода" translate="no" spellcheck="false" lang="ru" required>
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Сумма (₽)</label>
+                        <input type="text" id="edit-withdrawal-amount" oninput="formatInputSpaces(this)" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-bold outline-none focus:border-brand-purple" autocomplete="off" translate="no" spellcheck="false" lang="ru" required>
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Кто вывел</label>
+                    <div class="modal-dd" id="dd-edit-withdrawal-person">
+                        <button type="button" class="modal-dd-btn" style="font-weight:400;" onclick="toggleModalDD('dd-edit-withdrawal-person')">
+                            <span id="dd-edit-withdrawal-person-label">Юнион Эскей</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
+                        <div class="modal-dd-menu" id="dd-edit-withdrawal-person-menu">
+                            <button class="modal-dd-item selected" onclick="setEditWithdrawalPerson('Юнион Эскей', this)" type="button">Юнион Эскей</button>
+                            <button class="modal-dd-item" onclick="setEditWithdrawalPerson('Коля', this)" type="button">Коля</button>
+                        </div>
+                        <input type="hidden" id="edit-withdrawal-person" value="Юнион Эскей">
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Комментарий</label>
+                    <input type="text" id="edit-withdrawal-comment" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple" autocomplete="off" placeholder="Описание (необязательно)" translate="no" spellcheck="false" lang="ru">
+                </div>
+                <div class="pt-2 flex gap-2 justify-end shrink-0">
+                    <button type="button" onclick="closeEditWithdrawalModal()" class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors">Отмена</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-sm font-bold text-white bg-brand-purple hover:bg-brand-purpleHover shadow-md transition-all">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ЕДИНОЕ РЕДАКТИРОВАНИЕ РАСХОДОВ, ПОСТУПЛЕНИЙ И ТРАТ КОМПАНИИ -->
+    <div id="edit-operation-modal" class="fixed inset-0 bg-gray-950/50 backdrop-blur-sm z-[60] hidden flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target === this) closeEditOperationModal()">
+        <div class="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-md animate-fade-in border flex flex-col max-h-[92vh]">
+            <div class="px-6 pt-6 pb-4 border-b border-gray-100 flex justify-between items-start shrink-0">
+                <div>
+                    <h3 id="edit-operation-title" class="text-xl font-bold text-brand-dark">Изменить операцию</h3>
+                    <p id="edit-operation-subtitle" class="text-xs text-gray-400 mt-1">Изменения сохранятся в истории</p>
+                </div>
+                <button type="button" onclick="closeEditOperationModal()" class="text-gray-300 hover:text-gray-500 text-2xl leading-none transition-colors ml-4">&times;</button>
+            </div>
+            <form onsubmit="event.preventDefault(); saveEditOperation();" class="px-6 pt-4 pb-5 space-y-3 overflow-y-auto overflow-x-hidden" translate="no">
+                <div class="grid grid-cols-2 gap-3 date-sum-grid" style="grid-template-columns:1fr 1fr;">
+                    <div class="space-y-1 min-w-0">
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Дата</label>
+                        <div class="date-input-frame">
+                            <span id="edit-operation-date-display" class="date-display">Выберите дату</span>
+                            <input type="date" id="edit-operation-date" class="outline-none" onchange="syncDateDisplay('edit-operation-date')" oninput="syncDateDisplay('edit-operation-date')" aria-label="Дата операции" translate="no" spellcheck="false" lang="ru" required>
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Сумма (₽)</label>
+                        <input type="text" id="edit-operation-amount" oninput="formatInputSpaces(this)" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-bold outline-none focus:border-brand-purple" autocomplete="off" translate="no" spellcheck="false" lang="ru" required>
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label id="edit-operation-person-label-text" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Кто оплатил / вложил</label>
+                    <div class="modal-dd" id="dd-edit-operation-person">
+                        <button type="button" class="modal-dd-btn" style="font-weight:400;" onclick="toggleModalDD('dd-edit-operation-person')">
+                            <span id="dd-edit-operation-person-label">Юнион Эскей</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
+                        <div class="modal-dd-menu" id="dd-edit-operation-person-menu"></div>
+                        <input type="hidden" id="edit-operation-person" value="Юнион Эскей">
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label id="edit-operation-category-label-text" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Категория / назначение</label>
+                    <input type="text" id="edit-operation-category" list="category-options-edit" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple" autocomplete="off" placeholder="Выберите или введите свою..." translate="no" spellcheck="false" lang="ru">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Комментарий</label>
+                    <input type="text" id="edit-operation-comment" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple" autocomplete="off" placeholder="Описание (необязательно)" translate="no" spellcheck="false" lang="ru">
+                </div>
+                <div class="pt-2 flex gap-2 justify-end shrink-0">
+                    <button type="button" onclick="closeEditOperationModal()" class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors">Отмена</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-sm font-bold text-white bg-brand-purple hover:bg-brand-purpleHover shadow-md transition-all">Сохранить</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <!-- МОДАЛЬНОЕ ОКНО ИСТОРИИ КОМПАНИИ -->
     <div id="company-history-modal" class="fixed inset-0 bg-gray-950/40 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target === this) closeCompanyHistoryModal()">
-        <div class="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-3xl shadow-2xl h-[85vh] sm:h-auto sm:max-h-[82vh] flex flex-col overflow-hidden animate-fade-in border border-gray-100">
+        <div class="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-5xl shadow-2xl h-[85vh] sm:h-auto sm:max-h-[82vh] flex flex-col overflow-hidden animate-fade-in border border-gray-100">
             <div class="px-6 pt-6 pb-4 border-b border-gray-100 flex justify-between items-start shrink-0">
                 <div>
                     <h3 class="text-xl font-bold text-brand-dark">Траты компании</h3>
@@ -525,16 +942,16 @@
                 </div>
                 <button onclick="closeCompanyHistoryModal()" class="text-gray-300 hover:text-gray-500 text-2xl leading-none transition-colors ml-4">&times;</button>
             </div>
-            <div class="overflow-y-auto flex-1">
-                <table class="w-full border-collapse">
+            <div class="overflow-y-auto overflow-x-auto flex-1">
+                <table class="w-full border-collapse" style="min-width:860px;">
                     <thead style="background:white;border-bottom:1px solid #F3F4F6;">
                         <tr>
-                            <th style="text-align:center;padding:10px 16px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9CA3AF;white-space:nowrap;">Дата</th>
-                            <th style="text-align:center;padding:10px 16px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9CA3AF;white-space:nowrap;">Тип</th>
-                            <th style="text-align:center;padding:10px 16px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9CA3AF;white-space:nowrap;">Сумма</th>
-                            <th style="text-align:center;padding:10px 16px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9CA3AF;white-space:nowrap;">Назначение</th>
-                            <th style="text-align:center;padding:10px 16px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9CA3AF;white-space:nowrap;">Комментарий</th>
-                            <th style="text-align:center;padding:10px 16px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9CA3AF;white-space:nowrap;">Действия</th>
+                            <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9CA3AF;white-space:nowrap;">Дата</th>
+                            <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9CA3AF;">Тип</th>
+                            <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9CA3AF;white-space:nowrap;">Сумма</th>
+                            <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9CA3AF;">Назначение</th>
+                            <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9CA3AF;">Комментарий</th>
+                            <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9CA3AF;white-space:nowrap;">Действия</th>
                         </tr>
                     </thead>
                     <tbody id="company-history-table-body" class="divide-y divide-gray-50 text-xs text-gray-700"></tbody>
@@ -611,13 +1028,16 @@
                         <datalist id="investor-options"></datalist>
                     </div>
                     <div class="grid gap-3 date-sum-grid" style="grid-template-columns:1fr 1fr;">
-                        <div class="space-y-1">
+                        <div class="space-y-1 min-w-0">
                             <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Дата</label>
-                            <input type="date" id="uni-date" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
+                            <div class="date-input-frame">
+                                <span id="uni-date-display" class="date-display">Выберите дату</span>
+                                <input type="date" id="uni-date" class="outline-none" onchange="syncDateDisplay('uni-date')" oninput="syncDateDisplay('uni-date')" aria-label="Дата операции" translate="no" spellcheck="false" lang="ru" required>
+                            </div>
                         </div>
                         <div class="space-y-1">
                             <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Сумма (₽)</label>
-                            <input type="text" id="uni-amount" oninput="formatInputSpaces(this)" placeholder="0" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-bold outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
+                            <input type="text" id="uni-amount" oninput="formatInputSpaces(this)" placeholder="0" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-bold outline-none focus:border-brand-purple transition-all" autocomplete="off" name="amt_x7p1" translate="no" spellcheck="false" lang="ru" required>
                         </div>
                     </div>
                     <div class="space-y-1" id="uni-category-wrapper" style="position:relative;">
@@ -675,9 +1095,14 @@
             </div>
             <form onsubmit="event.preventDefault(); saveNewProject();">
                 <div class="px-6 py-5 space-y-3" translate="no">
-                    <input type="text" id="add-project-name" placeholder="Название объекта" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
-                    <input type="text" id="add-project-contract" oninput="formatInputSpaces(this)" placeholder="Сумма договора (₽)" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
-                    <input type="text" id="add-project-paid" oninput="formatInputSpaces(this)" placeholder="Поступило (₽)" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru">
+                    <input type="text" id="add-project-name" autocomplete="off" name="prj_nm_x3" placeholder="Название объекта" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
+                    <input type="text" id="add-project-contract" autocomplete="off" name="prj_ct_x3" oninput="formatInputSpaces(this)" placeholder="Сумма договора (₽)" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
+                    <input type="text" id="add-project-paid" autocomplete="off" name="prj_pd_x3" oninput="formatInputSpaces(this); toggleNewProjectIncomeFields();" placeholder="Поступило (₽)" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru">
+                    <div id="add-project-income-details" class="hidden space-y-3 rounded-2xl border border-purple-100 bg-purple-50/40 p-3">
+                        <p class="text-[10px] font-bold text-purple-500 uppercase tracking-wider">Данные поступления — сохранятся в истории</p>
+                        <input type="text" id="add-project-income-category" autocomplete="off" name="prj_inc_cat_x3" list="income-category-options" placeholder="Основание поступления" class="w-full h-10 bg-white border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru">
+                        <input type="text" id="add-project-income-comment" autocomplete="off" name="prj_inc_cmnt_x3" placeholder="Комментарий (необязательно)" class="w-full h-10 bg-white border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru">
+                    </div>
                     <div class="modal-dd" id="dd-add-partner">
                             <button type="button" class="modal-dd-btn" style="font-weight:400;" onclick="toggleModalDD('dd-add-partner')">
                                 <span id="dd-add-partner-label">Нет</span>
@@ -792,7 +1217,7 @@
 
     <script>
         // Интегрированный API-адрес
-        const API_URL = "https://script.google.com/macros/s/AKfycbxbhOHC8bNDREddmeFrZAtRsC5NeZD7g6pUqQnEKQ86jaY-Rag6E6l9ciwHOALJYmJacg/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbwFyU8QngfpcjS1kFscr4vd3k2Qxye8BwQDpELwrdSGGpkl3NayO9dfSGZgxkvNrCpBPQ/exec";
 
         // Изначальный/глобальный конфиг партнеров (с исправленными дефолтами для Димы - 1010 и АВ-Промстрой - 1111)
         let PARTNER_CONFIG = {
@@ -803,7 +1228,8 @@
             partner4: { name: "Партнер 4", pin: "4444", color: "#FDF2F8" }        // Розовый
         };
 
-        let data = [], companyTransactions = [], authRole = null, currentRole = null;
+        let data = [], companyTransactions = [], profitWithdrawals = [], authRole = null, currentRole = null;
+        let API_CAPABILITIES = { apiVersion: 0, projectTrash: false, operationTrash: false, withdrawalLedger: false, projectTrashRecordId: false };
         
         let chartsInstance = { 
             bar: null, 
@@ -819,6 +1245,65 @@
         })();
         function saveWithdrawals() {
             try { localStorage.setItem('gen_withdrawals', JSON.stringify(generatorsWithdrawals)); } catch(e) {}
+        }
+        function getProjectWithdrawals(projectId) {
+            const project = data.find(p => Number(p.id) === Number(projectId));
+            const legacyRows = (project?.expenses || [])
+                .filter(e => e.category === 'Вывод прибыли')
+                .map((e, index) => ({
+                    id: `legacy-${projectId}-${index}`,
+                    projectId: Number(projectId),
+                    date: e.date,
+                    person: e.investor || e.comment || 'Юнион Эскей',
+                    amount: e.amount,
+                    comment: e.comment || ''
+                }));
+            if (!API_CAPABILITIES.withdrawalLedger) return legacyRows;
+
+            // Не теряем старые выводы, которые были внесены до появления
+            // отдельного журнала «Выводы» в таблице.
+            const ledgerRows = profitWithdrawals.filter(w => Number(w.projectId) === Number(projectId));
+            const ledgerKeys = new Set(ledgerRows.map(w => [
+                String(w.date || ''),
+                Number(w.amount || 0),
+                normalizeName(w.person || w.investor || '')
+            ].join('|')));
+            const onlyLegacyRows = legacyRows.filter(w => !ledgerKeys.has([
+                String(w.date || ''),
+                Number(w.amount || 0),
+                normalizeName(w.person || w.investor || '')
+            ].join('|')));
+            return [...ledgerRows, ...onlyLegacyRows];
+        }
+
+        // Все расчёты используют одну логику:
+        // расходы объекта = операционные расходы + уже выведенная прибыль партнёрам;
+        // вывод Юнион Эскей не является расходом — это распоряжение нашей прибылью.
+        function isProfitWithdrawal(record) {
+            return String(record?.category || '').trim().toLowerCase() === 'вывод прибыли';
+        }
+
+        function isUnionEskeyRecipient(person) {
+            const value = String(person || '').trim().toLowerCase();
+            return !value || value.includes('юнион') || value.includes('union');
+        }
+
+        function getProjectOperationalExpenses(project) {
+            return (project?.expenses || []).filter(e => !isProfitWithdrawal(e));
+        }
+
+        function getProjectPartnerProfitPayouts(projectId) {
+            return getProjectWithdrawals(projectId)
+                .filter(w => !isUnionEskeyRecipient(w.person || w.investor));
+        }
+
+        function getProjectUnionProfitPayouts(projectId) {
+            return getProjectWithdrawals(projectId)
+                .filter(w => isUnionEskeyRecipient(w.person || w.investor));
+        }
+
+        function sumAmounts(rows) {
+            return (rows || []).reduce((sum, row) => sum + Number(row.amount || 0), 0);
         }
 
         function shiftChartMonth(delta) {
@@ -936,6 +1421,22 @@
         }
         
         let currentHistoryProjectId = null;
+        let editingWithdrawal = null;
+        let editingOperation = null;
+
+        function formatDateForField(value) {
+            if (!value) return 'Выберите дату';
+            const parts = String(value).split('-').map(Number);
+            if (parts.length !== 3 || parts.some(Number.isNaN)) return String(value);
+            const months = ['янв.','февр.','мар.','апр.','мая','июн.','июл.','авг.','сент.','окт.','нояб.','дек.'];
+            return parts[2] + ' ' + (months[parts[1] - 1] || '') + ' ' + parts[0] + ' г.';
+        }
+
+        function syncDateDisplay(inputId) {
+            const input = document.getElementById(inputId);
+            const display = document.getElementById(inputId + '-display');
+            if (input && display) display.textContent = formatDateForField(input.value);
+        }
 
         const statusColors = {
             'В работе':    'border-2 border-[#FDBA74]/70 text-gray-800 hover:border-[#FB923C]/60 hover:shadow-[0_0_10px_rgba(251,146,60,0.25)]',
@@ -984,6 +1485,14 @@
         const formatPercent = (v) => new Intl.NumberFormat('ru-RU', { style: 'percent', minimumFractionDigits: 1 }).format(v);
 
         const formatNumberWithSpaces = (v) => { if (v === undefined || v === null) return "0"; return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(v); };
+        const formatChartAxisMoney = (v) => {
+            const amount = Number(v) || 0;
+            const abs = Math.abs(amount);
+            const compact = (n) => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 }).format(n);
+            if (abs >= 1000000) return `${compact(amount / 1000000)} млн ₽`;
+            if (abs >= 1000) return `${compact(amount / 1000)} тыс. ₽`;
+            return `${formatNumberWithSpaces(amount)} ₽`;
+        };
 
         const parseFormattedNumber = (val) => {
             if (val === undefined || val === null || val === "") return 0;
@@ -1163,9 +1672,11 @@
 
             activeFetchPromise = (async () => {
                 try {
-                    const response = await fetch(API_URL, {
+                    const separator = API_URL.includes('?') ? '&' : '?';
+                    const response = await fetch(API_URL + separator + '_ts=' + Date.now(), {
                         method: 'GET',
-                        mode: 'cors'
+                        mode: 'cors',
+                        cache: 'no-store'
                     });
                     const rawText = await response.text();
                     let jsonData;
@@ -1175,6 +1686,14 @@
                         console.error("Ответ сервера не является JSON. Ответ:", rawText);
                         throw new Error("Неверный формат ответа от Google Sheets");
                     }
+
+                    API_CAPABILITIES = {
+                        apiVersion: Number(jsonData?.capabilities?.apiVersion || 0),
+                        projectTrash: jsonData?.capabilities?.projectTrash === true,
+                        operationTrash: jsonData?.capabilities?.operationTrash === true,
+                        withdrawalLedger: jsonData?.capabilities?.withdrawalLedger === true,
+                        projectTrashRecordId: jsonData?.capabilities?.projectTrashRecordId === true
+                    };
                     
                     // Считываем доступы партнеров, если они вернулись с сервера без перезаписи цветов
                     if (jsonData && jsonData.partners) {
@@ -1192,18 +1711,61 @@
                         data = jsonData.projects.map(p => {
                             const parsedExpenses = (p.expenses || []).map(e => ({ date: e.date, category: e.category, amount: parseFormattedNumber(e.amount), comment: e.comment, investor: e.investor, rowIndex: e.rowIndex, settled: e.settled === true || e.settled === 'TRUE' || e.settled === 1 }));
                             const parsedIncomes = (p.incomes || []).map(i => ({ date: i.date, category: i.category, amount: parseFormattedNumber(i.amount), comment: i.comment, investor: i.investor, rowIndex: i.rowIndex, settled: i.settled === true || i.settled === 'TRUE' || i.settled === 1 }));
-                            const computedPaid = parsedIncomes.length > 0 ? parsedIncomes.reduce((sum, i) => sum + i.amount, 0) : parseFormattedNumber(p.paid);
-                            return { ...p, id: Number(p.id), contract: parseFormattedNumber(p.contract), paid: computedPaid, cost: parsedExpenses.reduce((sum, e) => sum + e.amount, 0), expenses: parsedExpenses, incomes: parsedIncomes };
+                            const expenseSum = parsedExpenses.reduce((sum, e) => sum + e.amount, 0);
+                            const incomeSum = parsedIncomes.reduce((sum, i) => sum + i.amount, 0);
+                            const storedCost = parseFormattedNumber(p.cost);
+                            const storedPaid = parseFormattedNumber(p.paid);
+                            const computedCost = parsedExpenses.length > 0 ? expenseSum : storedCost;
+                            const computedPaid = parsedIncomes.length > 0 ? incomeSum : storedPaid;
+                            return {
+                                ...p,
+                                id: Number(p.id),
+                                contract: parseFormattedNumber(p.contract),
+                                paid: computedPaid,
+                                cost: computedCost,
+                                expenses: parsedExpenses,
+                                incomes: parsedIncomes
+                            };
                         });
+                    }
+
+                    // Корзина — теперь хранится на сервере в листе «Корзина»
+                    if (jsonData && jsonData.trash) {
+                        serverTrash = jsonData.trash.map(p => ({
+                            ...p,
+                            id: Number(p.id),
+                            trashId: String(p.trashId || ''),
+                            contract: parseFormattedNumber(p.contract)
+                        }));
+                    }
+
+                    // Корзина удалённых расходов хранится отдельно от объектов
+                    if (jsonData && Array.isArray(jsonData.operationTrash)) {
+                        serverOperationTrash = jsonData.operationTrash.map(t => ({
+                            ...t,
+                            projectId: Number(t.projectId || 0),
+                            amount: parseFormattedNumber(t.amount)
+                        }));
                     }
 
                     // Парсим транзакции компании
                     if (jsonData && jsonData.companyTransactions) {
-                        companyTransactions = jsonData.companyTransactions.map(tx => ({ ...tx, amount: parseFormattedNumber(tx.amount) }));
+                        companyTransactions = jsonData.companyTransactions.map(tx => ({
+                            ...tx,
+                            rowIndex: Number(tx.rowIndex || 0),
+                            amount: parseFormattedNumber(tx.amount)
+                        }));
                     }
 
-                    // Загружаем выводы Генераторов из GAS
-                    if (jsonData && jsonData.withdrawals && Object.keys(jsonData.withdrawals).length > 0) {
+                    // Новый журнал выводов. До развёртывания API v7 сохраняем
+                    // совместимость со старой месячной структурой.
+                    if (jsonData && Array.isArray(jsonData.withdrawals)) {
+                        profitWithdrawals = jsonData.withdrawals.map(w => ({
+                            ...w,
+                            projectId: Number(w.projectId || 0),
+                            amount: parseFormattedNumber(w.amount)
+                        }));
+                    } else if (jsonData && jsonData.withdrawals && Object.keys(jsonData.withdrawals).length > 0) {
                         generatorsWithdrawals = jsonData.withdrawals;
                         saveWithdrawals();
                     }
@@ -1217,6 +1779,14 @@
             })();
 
             return activeFetchPromise;
+        }
+
+        async function refreshServerData() {
+            if (!isLive()) return false;
+            activeFetchPromise = null;
+            await preFetchConfig();
+            setRole(currentRole || authRole || 'director');
+            return true;
         }
 
         // Умный вход: если PIN-код отсутствует в кэше, принудительно опрашиваем Google Таблицу на наличие обновлений
@@ -1426,7 +1996,8 @@
                     paid: Number(payload.paid || 0),
                     cost: 0,
                     partnerAccess: payload.partnerAccess || 'Нет',
-                    expenses: []
+                    expenses: [],
+                    incomes: []
                 });
             } else if (payload.action === 'updateStatus') {
                 const proj = data.find(p => Number(p.id) === Number(payload.projectId));
@@ -1446,12 +2017,19 @@
             } else if (payload.action === 'deleteExpense') {
                 const proj = data.find(p => Number(p.id) === Number(payload.projectId));
                 if (proj && proj.expenses) {
-                    const idx = proj.expenses.findIndex(e => e.date === payload.date && e.category === payload.category && Number(e.amount) === Number(payload.amount) && e.comment === payload.comment);
+                    const idx = payload.rowIndex
+                        ? proj.expenses.findIndex(e => Number(e.rowIndex) === Number(payload.rowIndex))
+                        : proj.expenses.findIndex(e => e.date === payload.date && e.category === payload.category && Number(e.amount) === Number(payload.amount) && e.comment === payload.comment);
                     if (idx !== -1) {
                         proj.expenses.splice(idx, 1);
                         proj.cost = proj.expenses.reduce((sum, e) => sum + e.amount, 0);
                     }
                 }
+            } else if (payload.action === 'deleteCompanyExpense') {
+                const idx = payload.rowIndex
+                    ? companyTransactions.findIndex(t => Number(t.rowIndex) === Number(payload.rowIndex))
+                    : companyTransactions.findIndex(t => t.date === payload.date && t.type === payload.type && Number(t.amount) === Number(payload.amount) && t.category === payload.category && t.comment === payload.comment);
+                if (idx !== -1) companyTransactions.splice(idx, 1);
             }
             renderTable();
             renderCharts();
@@ -1464,7 +2042,7 @@
         // Глобальная функция отправки данных на сервер Google Sheets
         async function sendPost(payload, reload = false) {
             simulateOfflinePost(payload);
-            if (!isLive()) return;
+            if (!isLive()) return false;
 
             try {
                 const details = { 'jsonData': JSON.stringify(payload) };
@@ -1474,7 +2052,8 @@
                 }
                 formBody = formBody.join("&");
 
-                // Отправляем без no-cors чтобы видеть ошибки
+                // Apps Script не отдаёт CORS-заголовок для POST, поэтому результат
+                // операции отдельно подтверждаем последующим GET-запросом.
                 const res = await fetch(API_URL, { 
                     method: 'POST', 
                     mode: 'no-cors',
@@ -1483,9 +2062,11 @@
                 });
                 
                 if (reload) setTimeout(initApp, 2500);
+                return true;
             } catch (e) { 
                 console.error("Ошибка при отправке POST:", e);
                 showNotification('Ошибка синхронизации с таблицей', 'error');
+                return false;
             }
         }
 
@@ -1507,21 +2088,318 @@
             updateProjectStatus(id, value);
         }
 
-        // Окончательное удаление строительного объекта
+        // Окончательное удаление строительного объекта — сервер сам архивирует в лист «Корзина»
         async function confirmDeleteProject(id) {
+            if (!isLive() || !API_CAPABILITIES.projectTrash || API_CAPABILITIES.apiVersion < 5) {
+                showNotification('Нужно обновить Google Apps Script до версии 5 — объект не удалён.', 'error');
+                renderTable();
+                return;
+            }
             const origIdx = data.findIndex(p => Number(p.id) === Number(id));
             if (origIdx === -1) return;
+            const project = data[origIdx];
+            const projName = project.name;
 
+            const statusContainer = document.getElementById('status-dropdown-container-' + id);
+            if (statusContainer) {
+                statusContainer.innerHTML = '<span class="text-xs font-bold text-gray-500">Перемещаю…</span>';
+            }
+
+            const requestSent = await sendPost({
+                action: 'deleteProject',
+                projectId: id,
+                projectName: projName
+            }, false);
+            if (!requestSent) {
+                renderTable();
+                return;
+            }
+
+            // Сразу убираем строку с экрана, чтобы пользователь не ждал
+            // медленного повторного чтения Google Таблицы. Если сервер не
+            // подтвердит удаление, refreshServerData вернёт объект на место.
             data.splice(origIdx, 1);
-            renderTable(); 
+            renderTable();
             renderCharts();
+            showNotification('Перемещаю «' + projName + '» в Корзину...', 'success');
 
-            await sendPost({ action: 'deleteProject', projectId: id }, false);
-            showNotification('Объект успешно удален', 'success');
+            let verified = false;
+            for (let attempt = 0; attempt < 6; attempt++) {
+                await new Promise(resolve => setTimeout(resolve, 900 + attempt * 500));
+                try {
+                    await refreshServerData();
+                    const sameProject = p =>
+                        Number(p.id) === Number(id) ||
+                        String(p.name || '').trim() === String(projName || '').trim();
+                    const stillActive = data.some(sameProject);
+                    const nowInTrash = serverTrash.some(sameProject);
+                    if (!stillActive && nowInTrash) {
+                        verified = true;
+                        break;
+                    }
+                } catch (e) {
+                    console.warn('Проверка корзины не удалась:', e);
+                }
+            }
+
+            if (verified) {
+                renderTable();
+                renderCharts();
+                showNotification('Объект «' + projName + '» перемещён в Корзину.', 'success');
+            } else {
+                await refreshServerData().catch(() => {});
+                renderTable();
+                renderCharts();
+                showNotification('Удаление ещё обрабатывается. Обновите страницу через несколько секунд.', 'error');
+            }
+        }
+
+        let serverTrash = []; // Удалённые объекты
+        let serverOperationTrash = []; // Удалённые расходы
+        let pendingProjectRestores = new Set();
+
+        function escapeTrashText(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        async function openTrash() {
+            const modal = document.getElementById('trash-modal');
+            const content = document.getElementById('trash-content');
+            if (!modal || !content) return;
+            modal.classList.remove('hidden');
+            // Сначала сразу показываем уже загруженную корзину, затем незаметно
+            // сверяем её с Google Таблицей — без пустого экрана ожидания.
+            renderTrashContent();
+            refreshServerData()
+                .then(renderTrashContent)
+                .catch(e => console.warn('Не удалось обновить корзину:', e));
+        }
+
+        function renderTrashContent() {
+            const content = document.getElementById('trash-content');
+            if (!content) return;
+
+            if (serverTrash.length === 0 && serverOperationTrash.length === 0) {
+                content.innerHTML = '<p class="text-gray-400 text-sm text-center py-8">Корзина пуста</p>';
+                return;
+            }
+
+            const objectRows = serverTrash.map((p) => {
+                const restoreKey = getProjectTrashKey(p.trashId, p.id);
+                const isRestoring = pendingProjectRestores.has(restoreKey);
+                return `
+                <div class="py-3 border-b border-gray-100 last:border-b-0">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="font-semibold text-gray-800 text-sm truncate">${escapeTrashText(p.name)}</div>
+                            <div class="text-xs text-gray-400 mt-0.5">Удалён ${escapeTrashText(p.deletedAt || '')} · Договор: ${formatMoney(p.contract || 0)}</div>
+                        </div>
+                        <div class="flex flex-wrap gap-2 shrink-0">
+                            <button onclick="restoreFromTrash('${p.trashId}', ${Number(p.id)})" ${isRestoring ? 'disabled' : ''} class="px-3 py-1.5 bg-[#EDE9FE] text-[#5B21B6] text-xs font-bold rounded-xl hover:bg-[#DDD6FE] transition-all disabled:opacity-60 disabled:cursor-wait">${isRestoring ? 'Восстанавливаю…' : 'Восстановить'}</button>
+                            <button onclick="permanentDeleteFromTrash('${p.trashId}', ${Number(p.id)})" ${isRestoring ? 'disabled' : ''} class="px-3 py-1.5 bg-gray-50 text-gray-400 text-xs font-bold rounded-xl hover:bg-red-50 hover:text-red-400 transition-all disabled:opacity-60 disabled:cursor-not-allowed">Удалить навсегда</button>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            const operationRows = serverOperationTrash.map((t) => {
+                const isProject = ['projectExpense', 'projectIncome', 'withdrawal'].includes(t.recordType);
+                const recordLabel = t.recordType === 'projectIncome'
+                    ? 'Поступление'
+                    : t.recordType === 'withdrawal'
+                    ? 'Вывод прибыли'
+                    : t.recordType === 'projectExpense'
+                    ? 'Расход объекта'
+                    : 'Расход компании';
+                const source = isProject
+                    ? `${recordLabel} · Объект: ${escapeTrashText(t.projectName || ('ID ' + t.projectId))}`
+                    : (t.type === 'personal' ? 'Личный вывод' : t.type === 'withdrawal' ? 'Вывод прибыли' : 'Общий расход компании');
+                return `
+                    <div class="py-3 border-b border-gray-100 last:border-b-0">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="font-semibold text-gray-800 text-sm">${escapeTrashText(t.category || 'Без категории')}</span>
+                                    <span class="text-xs font-bold text-[#5B21B6]">${formatMoney(t.amount || 0)}</span>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-0.5">${source} · ${escapeTrashText(t.date || '')}</div>
+                                <div class="text-xs text-gray-400 mt-0.5">Удалён ${escapeTrashText(t.deletedAt || '')}${t.comment ? ' · ' + escapeTrashText(t.comment) : ''}</div>
+                            </div>
+                            <div class="flex flex-wrap gap-2 shrink-0">
+                                <button onclick="restoreOperationFromTrash('${t.trashId}')" class="px-3 py-1.5 bg-[#EDE9FE] text-[#5B21B6] text-xs font-bold rounded-xl hover:bg-[#DDD6FE] transition-all">Восстановить</button>
+                                <button onclick="permanentDeleteOperationFromTrash('${t.trashId}')" class="px-3 py-1.5 bg-gray-50 text-gray-400 text-xs font-bold rounded-xl hover:bg-red-50 hover:text-red-400 transition-all">Удалить навсегда</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            content.innerHTML = `
+                ${serverTrash.length ? `
+                    <section class="py-2">
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 pb-1">Объекты · ${serverTrash.length}</div>
+                        ${objectRows}
+                    </section>
+                ` : ''}
+                ${serverOperationTrash.length ? `
+                    <section class="py-2">
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 pb-1">Операции · ${serverOperationTrash.length}</div>
+                        ${operationRows}
+                    </section>
+                ` : ''}
+            `;
+        }
+
+        function getTrashItem(trashId, projectId) {
+            return serverTrash.find(p => trashId
+                ? String(p.trashId) === String(trashId)
+                : Number(p.id) === Number(projectId));
+        }
+
+        function isSameTrashItem(item, trashId, projectId) {
+            return trashId
+                ? String(item.trashId) === String(trashId)
+                : Number(item.id) === Number(projectId);
+        }
+
+        function getProjectTrashKey(trashId, projectId) {
+            return trashId ? `trash:${String(trashId)}` : `project:${Number(projectId)}`;
+        }
+
+        async function restoreFromTrash(trashId, projectId) {
+            const restored = getTrashItem(trashId, projectId);
+            if (!restored) return;
+            const restoreKey = getProjectTrashKey(trashId, projectId);
+            if (pendingProjectRestores.has(restoreKey)) return;
+
+            pendingProjectRestores.add(restoreKey);
+            renderTrashContent();
+            showNotification('Восстанавливаю объект...', 'success');
+            try {
+                const requestSent = await sendPost(trashId
+                    ? { action: 'restoreProject', trashId }
+                    : { action: 'restoreProject', projectId }, false);
+                if (!requestSent) {
+                    await refreshServerData().catch(() => {});
+                    renderTrashContent();
+                    showNotification('Не удалось восстановить объект. Он остался в корзине.', 'error');
+                    return;
+                }
+
+                // POST в Google Apps Script не возвращает читаемый ответ, поэтому
+                // считаем восстановление завершённым только после GET-проверки.
+                for (const delay of [0, 900, 1400, 2000, 2600]) {
+                    if (delay) await new Promise(resolve => setTimeout(resolve, delay));
+                    try {
+                        await refreshServerData();
+                        const isActive = data.some(project => Number(project.id) === Number(restored.id));
+                        const stillInTrash = serverTrash.some(item => isSameTrashItem(item, trashId, projectId));
+                        renderTable();
+                        renderCharts();
+                        renderTrashContent();
+                        if (isActive && !stillInTrash) {
+                            showNotification(`«${restored.name}» восстановлен вместе с расходами, поступлениями и выводами.`, 'success');
+                            return;
+                        }
+                    } catch (e) {
+                        console.warn('Проверка восстановления объекта не удалась:', e);
+                    }
+                }
+                showNotification('Восстановление не подтвердилось. Объект остался в корзине — попробуйте ещё раз.', 'error');
+            } finally {
+                pendingProjectRestores.delete(restoreKey);
+                renderTrashContent();
+            }
+        }
+
+        async function permanentDeleteFromTrash(trashId, projectId) {
+            const item = getTrashItem(trashId, projectId);
+            const name = item ? item.name : 'Объект';
+            if (!confirm(`Удалить «${name}» из корзины навсегда? Это действие необратимо.`)) return;
+            await sendPost(trashId
+                ? { action: 'permanentDeleteTrash', trashId }
+                : { action: 'permanentDeleteTrash', projectId }, false);
+            serverTrash = serverTrash.filter(p => !isSameTrashItem(p, trashId, projectId));
+            renderTrashContent();
+            showNotification(`«${name}» удалён из корзины навсегда.`, 'success');
+        }
+
+        async function restoreOperationFromTrash(trashId) {
+            const item = serverOperationTrash.find(t => t.trashId === trashId);
+            if (!item) return;
+            if (['projectExpense', 'projectIncome', 'withdrawal'].includes(item.recordType) &&
+                !data.some(p => Number(p.id) === Number(item.projectId))) {
+                showNotification('Сначала восстановите сам объект, затем эту операцию.', 'error');
+                return;
+            }
+
+            showNotification('Восстанавливаю операцию...', 'success');
+            await sendPost({ action: 'restoreOperationTrash', trashId }, false);
+            await refreshServerData();
+            if (serverOperationTrash.some(t => t.trashId === trashId)) {
+                showNotification('Операция не восстановлена. Обновите код Google Apps Script и повторите.', 'error');
+                renderTrashContent();
+                return;
+            }
+            renderTrashContent();
+            showNotification(`Операция «${item.category || 'Без категории'}» восстановлена.`, 'success');
+        }
+
+        async function permanentDeleteOperationFromTrash(trashId) {
+            const item = serverOperationTrash.find(t => t.trashId === trashId);
+            if (!item) return;
+            if (!confirm(`Удалить операцию «${item.category || 'Без категории'}» из корзины навсегда?`)) return;
+            await sendPost({ action: 'permanentDeleteOperationTrash', trashId }, false);
+            serverOperationTrash = serverOperationTrash.filter(t => t.trashId !== trashId);
+            renderTrashContent();
+            showNotification('Операция удалена из корзины навсегда.', 'success');
+        }
+
+        const TODO_SIZE_STORAGE_KEY = 'union_eskey_todo_size_v1';
+
+        function getSavedTodoSize() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(TODO_SIZE_STORAGE_KEY) || 'null');
+                const width = Number(saved?.width);
+                const height = Number(saved?.height);
+                if (!Number.isFinite(width) || !Number.isFinite(height)) return null;
+                return {
+                    width: Math.max(100, Math.min(400, width)),
+                    height: Math.max(40, Math.min(200, height))
+                };
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function saveTodoSize(width, height) {
+            try {
+                localStorage.setItem(TODO_SIZE_STORAGE_KEY, JSON.stringify({ width, height }));
+            } catch (e) {
+                console.warn('Не удалось сохранить размер задач:', e);
+            }
+        }
+
+        function applyTodoSize(width, height) {
+            document.querySelectorAll('.todo-ta').forEach(ta => {
+                ta.style.width = width + 'px';
+                ta.style.height = height + 'px';
+            });
         }
 
         function initTodoSync() {
+            const savedSize = getSavedTodoSize();
             document.querySelectorAll('.todo-ta').forEach(ta => {
+                if (savedSize) {
+                    ta.style.width = savedSize.width + 'px';
+                    ta.style.height = savedSize.height + 'px';
+                }
                 ta.removeEventListener('mousedown', ta._todoResizeHandler || (()=>{}));
                 ta._todoResizeHandler = function(e) {
                     const r = ta.getBoundingClientRect();
@@ -1530,17 +2408,18 @@
                     e.preventDefault();
                     const startX = e.clientX, startY = e.clientY;
                     const startW = ta.offsetWidth, startH = ta.offsetHeight;
-                    const all = document.querySelectorAll('.todo-ta');
+                    let currentW = startW, currentH = startH;
                     document.body.style.cursor = 'se-resize';
                     function onMove(ev) {
-                        const w = Math.max(100, Math.min(400, startW + ev.clientX - startX));
-                        const h = Math.max(40, Math.min(200, startH + ev.clientY - startY));
-                        all.forEach(t => { t.style.width = w + 'px'; t.style.height = h + 'px'; });
+                        currentW = Math.max(100, Math.min(400, startW + ev.clientX - startX));
+                        currentH = Math.max(40, Math.min(200, startH + ev.clientY - startY));
+                        applyTodoSize(currentW, currentH);
                     }
                     function onUp() {
                         document.body.style.cursor = '';
                         document.removeEventListener('mousemove', onMove);
                         document.removeEventListener('mouseup', onUp);
+                        saveTodoSize(currentW, currentH);
                     }
                     document.addEventListener('mousemove', onMove);
                     document.addEventListener('mouseup', onUp);
@@ -1568,12 +2447,19 @@
                 totalContract += p.contract;
                 totalFactPaid += p.paid;
                 
-                const cost = p.expenses.reduce((s, e) => {
-                    if (e.category === 'Вывод прибыли') return s; // не входит в затраты
+                const operationalCost = getProjectOperationalExpenses(p).reduce((s, e) => {
                     if (currentRole === 'dima' && e.investor === PARTNER_CONFIG.kolya.name) return s;
                     if (currentRole === 'kolya' && e.investor === PARTNER_CONFIG.dima.name) return s;
                     return s + e.amount;
                 }, 0);
+                // На панели директора затраты объекта включают и уже выданную
+                // партнёрам прибыль. Это реальный денежный расход по объекту.
+                const partnerProfitPayouts = currentRole === 'director'
+                    ? sumAmounts(getProjectPartnerProfitPayouts(p.id))
+                    : 0;
+                const cost = operationalCost + partnerProfitPayouts;
+                // Маржа — общий заработок проекта до распределения: наш и партнёров.
+                const totalMargin = p.contract - sumAmounts(getProjectOperationalExpenses(p));
                 totalFactCost += cost;
 
                 // Выпадающий список с чекбоксами для Директора
@@ -1653,7 +2539,7 @@
                     <td class="px-6 py-4 text-center"><span class="bg-transparent border-2 border-[#FEF08A]/70 rounded-xl px-2 py-0.5 font-semibold text-gray-700 text-xs transition-all hover:border-[#EAB308]/60 hover:shadow-[0_0_8px_rgba(234,179,8,0.2)] whitespace-nowrap">${formatMoney(p.contract)}</span></td>
                     <td class="px-6 py-4 text-center"><span class="bg-transparent border-2 border-[#C4B5FD]/70 rounded-xl px-2 py-0.5 font-semibold text-gray-700 text-xs transition-all hover:border-[#A78BFA]/70 hover:shadow-[0_0_8px_rgba(167,139,250,0.25)] whitespace-nowrap">${formatMoney(p.paid)}</span></td>
                     <td class="px-6 py-4 text-center"><span class="bg-transparent border-2 border-[#BAE6FD]/70 rounded-xl px-2 py-0.5 font-semibold text-gray-700 text-xs transition-all hover:border-[#7DD3FC]/70 hover:shadow-[0_0_8px_rgba(125,211,252,0.25)] whitespace-nowrap">${formatMoney(cost)}</span></td>
-                    <td class="px-6 py-4 text-center margin-col min-w-[120px]"><span class="bg-transparent border-2 border-[#FBCFE8]/70 rounded-xl px-2 py-0.5 font-semibold text-gray-700 text-xs transition-all hover:border-[#F9A8D4]/70 hover:shadow-[0_0_8px_rgba(249,168,212,0.25)] whitespace-nowrap">${formatMoney(p.contract - cost)}</span></td>
+                    <td class="px-6 py-4 text-center margin-col min-w-[120px]"><span class="bg-transparent border-2 border-[#FBCFE8]/70 rounded-xl px-2 py-0.5 font-semibold text-gray-700 text-xs transition-all hover:border-[#F9A8D4]/70 hover:shadow-[0_0_8px_rgba(249,168,212,0.25)] whitespace-nowrap" title="Общая прибыль Юнион Эскей и партнёров до распределения">${formatMoney(totalMargin)}</span></td>
                     <td class="px-4 py-4 text-center access-col min-w-[190px] w-[190px]">${accessCellHtml}</td>
                     <td class="px-4 py-4 text-center min-w-[170px] w-[170px]">${statusCellHtml}</td>
                     <td class="px-6 py-4 text-right whitespace-nowrap">
@@ -1664,44 +2550,55 @@
             });
 
             document.querySelectorAll('.margin-col, .access-col').forEach(el => el.classList.toggle('hidden-role', currentRole !== 'director'));
+            document.querySelectorAll('.director-only').forEach(el => el.classList.toggle('hidden-role', currentRole !== 'director'));
+            const csRow = document.getElementById('cards-structure-row');
+            if (csRow) csRow.classList.toggle('lg:grid-cols-2', currentRole === 'director');
 
             if (currentRole === 'director') {
                 // Применяем фильтр по периоду
-                let filteredInc = [], filteredExp = [], filteredComp = [];
+                let filteredInc = [], filteredExp = [], filteredPartnerProfit = [], filteredUnionProfit = [], filteredComp = [];
                 data.forEach(p => {
                     filteredInc.push(...filterByPeriod(p.incomes || [], 'date'));
-                    p.expenses.forEach(e => {
-                        const isWithdrawal = e.category === 'Вывод прибыли';
-                        const isUnionEscay = !e.investor ||
-                            e.investor.toLowerCase().includes('юнион') ||
-                            e.investor.toLowerCase().includes('union');
-                        // Вывод прибыли Юнион Эскей → не в затратах (это наша прибыль)
-                        // Вывод прибыли любого другого партнёра → в затраты объектов
-                        if (!isWithdrawal || !isUnionEscay) {
-                            filteredExp.push(...filterByPeriod([e], 'date'));
-                        }
-                    });
+                    filteredExp.push(...filterByPeriod(getProjectOperationalExpenses(p), 'date'));
+                    filteredPartnerProfit.push(...filterByPeriod(getProjectPartnerProfitPayouts(p.id), 'date'));
+                    filteredUnionProfit.push(...filterByPeriod(getProjectUnionProfitPayouts(p.id), 'date'));
                 });
                 filteredComp = filterByPeriod(companyTransactions, 'date');
                 
                 const pFactPaid = filteredInc.reduce((s,i) => s + i.amount, 0);
-                const pFactCost = filteredExp.reduce((s,e) => s + e.amount, 0);
+                // Затраты объектов: материалы/работы + выплаченная партнёрам прибыль.
+                const pFactDirectCost = sumAmounts(filteredExp);
+                const pFactPartnerInvestment = filteredExp
+                    .filter(e => !isUnionEskeyRecipient(e.investor))
+                    .reduce((sum, e) => sum + e.amount, 0);
+                const pFactPartnerProfitPaid = sumAmounts(filteredPartnerProfit);
+                const pFactUnionDirectCost = filteredExp
+                    .filter(e => isUnionEskeyRecipient(e.investor))
+                    .reduce((sum, e) => sum + e.amount, 0);
                 const pCompGen  = filteredComp.filter(t => t.type==='general').reduce((s,t) => s + t.amount, 0);
                 const pCompPers = filteredComp.filter(t => t.type==='personal').reduce((s,t) => s + t.amount, 0);
 
-                // Ожидаемые = сумма всех договоров
-                const totalContractSum = data.reduce((s,p) => s + (p.contract||0), 0);
+                // Ожидается поступлений = остаток по каждому заключенному договору.
+                // Поступления учитываем за все время, поскольку это текущая сумма к получению.
+                const expectedReceipts = data.reduce((sum, project) => {
+                    const remaining = Number(project.contract || 0) - Number(project.paid || 0);
+                    return sum + Math.max(0, remaining);
+                }, 0);
 
-                // Прибыль факт = Выручка − Затраты объектов − Траты компании
-                // Личный вывод и вывод Юнион Эскей не вычитаются — это наша прибыль
-                const netProfit = pFactPaid - pFactCost - pCompGen;
+                // Денежный результат Юнион Эскей: учитываем только вложения,
+                // которые сделала сама компания. Вложения партнёров — не расход ЮЭ.
+                // Личный вывод — это уже распоряжение прибылью, поэтому его не вычитаем.
+                const netProfit = pFactPaid - pFactUnionDirectCost - pFactPartnerProfitPaid - pCompGen;
+                const personalProfitWithdrawal = pCompPers + sumAmounts(filteredUnionProfit);
 
                 document.getElementById('total-revenue').innerText = formatMoney(pFactPaid);
-                document.getElementById('planned-revenue').innerText = formatMoney(totalContractSum);
-                document.getElementById('total-expense').innerText = formatMoney(pFactCost);
+                document.getElementById('planned-revenue').innerText = formatMoney(expectedReceipts);
+                document.getElementById('direct-expense').innerText = formatMoney(pFactDirectCost);
+                document.getElementById('partner-investment').innerText = formatMoney(pFactPartnerInvestment);
+                document.getElementById('partner-profit-paid').innerText = formatMoney(pFactPartnerProfitPaid);
                 document.getElementById('general-expense').innerText = formatMoney(pCompGen);
                 document.getElementById('net-profit').innerText = formatMoney(netProfit);
-                document.getElementById('personal-expense').innerText = formatMoney(pCompPers);
+                document.getElementById('personal-expense').innerText = formatMoney(personalProfitWithdrawal);
             }
             
             updateCategoryDatalist();
@@ -1723,7 +2620,18 @@
             return FALLBACK_COLORS[index % FALLBACK_COLORS.length];
         }
 
-        let dashPeriod = 'all'; // 'all' | 'year' | 'month'
+        let dashPeriod = 'all'; // 'all' | 'year' | 'quarter' | 'month'
+        let dashPeriodControlsInitialized = false;
+
+        function setPeriodControlValue(type, value, label) {
+            const selected = document.getElementById(`dash-${type}-sel`);
+            const labelEl = document.getElementById(`dd-${type}-label`);
+            if (selected) selected.value = String(value);
+            if (labelEl) labelEl.textContent = label;
+            document.querySelectorAll(`#dd-${type}-menu .modal-dd-item`).forEach(item => {
+                item.classList.toggle('selected', item.textContent.trim() === label);
+            });
+        }
 
         function updatePeriodVisibility() {
             const row = document.getElementById('period-filter-row');
@@ -1733,7 +2641,7 @@
         function setDashPeriod(type) {
             dashPeriod = type;
             // Подсвечиваем активную кнопку
-            ['all','year','month'].forEach(t => {
+            ['all','year','quarter','month'].forEach(t => {
                 const btn = document.getElementById('dash-btn-' + t);
                 if (btn) {
                     if (t === type) { btn.className = 'px-3 py-1 rounded-lg text-[11px] font-semibold bg-[#EDE9FE] text-[#5B21B6] transition-all'; }
@@ -1742,15 +2650,21 @@
             });
             const ctrl = document.getElementById('dash-period-controls');
             const mdd = document.getElementById('dd-month');
+            const qdd = document.getElementById('dd-quarter');
             if (ctrl) ctrl.classList.toggle('hidden', type === 'all');
             if (mdd) mdd.classList.toggle('hidden', type !== 'month');
-            // Устанавливаем текущий месяц/год по умолчанию
-            if (type !== 'all') {
+            if (qdd) qdd.classList.toggle('hidden', type !== 'quarter');
+            // При первом открытии сразу подставляем текущий месяц и квартал,
+            // а не зашитый в разметке предыдущий месяц. Дальше выбор пользователя сохраняется.
+            if (type !== 'all' && !dashPeriodControlsInitialized) {
                 const now = new Date();
-                const ySel = document.getElementById('dash-year-sel');
-                const mSel = document.getElementById('dash-month-sel');
-                if (ySel && !ySel.value) ySel.value = String(now.getFullYear());
-                if (mSel && !mSel.value) mSel.value = String(now.getMonth() + 1);
+                const month = now.getMonth() + 1;
+                const quarter = Math.floor(now.getMonth() / 3) + 1;
+                const monthLabel = MONTH_NAMES_RU_FULL[String(month).padStart(2, '0')] || String(month);
+                setPeriodControlValue('year', now.getFullYear(), String(now.getFullYear()));
+                setPeriodControlValue('month', month, monthLabel);
+                setPeriodControlValue('quarter', quarter, `${['I', 'II', 'III', 'IV'][quarter - 1]} квартал`);
+                dashPeriodControlsInitialized = true;
             }
             renderTable();
             renderCharts();
@@ -1760,7 +2674,19 @@
             if (dashPeriod === 'all') return null;
             const y = parseInt(document.getElementById('dash-year-sel')?.value || new Date().getFullYear());
             const m = parseInt(document.getElementById('dash-month-sel')?.value || (new Date().getMonth()+1));
-            return { type: dashPeriod, year: y, month: m };
+            const q = parseInt(document.getElementById('dash-quarter-sel')?.value || (Math.floor(new Date().getMonth() / 3) + 1));
+            return { type: dashPeriod, year: y, month: m, quarter: q };
+        }
+
+        function selectPeriodDD(type, value, label) {
+            const dropdownId = `dd-${type}`;
+            setPeriodControlValue(type, value, label);
+            const menu = document.getElementById(`${dropdownId}-menu`);
+            const button = document.querySelector(`#${dropdownId} .modal-dd-btn`);
+            if (menu) menu.style.display = 'none';
+            if (button) button.classList.remove('open');
+            renderTable();
+            renderCharts();
         }
 
         function filterByPeriod(items, dateField) {
@@ -1770,9 +2696,31 @@
                 const d = new Date(item[dateField] || item.date);
                 if (isNaN(d)) return true;
                 if (pf.type === 'year') return d.getFullYear() === pf.year;
+                if (pf.type === 'quarter') return d.getFullYear() === pf.year && Math.floor(d.getMonth() / 3) + 1 === pf.quarter;
                 return d.getFullYear() === pf.year && (d.getMonth()+1) === pf.month;
             });
         }
+
+        function toggleStatCardHint(label) {
+            const wasOpen = label.classList.contains('is-open');
+            document.querySelectorAll('.stat-card-label.is-open').forEach(item => {
+                item.classList.remove('is-open');
+                item.setAttribute('aria-expanded', 'false');
+            });
+            if (!wasOpen) {
+                label.classList.add('is-open');
+                label.setAttribute('aria-expanded', 'true');
+            }
+        }
+
+        document.addEventListener('click', event => {
+            if (!event.target.closest('.stat-card-label')) {
+                document.querySelectorAll('.stat-card-label.is-open').forEach(item => {
+                    item.classList.remove('is-open');
+                    item.setAttribute('aria-expanded', 'false');
+                });
+            }
+        });
 
         function toggleDragMode() {
             dragModeActive = !dragModeActive;
@@ -1834,7 +2782,7 @@
                         for (let mo = 1; mo <= 12; mo++) targetMonths.push(`2026-${String(mo).padStart(2,'0')}`);
                     }
                 } else {
-                    const startMo = flowYear === 2026 ? 5 : 1; // 2026 начинаем с мая
+                    const startMo = 1; // Всегда с января — столбики уже
                     for (let mo = startMo; mo <= 12; mo++) targetMonths.push(`${flowYear}-${String(mo).padStart(2,'0')}`);
                 }
 
@@ -1891,32 +2839,32 @@
                             d.expenseItems.forEach(e => { byCategory[e.category]=(byCategory[e.category]||0)+e.amount; });
                             const totalOut = d.out;
 
-                            let html = `<div style="display:flex;justify-content:space-between;align-items:center;" class="mb-2">
-                                <span class="font-bold text-gray-700 text-xs">${title}</span>
+                            let html = `<div style="display:flex;justify-content:space-between;align-items:center;" class="mb-3">
+                                <span class="flow-detail-title">${title}</span>
                                 <button onclick="document.getElementById('flow-detail').classList.add('hidden')" class="text-gray-300 hover:text-gray-500 text-lg leading-none">&times;</button>
                             </div>
                             <div class="flow-cols">
                                 <div>
-                                    <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Расходы <span class="font-semibold text-gray-600">${formatMoney(totalOut)}</span></div>
+                                    <div class="flow-detail-heading">Расходы <strong>${formatMoney(totalOut)}</strong></div>
                                     ${Object.entries(byCategory).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
                                         const pct = totalOut>0 ? Math.round(v/totalOut*100) : 0;
-                                        return `<div style="display:grid;grid-template-columns:1fr 74px 36px;align-items:center;gap:2px;margin-bottom:2px;">
-                                            <span style="font-size:11px;color:#4B5563;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;" title="${k}">${k}</span>
-                                            <span style="text-align:right;font-size:11px;font-weight:600;color:#1F2937;white-space:nowrap;">${formatMoney(v)}</span>
-                                            <span style="text-align:right;font-size:10px;color:#9CA3AF;">(${pct}%)</span>
+                                        return `<div class="flow-detail-row">
+                                            <span class="flow-detail-name" title="${k}">${k}</span>
+                                            <span class="flow-detail-value">${formatMoney(v)}</span>
+                                            <span class="flow-detail-percent">(${pct}%)</span>
                                         </div>`;
-                                    }).join('') || '<div style="font-size:11px;color:#D1D5DB;font-style:italic;">—</div>'}
+                                    }).join('') || '<div style="font-size:13px;color:#D1D5DB;font-style:italic;">—</div>'}
                                 </div>
                                 <div>
-                                    <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Поступило <span class="font-semibold text-gray-600">${formatMoney(totalIn)}</span></div>
+                                    <div class="flow-detail-heading">Поступило <strong>${formatMoney(totalIn)}</strong></div>
                                     ${Object.entries(byProject).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
                                         const pct = totalIn>0 ? Math.round(v/totalIn*100) : 0;
-                                        return `<div style="display:grid;grid-template-columns:1fr 74px 36px;align-items:center;gap:2px;margin-bottom:2px;">
-                                            <span style="font-size:11px;color:#4B5563;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;" title="${k}">${k}</span>
-                                            <span style="text-align:right;font-size:11px;font-weight:600;color:#1F2937;white-space:nowrap;">${formatMoney(v)}</span>
-                                            <span style="text-align:right;font-size:10px;color:#9CA3AF;">(${pct}%)</span>
+                                        return `<div class="flow-detail-row">
+                                            <span class="flow-detail-name" title="${k}">${k}</span>
+                                            <span class="flow-detail-value">${formatMoney(v)}</span>
+                                            <span class="flow-detail-percent">(${pct}%)</span>
                                         </div>`;
-                                    }).join('') || '<div style="font-size:11px;color:#D1D5DB;font-style:italic;">—</div>'}
+                                    }).join('') || '<div style="font-size:13px;color:#D1D5DB;font-style:italic;">—</div>'}
                                 </div>
                             </div>`;
 
@@ -1924,11 +2872,11 @@
                             const detC = document.getElementById('flow-detail-content');
                             if (det && detC) { detC.innerHTML = html; det.classList.remove('hidden'); }
                         },
-                        plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 12 } },
+                        plugins: { legend: { position: 'bottom', labels: { color: '#6B7280', padding: 16, boxWidth: 12, font: { family: 'Inter, system-ui, -apple-system, sans-serif', size: 12, weight: '600' } } },
                                    tooltip: { backgroundColor: 'white', borderColor: '#E5E7EB', borderWidth: 1, titleColor: '#6B7280', bodyColor: '#1F2937', padding: { x: 14, y: 10 }, displayColors: true, boxWidth: 10, boxHeight: 10, cornerRadius: 10, callbacks: { title: () => '', label: ctx => '  ' + ctx.dataset.label + '   ' + formatMoney(ctx.raw) } } },
                         scales: {
-                            y: { ticks: { font: { size: 10 }, callback: v => formatMoney(v) }, grid: { color: '#F9FAFB' } },
-                            x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                            y: { ticks: { color: '#6B7280', font: { family: 'Inter, system-ui, -apple-system, sans-serif', size: 12, weight: '500' }, callback: v => formatChartAxisMoney(v) }, grid: { color: '#F9FAFB' } },
+                            x: { grid: { display: false }, ticks: { color: '#6B7280', font: { family: 'Inter, system-ui, -apple-system, sans-serif', size: 12, weight: '600' } } }
                         }
                     }
                 });
@@ -2021,10 +2969,36 @@
                     });
                     
                     // ДИНАМИЧЕСКИЙ СБОР ВСЕХ ИНВЕСТОРОВ ДЛЯ ТЕКУЩЕГО ПРОЕКТА С УМНЫМ СЛИЯНИЕМ ДУБЛИКАТОВ
-                    // Исключаем «Вывод прибыли» из операционных расходов
-                    const operationalExpenses = p.expenses.filter(e => e.category !== 'Вывод прибыли');
-                    const withdrawalExpenses  = p.expenses.filter(e => e.category === 'Вывод прибыли');
-
+                    const operationalExpenses = getProjectOperationalExpenses(p);
+                    const projectIncome = sumAmounts(p.incomes || []);
+                    const projectOperationalCost = sumAmounts(operationalExpenses);
+                    const totalProjectMargin = projectIncome - projectOperationalCost;
+                    // Так же, как в карточке «Генератор»: результат после расчетного налога 6%.
+                    const projectTax = Math.round(projectIncome * 0.06);
+                    const projectResultAfterTax = totalProjectMargin - projectTax;
+                    // После результата показываем только реальные выводы с объекта:
+                    // они берутся из журнала «Выводы», а не из расчетной прибыли.
+                    const withdrawalByRecipient = {};
+                    getProjectWithdrawals(p.id).forEach(withdrawal => {
+                        const rawRecipient = withdrawal.person || withdrawal.investor || 'Юнион Эскей';
+                        const recipient = isUnionEskeyRecipient(rawRecipient)
+                            ? 'Юнион Эскей'
+                            : Object.values(PARTNER_CONFIG).find(cfg => normalizeName(cfg.name) === normalizeName(rawRecipient))?.name || rawRecipient;
+                        withdrawalByRecipient[recipient] = (withdrawalByRecipient[recipient] || 0) + Number(withdrawal.amount || 0);
+                    });
+                    const withdrawalSummaryHtml = Object.entries(withdrawalByRecipient)
+                        .sort(([aName, aSum], [bName, bSum]) => {
+                            if (aName === 'Юнион Эскей') return -1;
+                            if (bName === 'Юнион Эскей') return 1;
+                            return bSum - aSum;
+                        })
+                        .map(([recipient, amount]) => `
+                            <div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:2px 0 3px;">
+                                <span class="text-xs text-gray-600 font-medium">${recipient}</span>
+                                <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;">${formatMoney(amount)}</span>
+                                <span></span>
+                            </div>
+                        `).join('') || '<div class="text-xs text-gray-300 italic">Нет выводов</div>';
                     const investorSums = {};
                     operationalExpenses.forEach(e => {
                         const rawInv = String(e.investor || 'Юнион Эскей').trim();
@@ -2067,17 +3041,6 @@
                         const cat = e.category || "Без категории";
                         catSums[cat] = (catSums[cat] || 0) + e.amount;
                     });
-
-                    // Выводы прибыли по партнёрам
-                    const withdrawalByPartner = {};
-                    withdrawalExpenses.forEach(e => {
-                        const who = e.investor || e.comment || 'Юнион Эскей';
-                        withdrawalByPartner[who] = (withdrawalByPartner[who] || 0) + e.amount;
-                    });
-                    const withdrawalHtml = Object.entries(withdrawalByPartner).length
-                        ? Object.entries(withdrawalByPartner).map(([who, sum]) =>
-                            `<div class="flex items-center"><span class="text-xs text-gray-600 font-medium" style="flex:1;min-width:0;overflow:hidden;">${who}</span><span class="text-xs font-semibold text-gray-800" style="width:82px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums;overflow:hidden;">${formatMoney(sum)}</span><span style="width:40px;flex-shrink:0;"></span></div>`).join('')
-                        : '<div class="text-xs text-gray-300 italic">—</div>';
 
                     const activeCats = Object.keys(catSums).filter(c => catSums[c] > 0);
                     let chartData = activeCats.map(c => catSums[c]);
@@ -2130,20 +3093,20 @@
                                 ${catListHtml || '<div class="text-xs text-gray-400 italic">Нет расходов</div>'}
                             </div>
                             <div class="border-t border-gray-100 pt-3">
-                                <div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:3px 0 2px;">
+                                <div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:2px 0 3px;">
                                     <span class="text-[9px] font-bold uppercase text-gray-400 tracking-wider">Результат</span>
-                                    <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;">${(() => { const inc=(p.incomes||[]).reduce((s,i)=>s+i.amount,0); const exp=operationalExpenses.reduce((s,e)=>s+e.amount,0); const n=inc-exp-Math.round(inc*0.06); return (n>=0?'+':'')+formatMoney(n); })()}</span>
+                                    <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;">${(projectResultAfterTax>=0?'+':'')+formatMoney(projectResultAfterTax)}</span>
                                     <span></span>
                                 </div>
                                 <div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:2px 0 3px;">
                                     <span class="text-[9px] font-bold uppercase text-gray-400 tracking-wider" title="НДС 5% + налог на прибыль 1%">Налог</span>
-                                    <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;">${(() => { const inc=(p.incomes||[]).reduce((s,i)=>s+i.amount,0); return '−'+formatMoney(Math.round(inc*0.06)); })()}</span>
+                                    <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;">−${formatMoney(projectTax)}</span>
                                     <span style="text-align:right;font-size:10px;color:#9CA3AF;">(6%)</span>
                                 </div>
                             </div>
-                            <div class="space-y-1.5 border-t border-gray-100 pt-3">
+                            <div class="border-t border-gray-100 pt-3">
                                 <div class="text-[9px] font-bold uppercase text-gray-400 tracking-wider mb-1.5">Выведено прибыли</div>
-                                ${withdrawalHtml}
+                                ${withdrawalSummaryHtml}
                             </div>
                         </div>
                     `;
@@ -2368,11 +3331,11 @@
                 <div style="border-top:1px solid #F3F4F6;margin-top:12px;padding-top:8px;">
                     <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Выведено прибыли</div>
                     ${(() => {
-                        let wExp = (genProj.expenses||[]).filter(e => e.category === 'Вывод прибыли');
+                        let wExp = getProjectWithdrawals(genProj.id);
                         if (isMonth) wExp = wExp.filter(e => e.date && e.date.startsWith(mk));
                         if (wExp.length === 0) return '<div style="font-size:12px;color:#D1D5DB;font-style:italic;">—</div>';
                         const byInv = {};
-                        wExp.forEach(e => { const inv = e.investor||e.comment||'Юнион Эскей'; byInv[inv]=(byInv[inv]||0)+e.amount; });
+                        wExp.forEach(e => { const inv = e.person||e.investor||e.comment||'Юнион Эскей'; byInv[inv]=(byInv[inv]||0)+e.amount; });
                         return Object.entries(byInv).map(([inv,sum]) =>
                             '<div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;margin-bottom:2px;">' +
                             '<span class="text-xs text-gray-600 font-medium" style="overflow:hidden;white-space:nowrap;">'+inv+'</span>'+
@@ -2536,28 +3499,7 @@
             const t = sorted[idx];
             const origIdx = companyTransactions.findIndex(x => x.date === t.date && x.type === t.type && x.amount === t.amount && x.category === t.category && x.comment === t.comment);
             if (origIdx === -1) return;
-            
-            const row = document.getElementById(`company-row-${idx}`);
-            if (!row) return;
-
-            row.innerHTML = `
-                <td class="px-3 py-2"><input type="date" id="edit-comp-date-${idx}" value="${t.date}" class="h-9 min-w-[120px] px-2 py-0 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
-                <td class="px-3 py-2">
-                    <select id="edit-comp-type-${idx}" class="bg-gray-50 border border-gray-200 rounded-lg p-1.5 text-xs w-full outline-none focus:border-brand-purple cursor-pointer">
-                        <option value="general" ${t.type === 'general' ? 'selected' : ''}>Общий расход</option>
-                        <option value="personal" ${t.type === 'personal' ? 'selected' : ''}>Личный вывод</option>
-                    </select>
-                </td>
-                <td class="px-3 py-2"><input type="text" id="edit-comp-amount-${idx}" value="${formatNumberWithSpaces(t.amount)}" oninput="formatInputSpaces(this)" class="bg-gray-50 border border-gray-200 rounded-lg p-1.5 text-xs w-full text-right font-bold outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
-                <td class="px-3 py-2">
-                    <input type="text" id="edit-comp-category-${idx}" value="${t.category}" list="category-options-edit" class="h-9 min-w-[140px] px-2 py-0 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru">
-                </td>
-                <td class="px-3 py-2"><input type="text" id="edit-comp-comment-${idx}" value="${t.comment || ''}" class="bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
-                <td class="px-3 py-2 text-right whitespace-nowrap">
-                    <button onclick="saveEditCompanyExpense(${origIdx}, ${idx})" class="text-green-600 hover:underline font-bold text-xs mr-3">ОК</button>
-                    <button onclick="renderCompanyHistoryTable()" class="text-gray-400 hover:underline font-bold text-xs">Отмена</button>
-                </td>
-            `;
+            openEditOperationModal({ kind:'company', origIdx, record:t });
         }
 
         async function saveEditCompanyExpense(origIdx, displayIdx) {
@@ -2570,33 +3512,50 @@
 
             if (!newAmount || newAmount <= 0) { showNotification('Сумма расхода должна быть больше нуля!', 'error'); return; }
 
-            companyTransactions[origIdx] = { date: newDate, type: newType, amount: newAmount, category: newCategory, comment: newComment };
+            companyTransactions[origIdx] = {
+                ...companyTransactions[origIdx],
+                date: newDate,
+                type: newType,
+                amount: newAmount,
+                category: newCategory,
+                comment: newComment
+            };
 
             renderTable(); renderCharts(); renderCompanyHistoryTable();
 
             await sendPost({
                 action: 'editCompanyExpense',
                 oldDate: oldTx.date, oldType: oldTx.type, oldAmount: oldTx.amount, oldCategory: oldTx.category, oldComment: oldTx.comment,
-                newDate: newDate, newType: newType, newAmount: newAmount, newCategory: newCategory, newComment: newComment
+                newDate: newDate, newType: newType, newAmount: newAmount, newCategory: newCategory, newComment: newComment,
+                newInvestor: oldTx.investor || 'Юнион Эскей'
             }, false);
             showNotification('Операция успешно изменена', 'success');
         }
 
         async function deleteCompanyExpense(displayIdx) {
+            if (!isLive() || !API_CAPABILITIES.operationTrash) {
+                showNotification('Корзина расходов пока не подключена. Сначала обновите Google Apps Script.', 'error');
+                renderCompanyHistoryTable();
+                return;
+            }
             let sorted = [...companyTransactions].sort((a,b) => new Date(b.date) - new Date(a.date));
             const t = sorted[displayIdx];
             const origIdx = companyTransactions.findIndex(x => x.date === t.date && x.type === t.type && x.amount === t.amount && x.category === t.category && x.comment === t.comment);
             if (origIdx === -1) return;
 
-            companyTransactions.splice(origIdx, 1);
-
-            renderTable(); renderCharts(); renderCompanyHistoryTable();
-
             await sendPost({
                 action: 'deleteCompanyExpense',
-                date: t.date, type: t.type, amount: t.amount, category: t.category, comment: t.comment
+                rowIndex: t.rowIndex,
+                date: t.date,
+                type: t.type,
+                amount: t.amount,
+                category: t.category,
+                comment: t.comment,
+                investor: t.investor || 'Юнион Эскей'
             }, false);
-            showNotification('Операция успешно удалена', 'success');
+            await refreshServerData();
+            renderCompanyHistoryTable();
+            showNotification('Расход перемещён в Корзину', 'success');
         }
 
         // --- ЕЖЕМЕСЯЧНЫЙ ДЕТАЛЬНЫЙ СРЕЗ ---
@@ -2717,6 +3676,7 @@
             document.getElementById('history-object-name').innerText = p.name;
             renderHistoryTable(id);
             renderIncomeHistoryTable(id);
+            renderWithdrawalHistoryTable(id);
             switchHistoryTab('expenses');
             document.getElementById('history-modal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
@@ -2728,22 +3688,318 @@
         function switchHistoryTab(tab) {
             const expBtn = document.getElementById('history-tab-expenses');
             const incBtn = document.getElementById('history-tab-incomes');
+            const wBtn = document.getElementById('history-tab-withdrawals');
             const expTable = document.getElementById('history-table-expenses');
             const incTable = document.getElementById('history-table-incomes');
-            if (!expBtn || !incBtn || !expTable || !incTable) return;
+            const wTable = document.getElementById('history-table-withdrawals');
+            if (!expBtn || !incBtn || !wBtn || !expTable || !incTable || !wTable) return;
 
             const activeClasses = ['border-brand-purple', 'text-brand-purple'];
             const inactiveClasses = ['border-transparent', 'text-gray-400'];
+            [[expBtn, expTable, 'expenses'], [incBtn, incTable, 'incomes'], [wBtn, wTable, 'withdrawals']]
+                .forEach(([btn, table, key]) => {
+                    const active = tab === key;
+                    btn.classList.toggle('border-brand-purple', active);
+                    btn.classList.toggle('text-brand-purple', active);
+                    btn.classList.toggle('border-transparent', !active);
+                    btn.classList.toggle('text-gray-400', !active);
+                    table.classList.toggle('hidden', !active);
+                });
 
-            if (tab === 'incomes') {
-                incBtn.classList.add(...activeClasses); incBtn.classList.remove(...inactiveClasses);
-                expBtn.classList.remove(...activeClasses); expBtn.classList.add(...inactiveClasses);
-                incTable.classList.remove('hidden'); expTable.classList.add('hidden');
-            } else {
-                expBtn.classList.add(...activeClasses); expBtn.classList.remove(...inactiveClasses);
-                incBtn.classList.remove(...activeClasses); incBtn.classList.add(...inactiveClasses);
-                expTable.classList.remove('hidden'); incTable.classList.add('hidden');
+            // Вкладка «Выводы» всегда должна брать свежие строки журнала,
+            // а не оставаться пустой после открытия общей истории объекта.
+            if (tab === 'withdrawals' && currentHistoryProjectId !== null) {
+                renderWithdrawalHistoryTable(currentHistoryProjectId);
             }
+        }
+
+        function renderWithdrawalHistoryTable(projectId) {
+            const tbody = document.getElementById('withdrawal-history-table-body');
+            if (!tbody) return;
+            const rows = getProjectWithdrawals(projectId)
+                .sort((a, b) => new Date(b.date) - new Date(a.date));
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-gray-400 italic">Нет выводов прибыли</td></tr>';
+                return;
+            }
+            const canManage = currentRole === 'director' && API_CAPABILITIES.withdrawalLedger;
+            tbody.innerHTML = rows.map((w, idx) => `
+                <tr id="withdrawal-row-${Number(projectId)}-${idx}" class="border-b border-gray-50 hover:bg-gray-50/80">
+                    <td class="px-4 sm:px-6 py-3 text-center whitespace-nowrap">${escapeTrashText(w.date || '')}</td>
+                    <td class="px-4 sm:px-6 py-3 text-center font-medium">${escapeTrashText(w.person || 'Юнион Эскей')}</td>
+                    <td class="px-4 sm:px-6 py-3 text-center font-semibold whitespace-nowrap">${formatMoney(w.amount || 0)}</td>
+                    <td class="px-4 sm:px-6 py-3 text-center text-gray-400">${escapeTrashText(w.comment || '—')}</td>
+                    <td class="px-4 sm:px-6 py-3 text-center whitespace-nowrap">${canManage ? `
+                        <div class="flex gap-2 justify-center items-center">
+                            <button onclick="startEditWithdrawal(${Number(projectId)}, ${idx})" class="text-[#7C3AED] hover:underline text-xs font-bold">Изменить</button>
+                            <button onclick="deleteWithdrawal('${escapeTrashText(w.id)}', ${Number(projectId)})" class="text-[#93C5FD] hover:text-[#60A5FA] hover:underline text-xs font-bold">Удалить</button>
+                        </div>` : '—'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function getSortedProjectWithdrawals(projectId) {
+            return getProjectWithdrawals(projectId)
+                .sort((a, b) => new Date(b.date) - new Date(a.date));
+        }
+
+        function startEditWithdrawal(projectId, displayIdx) {
+            const withdrawal = getSortedProjectWithdrawals(projectId)[displayIdx];
+            if (!withdrawal) return;
+
+            // Старые записи без ID автоматически переносятся API в отдельный журнал.
+            // Редактировать их до переноса небезопасно: нельзя однозначно найти строку в таблице.
+            if (String(withdrawal.id || '').startsWith('legacy-')) {
+                showNotification('Эта старая запись ещё переносится в журнал выводов. Обновите страницу через несколько секунд.', 'error');
+                return;
+            }
+
+            editingWithdrawal = { id: String(withdrawal.id), projectId: Number(projectId) };
+            document.getElementById('edit-withdrawal-date').value = withdrawal.date || '';
+            syncDateDisplay('edit-withdrawal-date');
+            document.getElementById('edit-withdrawal-amount').value = formatNumberWithSpaces(withdrawal.amount || 0);
+            document.getElementById('edit-withdrawal-comment').value = withdrawal.comment || '';
+            setEditWithdrawalPerson(withdrawal.person === 'Коля' ? 'Коля' : 'Юнион Эскей');
+            document.getElementById('edit-withdrawal-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function setEditWithdrawalPerson(person, source) {
+            const value = person === 'Коля' ? 'Коля' : 'Юнион Эскей';
+            const hidden = document.getElementById('edit-withdrawal-person');
+            const label = document.getElementById('dd-edit-withdrawal-person-label');
+            if (hidden) hidden.value = value;
+            if (label) label.textContent = value;
+            document.querySelectorAll('#dd-edit-withdrawal-person-menu .modal-dd-item').forEach(item => {
+                item.classList.toggle('selected', item.textContent.trim() === value);
+            });
+            const menu = document.getElementById('dd-edit-withdrawal-person-menu');
+            const btn = document.querySelector('#dd-edit-withdrawal-person .modal-dd-btn');
+            if (menu) menu.style.display = 'none';
+            if (btn) btn.classList.remove('open');
+        }
+
+        function closeEditWithdrawalModal() {
+            editingWithdrawal = null;
+            document.getElementById('edit-withdrawal-modal').classList.add('hidden');
+            const menu = document.getElementById('dd-edit-withdrawal-person-menu');
+            if (menu) menu.style.display = 'none';
+            document.body.style.overflow = 'hidden';
+        }
+
+        async function saveEditWithdrawal() {
+            const editing = editingWithdrawal;
+            if (!editing) return;
+
+            const date = document.getElementById('edit-withdrawal-date')?.value;
+            const person = document.getElementById('edit-withdrawal-person')?.value || 'Юнион Эскей';
+            const amount = parseFormattedNumber(document.getElementById('edit-withdrawal-amount')?.value);
+            const comment = document.getElementById('edit-withdrawal-comment')?.value || '';
+
+            if (!date || !amount || amount <= 0) {
+                showNotification('Укажите дату и сумму вывода больше нуля.', 'error');
+                return;
+            }
+
+            const storedWithdrawal = profitWithdrawals.find(item => String(item.id) === editing.id);
+            if (!storedWithdrawal) {
+                showNotification('Не удалось найти вывод для редактирования. Обновите страницу и повторите.', 'error');
+                renderWithdrawalHistoryTable(editing.projectId);
+                return;
+            }
+
+            const previous = { ...storedWithdrawal };
+            Object.assign(storedWithdrawal, { date, person, amount, comment });
+            closeEditWithdrawalModal();
+            renderWithdrawalHistoryTable(editing.projectId);
+            renderCharts();
+
+            const sent = await sendPost({
+                action: 'editWithdrawal',
+                id: editing.id,
+                projectId: editing.projectId,
+                date,
+                person,
+                amount,
+                comment
+            }, false);
+
+            if (!sent) {
+                Object.assign(storedWithdrawal, previous);
+                renderWithdrawalHistoryTable(editing.projectId);
+                renderCharts();
+                return;
+            }
+
+            showNotification('Вывод изменён', 'success');
+            // Google Таблицы иногда применяют POST с небольшой задержкой. Мягкое
+            // обновление закрепляет на экране именно серверную версию записи.
+            setTimeout(async () => {
+                try {
+                    await refreshServerData();
+                    renderWithdrawalHistoryTable(editing.projectId);
+                    renderTable();
+                    renderCharts();
+                } catch (e) {
+                    console.warn('Не удалось обновить вывод после редактирования:', e);
+                }
+            }, 900);
+        }
+
+        function getEditOperationPeople(kind, project, currentValue) {
+            const list = [];
+            const add = (value, label) => {
+                const safeValue = String(value || '').trim();
+                if (safeValue && !list.some(item => item.value === safeValue)) list.push({ value: safeValue, label: label || safeValue });
+            };
+            if (kind === 'company') {
+                add('general', 'Общий расход');
+                add('personal', 'Личный вывод');
+                add('withdrawal', 'Вывод прибыли');
+                add(currentValue, currentValue === 'general' ? 'Общий расход' : currentValue === 'withdrawal' ? 'Вывод прибыли' : 'Личный вывод');
+                return list;
+            }
+            add('Общие');
+            add('Юнион Эскей');
+            const access = normalizeName(String((project && project.partnerAccess) || '').trim());
+            const partnerKeys = ['dima', 'kolya', 'partner3', 'partner4'];
+            const accessPartner = partnerKeys.find(key => normalizeName(PARTNER_CONFIG[key] && PARTNER_CONFIG[key].name) === access);
+            if (accessPartner) {
+                add(PARTNER_CONFIG[accessPartner].name);
+            } else if (currentRole === 'director') {
+                partnerKeys.forEach(key => add(PARTNER_CONFIG[key] && PARTNER_CONFIG[key].name));
+            } else if (PARTNER_CONFIG[currentRole]) {
+                add(PARTNER_CONFIG[currentRole].name);
+            }
+            add(currentValue || 'Юнион Эскей');
+            return list;
+        }
+
+        function setEditOperationPerson(value) {
+            const hidden = document.getElementById('edit-operation-person');
+            const label = document.getElementById('dd-edit-operation-person-label');
+            if (hidden) hidden.value = value;
+            if (label) {
+                const match = Array.from(document.querySelectorAll('#dd-edit-operation-person-menu .modal-dd-item'))
+                    .find(item => item.dataset.value === String(value));
+                label.textContent = match ? match.textContent : value;
+            }
+            document.querySelectorAll('#dd-edit-operation-person-menu .modal-dd-item').forEach(item => {
+                item.classList.toggle('selected', item.dataset.value === String(value));
+            });
+            const menu = document.getElementById('dd-edit-operation-person-menu');
+            const btn = document.querySelector('#dd-edit-operation-person .modal-dd-btn');
+            if (menu) menu.style.display = 'none';
+            if (btn) btn.classList.remove('open');
+        }
+
+        function renderEditOperationPeople(options, selected) {
+            const menu = document.getElementById('dd-edit-operation-person-menu');
+            if (!menu) return;
+            menu.replaceChildren(...options.map(option => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'modal-dd-item';
+                button.dataset.value = option.value;
+                button.textContent = option.label;
+                button.addEventListener('click', () => setEditOperationPerson(option.value));
+                return button;
+            }));
+            setEditOperationPerson(selected);
+        }
+
+        function openEditOperationModal(config) {
+            editingOperation = config;
+            const isIncome = config.kind === 'income';
+            const isCompany = config.kind === 'company';
+            const record = config.record || {};
+            const title = isCompany ? 'Изменить трату' : isIncome ? 'Изменить поступление' : 'Изменить расход';
+            const subtitle = isCompany ? 'Изменения сохранятся в истории компании' : 'Изменения сохранятся в истории объекта';
+            document.getElementById('edit-operation-title').textContent = title;
+            document.getElementById('edit-operation-subtitle').textContent = subtitle;
+            document.getElementById('edit-operation-person-label-text').textContent = isCompany ? 'Тип траты' : isIncome ? 'От кого поступление' : 'Кто оплатил / вложил';
+            document.getElementById('edit-operation-category-label-text').textContent = isIncome ? 'Основание поступления' : 'Категория / назначение';
+            document.getElementById('edit-operation-category').placeholder = isIncome ? 'Аванс по договору, Оплата этапа...' : isCompany ? 'Бухгалтерия, Налоги, Аренда...' : 'Материалы, Зарплата, Топливо...';
+            document.getElementById('edit-operation-date').value = record.date || '';
+            syncDateDisplay('edit-operation-date');
+            document.getElementById('edit-operation-amount').value = formatNumberWithSpaces(record.amount || 0);
+            document.getElementById('edit-operation-category').value = record.category || '';
+            document.getElementById('edit-operation-comment').value = record.comment || '';
+            const selected = isCompany ? (record.type || 'general') : (record.investor || 'Юнион Эскей');
+            renderEditOperationPeople(getEditOperationPeople(config.kind, config.project, selected), selected);
+            document.getElementById('edit-operation-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeEditOperationModal() {
+            editingOperation = null;
+            document.getElementById('edit-operation-modal').classList.add('hidden');
+            const menu = document.getElementById('dd-edit-operation-person-menu');
+            if (menu) menu.style.display = 'none';
+            const btn = document.querySelector('#dd-edit-operation-person .modal-dd-btn');
+            if (btn) btn.classList.remove('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        async function saveEditOperation() {
+            const editing = editingOperation;
+            if (!editing) return;
+            const newDate = document.getElementById('edit-operation-date').value;
+            const newAmount = parseFormattedNumber(document.getElementById('edit-operation-amount').value);
+            const newCategory = document.getElementById('edit-operation-category').value || 'Без категории';
+            const newComment = document.getElementById('edit-operation-comment').value || '';
+            const newPerson = document.getElementById('edit-operation-person').value;
+            if (!newDate || !newAmount || newAmount <= 0) {
+                showNotification('Укажите дату и сумму больше нуля.', 'error');
+                return;
+            }
+
+            if (editing.kind === 'company') {
+                const oldTx = Object.assign({}, companyTransactions[editing.origIdx]);
+                if (!oldTx) return;
+                companyTransactions[editing.origIdx] = { ...oldTx, date:newDate, type:newPerson, amount:newAmount, category:newCategory, comment:newComment };
+                closeEditOperationModal();
+                renderTable(); renderCharts(); renderCompanyHistoryTable();
+                await sendPost({
+                    action:'editCompanyExpense',
+                    oldDate:oldTx.date, oldType:oldTx.type, oldAmount:oldTx.amount, oldCategory:oldTx.category, oldComment:oldTx.comment,
+                    newDate, newType:newPerson, newAmount, newCategory, newComment,
+                    newInvestor:oldTx.investor || 'Юнион Эскей'
+                }, false);
+                showNotification('Операция изменена', 'success');
+                return;
+            }
+
+            const project = data.find(item => Number(item.id) === Number(editing.projectId));
+            if (!project) return;
+            const collection = editing.kind === 'income' ? (project.incomes || []) : (project.expenses || []);
+            const oldRecord = Object.assign({}, collection[editing.origIdx]);
+            if (!oldRecord) return;
+            collection[editing.origIdx] = { ...oldRecord, date:newDate, category:newCategory, amount:newAmount, comment:newComment, investor:newPerson };
+            if (editing.kind === 'income') project.paid = collection.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+            else project.cost = collection.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+            closeEditOperationModal();
+            renderTable(); renderCharts();
+            if (editing.kind === 'income') renderIncomeHistoryTable(editing.projectId);
+            else renderHistoryTable(editing.projectId);
+            await sendPost({
+                action: editing.kind === 'income' ? 'editIncome' : 'editExpense',
+                projectId:editing.projectId,
+                oldDate:oldRecord.date, oldCategory:oldRecord.category, oldAmount:oldRecord.amount, oldComment:oldRecord.comment, oldInvestor:oldRecord.investor || 'Юнион Эскей',
+                newDate, newCategory, newAmount, newComment, newInvestor:newPerson
+            }, false);
+            showNotification(editing.kind === 'income' ? 'Поступление изменено' : 'Расход изменен', 'success');
+        }
+
+        async function deleteWithdrawal(id, projectId) {
+            const item = profitWithdrawals.find(w => String(w.id) === String(id));
+            if (!item || !confirm(`Удалить вывод ${formatMoney(item.amount)}? Он попадёт в корзину.`)) return;
+            const sent = await sendPost({ action: 'deleteWithdrawal', id }, false);
+            if (!sent) return;
+            await refreshServerData();
+            renderWithdrawalHistoryTable(projectId);
+            renderCharts();
+            showNotification('Вывод перемещён в корзину', 'success');
         }
 
         function renderHistoryTable(projectId) {
@@ -3080,7 +4336,11 @@
             
             let sorted = [...project.expenses].sort((a,b) => new Date(b.date) - new Date(a.date));
             const exp = sorted[idx];
+            if (!exp) return;
             const origIdx = project.expenses.findIndex(e => e.date === exp.date && e.category === exp.category && e.amount === exp.amount && e.comment === exp.comment);
+            if (origIdx === -1) return;
+            openEditOperationModal({ kind:'expense', projectId:Number(projectId), project, origIdx, record:exp });
+            return;
             const row = document.getElementById(`history-row-${projectId}-${idx}`);
             if (!row) return;
 
@@ -3109,11 +4369,11 @@
             }
 
             row.innerHTML = `
-                <td class="px-3 py-2"><input type="date" id="edit-date-${projectId}-${idx}" value="${exp.date}" class="h-9 min-w-[110px] px-2 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
-                <td class="px-3 py-2 max-w-[130px]"><input type="text" id="edit-category-${projectId}-${idx}" value="${exp.category}" list="category-options-edit" class="h-9 px-2 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
-                <td class="px-3 py-2"><input type="text" id="edit-amount-${projectId}-${idx}" value="${formatNumberWithSpaces(exp.amount)}" oninput="formatInputSpaces(this)" class="h-9 bg-gray-50 border border-gray-200 rounded-lg px-2 text-xs w-full text-center font-bold outline-none focus:border-brand-purple min-w-[90px]" translate="no" spellcheck="false" lang="ru"></td>
-                <td class="px-3 py-2"><select id="edit-investor-${projectId}-${idx}" class="h-9 px-2 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple cursor-pointer min-w-[100px]">${investorOptions}</select></td>
-                <td class="px-3 py-2"><input type="text" id="edit-comment-${projectId}-${idx}" value="${exp.comment || ''}" class="h-9 px-2 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
+                <td class="px-3 py-2"><input type="date" id="edit-date-${projectId}-${idx}" value="${exp.date}" class="history-edit-control min-w-[110px] px-2 bg-gray-50 border border-gray-200 w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
+                <td class="px-3 py-2 max-w-[130px]"><input type="text" id="edit-category-${projectId}-${idx}" value="${exp.category}" list="category-options-edit" class="history-edit-control px-2 bg-gray-50 border border-gray-200 w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
+                <td class="px-3 py-2"><input type="text" id="edit-amount-${projectId}-${idx}" value="${formatNumberWithSpaces(exp.amount)}" oninput="formatInputSpaces(this)" class="history-edit-control bg-gray-50 border border-gray-200 px-2 w-full text-center font-bold outline-none focus:border-brand-purple min-w-[90px]" translate="no" spellcheck="false" lang="ru"></td>
+                <td class="px-3 py-2"><select id="edit-investor-${projectId}-${idx}" class="history-edit-control history-edit-select px-2 bg-gray-50 border border-gray-200 w-full outline-none focus:border-brand-purple cursor-pointer min-w-[100px]">${investorOptions}</select></td>
+                <td class="px-3 py-2"><input type="text" id="edit-comment-${projectId}-${idx}" value="${exp.comment || ''}" class="history-edit-control px-2 bg-gray-50 border border-gray-200 w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
                 <td class="px-2 py-2"></td>
                 <td class="px-3 py-2">
                     <div class="flex gap-2 justify-center items-center">
@@ -3151,6 +4411,11 @@
         }
 
         async function deleteExpense(projectId, displayIdx) {
+            if (!isLive() || !API_CAPABILITIES.operationTrash) {
+                showNotification('Корзина расходов пока не подключена. Сначала обновите Google Apps Script.', 'error');
+                renderHistoryTable(projectId);
+                return;
+            }
             const project = data.find(p => Number(p.id) === Number(projectId));
             if (!project) return;
             let sorted = [...project.expenses].sort((a,b) => new Date(b.date) - new Date(a.date));
@@ -3163,12 +4428,19 @@
             const origIdx = project.expenses.findIndex(e => e.date === exp.date && e.category === exp.category && e.amount === exp.amount && e.comment === exp.comment);
             if (origIdx === -1) return;
 
-            project.expenses.splice(origIdx, 1);
-            project.cost = project.expenses.reduce((sum, e) => sum + e.amount, 0);
-            renderTable(); renderCharts(); renderHistoryTable(projectId);
-
-            await sendPost({ action: 'deleteExpense', projectId: projectId, date: exp.date, category: exp.category, amount: exp.amount, comment: exp.comment, investor: exp.investor || 'Юнион Эскей' }, false);
-            showNotification('Расход удален', 'success');
+            await sendPost({
+                action: 'deleteExpense',
+                projectId: projectId,
+                rowIndex: exp.rowIndex,
+                date: exp.date,
+                category: exp.category,
+                amount: exp.amount,
+                comment: exp.comment,
+                investor: exp.investor || 'Юнион Эскей'
+            }, false);
+            await refreshServerData();
+            renderHistoryTable(projectId);
+            showNotification('Расход перемещён в Корзину', 'success');
         }
 
         // --- ПОСТУПЛЕНИЯ: РЕДАКТИРОВАНИЕ И УДАЛЕНИЕ (ПО АНАЛОГИИ С РАСХОДАМИ) ---
@@ -3192,7 +4464,11 @@
 
             let sorted = [...(project.incomes || [])].sort((a,b) => new Date(b.date) - new Date(a.date));
             const inc = sorted[idx];
+            if (!inc) return;
             const origIdx = project.incomes.findIndex(i => i.date === inc.date && i.category === inc.category && i.amount === inc.amount && i.comment === inc.comment);
+            if (origIdx === -1) return;
+            openEditOperationModal({ kind:'income', projectId:Number(projectId), project, origIdx, record:inc });
+            return;
             const row = document.getElementById(`income-row-${projectId}-${idx}`);
             if (!row) return;
 
@@ -3221,11 +4497,11 @@
             }
 
             row.innerHTML = `
-                <td class="px-3 py-2"><input type="date" id="edit-income-date-${projectId}-${idx}" value="${inc.date}" class="h-9 min-w-[110px] px-2 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
-                <td class="px-3 py-2 max-w-[130px]"><input type="text" id="edit-income-category-${projectId}-${idx}" value="${inc.category}" list="category-options-edit" class="h-9 px-2 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
-                <td class="px-3 py-2"><input type="text" id="edit-income-amount-${projectId}-${idx}" value="${formatNumberWithSpaces(inc.amount)}" oninput="formatInputSpaces(this)" class="h-9 bg-gray-50 border border-gray-200 rounded-lg px-2 text-xs w-full text-center font-bold outline-none focus:border-brand-purple min-w-[90px]" translate="no" spellcheck="false" lang="ru"></td>
-                <td class="px-3 py-2"><select id="edit-income-investor-${projectId}-${idx}" class="h-9 px-2 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple cursor-pointer min-w-[100px]">${investorOptions}</select></td>
-                <td class="px-3 py-2"><input type="text" id="edit-income-comment-${projectId}-${idx}" value="${inc.comment || ''}" class="h-9 px-2 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
+                <td class="px-3 py-2"><input type="date" id="edit-income-date-${projectId}-${idx}" value="${inc.date}" class="history-edit-control min-w-[110px] px-2 bg-gray-50 border border-gray-200 w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
+                <td class="px-3 py-2 max-w-[130px]"><input type="text" id="edit-income-category-${projectId}-${idx}" value="${inc.category}" list="category-options-edit" class="history-edit-control px-2 bg-gray-50 border border-gray-200 w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
+                <td class="px-3 py-2"><input type="text" id="edit-income-amount-${projectId}-${idx}" value="${formatNumberWithSpaces(inc.amount)}" oninput="formatInputSpaces(this)" class="history-edit-control bg-gray-50 border border-gray-200 px-2 w-full text-center font-bold outline-none focus:border-brand-purple min-w-[90px]" translate="no" spellcheck="false" lang="ru"></td>
+                <td class="px-3 py-2"><select id="edit-income-investor-${projectId}-${idx}" class="history-edit-control history-edit-select px-2 bg-gray-50 border border-gray-200 w-full outline-none focus:border-brand-purple cursor-pointer min-w-[100px]">${investorOptions}</select></td>
+                <td class="px-3 py-2"><input type="text" id="edit-income-comment-${projectId}-${idx}" value="${inc.comment || ''}" class="history-edit-control px-2 bg-gray-50 border border-gray-200 w-full outline-none focus:border-brand-purple" translate="no" spellcheck="false" lang="ru"></td>
                 <td class="px-2 py-2"></td>
                 <td class="px-3 py-2">
                     <div class="flex gap-2 justify-center items-center">
@@ -3275,7 +4551,7 @@
             project.paid = project.incomes.reduce((sum, i) => sum + i.amount, 0);
             renderTable(); renderCharts(); renderIncomeHistoryTable(projectId);
 
-            await sendPost({ action: 'deleteIncome', projectId: projectId, date: inc.date, category: inc.category, amount: inc.amount, comment: inc.comment, investor: inc.investor || 'Юнион Эскей' }, false);
+            await sendPost({ action: 'deleteIncome', projectId: projectId, rowIndex: inc.rowIndex, date: inc.date, category: inc.category, amount: inc.amount, comment: inc.comment, investor: inc.investor || 'Юнион Эскей' }, false);
             showNotification('Поступление удалено', 'success');
         }
 
@@ -3307,9 +4583,13 @@
         }
         
         function openAddProjectModal() { 
+            refreshOperationCategoryOptions();
             document.getElementById('add-project-name').value = '';
             document.getElementById('add-project-contract').value = '';
             document.getElementById('add-project-paid').value = '';
+            document.getElementById('add-project-income-category').value = '';
+            document.getElementById('add-project-income-comment').value = '';
+            toggleNewProjectIncomeFields();
             updateAccessDropdowns();
             // Сбрасываем выбор на "Нет"
             const lbl = document.getElementById('dd-add-partner-label');
@@ -3321,32 +4601,118 @@
         }
         
         function closeAddProjectModal() { document.getElementById('add-project-modal').classList.add('hidden'); document.body.style.overflow = ''; }
+
+        function toggleNewProjectIncomeFields() {
+            const details = document.getElementById('add-project-income-details');
+            const paid = parseFormattedNumber(document.getElementById('add-project-paid')?.value || '');
+            if (details) details.classList.toggle('hidden', paid <= 0);
+        }
         
         async function saveNewProject() { 
             const submitBtn = document.querySelector('#btn-save-project');
-            if (submitBtn && submitBtn.disabled) return; 
-            
-            if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = "Создание..."; }
-            
-            const p = { 
-                action: 'addProject', 
-                name: document.getElementById('add-project-name').value, 
-                contract: parseFormattedNumber(document.getElementById('add-project-contract').value), 
-                partnerAccess: document.getElementById('add-project-partner').value, 
-                paid: parseFormattedNumber(document.getElementById('add-project-paid').value) 
-            };
-            
+            if (submitBtn && submitBtn.disabled) return;
+
+            const name = document.getElementById('add-project-name').value.trim();
+            const paid = parseFormattedNumber(document.getElementById('add-project-paid').value);
+            const incomeCategory = document.getElementById('add-project-income-category').value.trim();
+            const incomeComment = document.getElementById('add-project-income-comment').value.trim();
+            if (paid > 0 && !incomeCategory) {
+                showNotification('Укажите основание поступления.', 'error');
+                document.getElementById('add-project-income-category').focus();
+                return;
+            }
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerText = 'Создание...';
+            }
+
+            const knownIds = new Set(data.map(project => Number(project.id)));
+            const createRequest = sendPost({
+                action: 'addProject',
+                name,
+                contract: parseFormattedNumber(document.getElementById('add-project-contract').value),
+                partnerAccess: document.getElementById('add-project-partner').value,
+                // Поступление записываем отдельной строкой ниже, вместе с основанием и комментарием.
+                paid: 0
+            }, false);
+
+            // Закрываем окно сразу: sendPost уже обновил данные на экране,
+            // а подтверждение Google продолжится без блокировки интерфейса.
             closeAddProjectModal();
-            
-            setTimeout(() => {
-                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = "Создать"; }
-            }, 1000);
-            
-            sendPost(p, false);
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Создать';
+            }
+            showNotification('Создаю объект...', 'success');
+
+            const requestSent = await createRequest;
+
+            let createdProject = null;
+            if (requestSent) {
+                for (let attempt = 0; attempt < 6; attempt++) {
+                    await new Promise(resolve => setTimeout(resolve, 800 + attempt * 400));
+                    try {
+                        await refreshServerData();
+                        createdProject = data.find(project =>
+                            !knownIds.has(Number(project.id)) &&
+                            String(project.name || '').trim() === name
+                        );
+                        if (createdProject) break;
+                    } catch (e) {
+                        console.warn('Проверка создания объекта не удалась:', e);
+                    }
+                }
+            }
+
+            if (!createdProject) {
+                showNotification('Объект пока не появился в списке. Обновите страницу через несколько секунд.', 'error');
+                return;
+            }
+
+            if (paid > 0) {
+                const operationDate = new Date().toISOString().slice(0, 10);
+                const incomeSent = await sendPost({
+                    action: 'addIncome',
+                    projectId: createdProject.id,
+                    date: operationDate,
+                    category: incomeCategory,
+                    amount: paid,
+                    comment: incomeComment,
+                    investor: 'Заказчик'
+                }, false);
+
+                let incomeVerified = false;
+                if (incomeSent) {
+                    for (let attempt = 0; attempt < 6; attempt++) {
+                        await new Promise(resolve => setTimeout(resolve, 800 + attempt * 400));
+                        try {
+                            await refreshServerData();
+                            const freshProject = data.find(project => Number(project.id) === Number(createdProject.id));
+                            incomeVerified = Boolean(freshProject && (freshProject.incomes || []).some(income =>
+                                Number(income.amount) === Number(paid) &&
+                                String(income.category || '') === incomeCategory &&
+                                String(income.comment || '') === incomeComment
+                            ));
+                            if (incomeVerified) break;
+                        } catch (e) {
+                            console.warn('Проверка поступления не удалась:', e);
+                        }
+                    }
+                }
+
+                if (!incomeVerified) {
+                    showNotification('Объект создан, но поступление не сохранилось. Добавьте его через «+ Расход».', 'error');
+                    return;
+                }
+            }
+
             renderTable();
             renderCharts();
-            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = "Создать"; }
-            showNotification('Создан новый объект', 'success');
+            showNotification(
+                paid > 0 ? 'Создан новый объект вместе с историей поступления.' : 'Создан новый объект.',
+                'success'
+            );
         }
 
         function toggleModalDD(id) {
@@ -3357,7 +4723,7 @@
             document.querySelectorAll('.modal-dd-menu').forEach(m => { m.style.display = 'none'; });
             document.querySelectorAll('.modal-dd-btn.open').forEach(b => b.classList.remove('open'));
             if (!isOpen) {
-                const isPeriod = (id === 'dd-year' || id === 'dd-month');
+                const isPeriod = (id === 'dd-year' || id === 'dd-quarter' || id === 'dd-month');
                 if (isPeriod) {
                     const parent = document.getElementById(id);
                     if (parent && menu.parentElement !== parent) parent.appendChild(menu);
@@ -3451,6 +4817,27 @@
                 ...(companyTransactions||[]).filter(t=>t.type==='personal').map(t=>t.category).filter(Boolean)])];
         }
 
+        // Подсказки берём из реальной истории и держим их раздельно: расходы
+        // не попадают в поступления, а основания поступлений — в расходы.
+        function refreshOperationCategoryOptions() {
+            buildCatLists();
+            const lists = {
+                'expense-category-options': CAT_LISTS.project,
+                'income-category-options': CAT_LISTS.income,
+                'general-category-options': CAT_LISTS.general,
+                'personal-category-options': CAT_LISTS.personal
+            };
+            Object.entries(lists).forEach(([id, values]) => {
+                const datalist = document.getElementById(id);
+                if (!datalist) return;
+                datalist.replaceChildren(...values.map(value => {
+                    const option = document.createElement('option');
+                    option.value = String(value).trim();
+                    return option;
+                }));
+            });
+        }
+
         function getCatType() {
             const el = document.getElementById('uni-category-input');
             return (el && el.dataset.cattype) || _currentModalType || 'project';
@@ -3507,11 +4894,29 @@
             const opts = Array.from(dl.options).map(o=>o.value).filter(v=>v&&(!query||v.toLowerCase().includes(query)));
             const dd = document.getElementById('cat-dd');
             if (!dd || !opts.length) { if(dd) dd.style.display='none'; return; }
-            const r = inp.getBoundingClientRect();
-            dd.style.top = (r.bottom + 2) + 'px';
-            dd.style.left = r.left + 'px';
-            dd.style.width = r.width + 'px';
-            dd.innerHTML = opts.map(o=>`<div class="modal-dd-item" onmousedown="event.preventDefault();pickCatOpt('${o.replace(/'/g,"\'")}')">${o}</div>`).join('');
+            dd.innerHTML = opts.map(o=>`<div class="modal-dd-item" onmousedown="event.preventDefault();pickCatOpt('${o.replace(/'/g,"'")}')" ontouchend="event.preventDefault();pickCatOpt('${o.replace(/'/g,"'")}')">${o}</div>`).join('');
+            // На мобильном — показываем под инпутом внутри формы
+            const isMobile = window.innerWidth < 640;
+            if (isMobile) {
+                const wrapper = inp.closest('.space-y-1') || inp.parentElement;
+                if (wrapper) {
+                    wrapper.style.position = 'relative';
+                    if (dd.parentElement !== wrapper) wrapper.appendChild(dd);
+                    dd.style.position = 'absolute';
+                    dd.style.top = inp.offsetHeight + 4 + 'px';
+                    dd.style.left = '0';
+                    dd.style.width = '100%';
+                    dd.style.removeProperty('z-index');
+                    dd.style.zIndex = '9999';
+                }
+            } else {
+                if (dd.parentElement !== document.body) document.body.appendChild(dd);
+                const r = inp.getBoundingClientRect();
+                dd.style.position = 'fixed';
+                dd.style.top = (r.bottom + 2) + 'px';
+                dd.style.left = r.left + 'px';
+                dd.style.width = r.width + 'px';
+            }
             dd.style.display = 'block';
         }
 
@@ -3546,23 +4951,14 @@
             initCatInput(); 
             _currentModalType = 'project';
             const _catInp = document.getElementById('uni-category-input');
-            if (_catInp) { _catInp.dataset.cattype = 'project'; _catInp.value = ''; _catInp.placeholder = 'Материалы, Зарплата, Топливо...'; }
+            if (_catInp) {
+                _catInp.dataset.cattype = 'project';
+                _catInp._catListId = 'expense-category-options';
+                _catInp.value = '';
+                _catInp.placeholder = 'Материалы, Зарплата, Топливо...';
+            }
             updateInvestorDatalist();
-            // Наполняем все datalist из реальной истории
-            const incCats = new Set(["Аванс по договору","Оплата этапа","Окончательный расчет","Доплата","Доп. соглашение"]);
-            const genCats = new Set(["Бухгалтерия","Налоги","Аренда офиса","Зарплата офиса","Подарки","Реклама","Связь"]);
-            const persCats = new Set(["Личный вывод","Дивиденды","Транспорт"]);
-            (data||[]).forEach(p => (p.incomes||[]).forEach(i => { if(i.category&&i.category.trim()) incCats.add(i.category.trim()); }));
-            (companyTransactions||[]).forEach(t => {
-                if (!t.category||!t.category.trim()) return;
-                if (t.type==='personal') persCats.add(t.category.trim());
-                else genCats.add(t.category.trim());
-            });
-            const dlFill = {'income-category-options':incCats,'general-category-options':genCats,'personal-category-options':persCats};
-            Object.entries(dlFill).forEach(([id,cats]) => {
-                const dl = document.getElementById(id);
-                if (dl) dl.innerHTML = [...cats].map(v=>`<option value="${v}">`).join('');
-            });
+            refreshOperationCategoryOptions();
             const projSelect = document.getElementById('uni-project');
             const projMenu = document.getElementById('dd-project-menu');
             if (!projSelect) return;
@@ -3579,6 +4975,7 @@
             projSelect.onchange = updateInvestorDatalist;
             
             document.getElementById('uni-date').value = new Date().toISOString().split('T')[0];
+            syncDateDisplay('uni-date');
             document.getElementById('uni-comment').value = '';
             document.getElementById('uni-amount').value = '';
             document.getElementById('uni-category-input').value = '';
@@ -3619,7 +5016,14 @@
                 };
             } else if (type === 'withdrawal') {
                 const investorVal = document.getElementById('uni-investor-input').value.trim() || 'Юнион Эскей';
-                p = {
+                p = API_CAPABILITIES.withdrawalLedger ? {
+                    action: 'addWithdrawal',
+                    projectId: document.getElementById('uni-project').value,
+                    date: document.getElementById('uni-date').value,
+                    person: investorVal,
+                    amount: parseFormattedNumber(document.getElementById('uni-amount').value),
+                    comment: document.getElementById('uni-comment').value
+                } : {
                     action: 'addExpense',
                     projectId: document.getElementById('uni-project').value,
                     date: document.getElementById('uni-date').value,
@@ -3650,14 +5054,21 @@
                 };
             }
             
-            // Обновляем локальные данные сразу
-            sendPost(p, false);
-            
+            // Локальные данные обновляются внутри sendPost до сетевого ожидания.
+            // Окно закрываем сразу, подтверждение Google ждём уже в фоне интерфейса.
+            const sendRequest = sendPost(p, false);
             closeUniversalModal();
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = "Сохранить"; }
             renderTable();
             renderCharts();
-            
-            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = "Сохранить"; }
+
+            const requestSent = await sendRequest;
+            if (!requestSent) return;
+            if (isLive()) {
+                try { await refreshServerData(); } catch (e) { console.warn('Не удалось сразу обновить операцию:', e); }
+            }
+            renderTable();
+            renderCharts();
             showNotification(type === 'income' ? 'Поступление сохранено' : 'Операция сохранена', 'success');
         }
 
@@ -3863,7 +5274,11 @@
             menu.classList.remove('hidden');
         }
 
+        // Меню «Доступ» выводится поверх таблицы. Закрываем его при любой
+        // прокрутке — в том числе внутри таблицы, а не только всей страницы.
         window.addEventListener('scroll', function() { closeAllDropdowns(); }, { passive: true });
+        document.addEventListener('scroll', function() { closeAllDropdowns(); }, { capture: true, passive: true });
+        window.addEventListener('resize', function() { closeAllDropdowns(); }, { passive: true });
 
         function closeAllDropdowns() {
             document.querySelectorAll('[id^="access-dropdown-menu-"],[id^="status-dropdown-menu-"]').forEach(m => {
@@ -4118,5 +5533,18 @@
         }
     </script>
     <div id="cat-dd" style="display:none;position:fixed;background:white;border:1px solid #E5E7EB;border-radius:16px;box-shadow:0 10px 25px rgba(0,0,0,0.15);z-index:99999;max-height:200px;overflow-y:auto;padding:8px;"></div>
+    <!-- КОРЗИНА УДАЛЁННЫХ ОБЪЕКТОВ И РАСХОДОВ -->
+    <div id="trash-modal" class="fixed inset-0 bg-gray-950/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" onclick="if(event.target===this)this.classList.add('hidden')">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col animate-fade-in border border-gray-100">
+            <div class="px-6 pt-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800">🗑 Корзина</h3>
+                    <p class="text-xs text-gray-400 mt-0.5">Объекты и расходы можно восстановить</p>
+                </div>
+                <button onclick="document.getElementById('trash-modal').classList.add('hidden')" class="text-gray-300 hover:text-gray-500 text-2xl leading-none">&times;</button>
+            </div>
+            <div id="trash-content" class="overflow-y-auto flex-1 px-6 py-2"></div>
+        </div>
+    </div>
 </body>
 </html>
