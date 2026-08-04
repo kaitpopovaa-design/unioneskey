@@ -1493,6 +1493,14 @@
             if (abs >= 1000) return `${compact(amount / 1000)} тыс. ₽`;
             return `${formatNumberWithSpaces(amount)} ₽`;
         };
+        const formatChartAxisMoneyMobile = (v) => {
+            const amount = Number(v) || 0;
+            const abs = Math.abs(amount);
+            const compact = (n) => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 }).format(n);
+            if (abs >= 1000000) return `${compact(amount / 1000000)}м`;
+            if (abs >= 1000) return `${compact(amount / 1000)}т`;
+            return amount === 0 ? '0' : formatNumberWithSpaces(amount);
+        };
 
         const parseFormattedNumber = (val) => {
             if (val === undefined || val === null || val === "") return 0;
@@ -2808,6 +2816,7 @@
 
                 const bgIn  = targetMonths.map(m => m === currentMonthKey2 ? '#C4B5FD' : '#EDE9FE');
                 const bgOut = targetMonths.map(m => m === currentMonthKey2 ? '#93C5FD' : '#DBEAFE');
+                const isMobileFlowChart = window.innerWidth <= 640;
 
                 if (chartsInstance.bar) chartsInstance.bar.destroy();
                 chartsInstance.bar = new Chart(document.getElementById('barChart'), {
@@ -2872,11 +2881,11 @@
                             const detC = document.getElementById('flow-detail-content');
                             if (det && detC) { detC.innerHTML = html; det.classList.remove('hidden'); }
                         },
-                        plugins: { legend: { position: 'bottom', labels: { color: '#6B7280', padding: 16, boxWidth: 12, font: { family: 'Inter, system-ui, -apple-system, sans-serif', size: 12, weight: '600' } } },
+                        plugins: { legend: { position: 'bottom', labels: { color: '#6B7280', padding: 16, boxWidth: 12, font: { family: 'Inter, system-ui, -apple-system, sans-serif', size: isMobileFlowChart ? 11 : 12, weight: '600' } } },
                                    tooltip: { backgroundColor: 'white', borderColor: '#E5E7EB', borderWidth: 1, titleColor: '#6B7280', bodyColor: '#1F2937', padding: { x: 14, y: 10 }, displayColors: true, boxWidth: 10, boxHeight: 10, cornerRadius: 10, callbacks: { title: () => '', label: ctx => '  ' + ctx.dataset.label + '   ' + formatMoney(ctx.raw) } } },
                         scales: {
-                            y: { ticks: { color: '#6B7280', font: { family: 'Inter, system-ui, -apple-system, sans-serif', size: 12, weight: '500' }, callback: v => formatChartAxisMoney(v) }, grid: { color: '#F9FAFB' } },
-                            x: { grid: { display: false }, ticks: { color: '#6B7280', font: { family: 'Inter, system-ui, -apple-system, sans-serif', size: 12, weight: '600' } } }
+                            y: { ticks: { color: '#6B7280', padding: 4, maxTicksLimit: 6, font: { family: 'Inter, system-ui, -apple-system, sans-serif', size: isMobileFlowChart ? 10 : 12, weight: '500' }, callback: v => isMobileFlowChart ? formatChartAxisMoneyMobile(v) : formatChartAxisMoney(v) }, grid: { color: '#F9FAFB' } },
+                            x: { grid: { display: false }, ticks: { color: '#6B7280', autoSkip: !isMobileFlowChart, maxRotation: 0, minRotation: 0, padding: 6, font: { family: 'Inter, system-ui, -apple-system, sans-serif', size: isMobileFlowChart ? 10 : 12, weight: '600' } } }
                         }
                     }
                 });
