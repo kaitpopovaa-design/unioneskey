@@ -177,8 +177,8 @@
             textarea.todo-ta { font-size: 12px !important; }
         }
 
-        /* Окна «Изменить» повторяют поля «Новой операции»: одинаковая
-           высота, шрифт, дата и выпадающие списки на компьютере. */
+        /* На компьютере формы используют тот же размер текста, что и на
+           телефоне: без отдельного уменьшения полей и выпадающих списков. */
         @media (min-width: 768px) {
             html #uni-amount,
             html #uni-category-input,
@@ -186,25 +186,32 @@
             html #edit-withdrawal-modal input:not([type="hidden"]),
             html #edit-operation-modal input:not([type="hidden"]),
             html #add-project-modal input:not([type="hidden"]) {
-                font-size: 12px !important;
-                line-height: 16px !important;
-                height: 36px !important;
+                font-size: 16px !important;
+                line-height: 20px !important;
+                height: 44px !important;
             }
             html #universal-modal .date-input-frame,
             html #edit-withdrawal-modal .date-input-frame,
-            html #edit-operation-modal .date-input-frame { height:36px !important; }
+            html #edit-operation-modal .date-input-frame { height:44px !important; }
             html #universal-modal .date-display,
             html #edit-withdrawal-modal .date-display,
             html #edit-operation-modal .date-display {
-                font-size: 12px !important;
-                line-height: 16px !important;
+                font-size: 16px !important;
+                line-height: 20px !important;
             }
             html #universal-modal .modal-dd-btn,
             html #add-project-modal .modal-dd-btn,
             html #edit-withdrawal-modal .modal-dd-btn,
             html #edit-operation-modal .modal-dd-btn {
-                font-size: 12px !important;
-                height: 36px !important;
+                font-size: 16px !important;
+                height: 44px !important;
+            }
+            html #universal-modal .modal-dd-item,
+            html #add-project-modal .modal-dd-item,
+            html #edit-withdrawal-modal .modal-dd-item,
+            html #edit-operation-modal .modal-dd-item {
+                padding: 11px 14px !important;
+                font-size: 16px !important;
             }
         }
         
@@ -345,7 +352,13 @@
         @media (max-width: 600px) { .flow-cols { grid-template-columns: 1fr; } }
         .flow-detail-title { font-size:12px; font-weight:700; color:#374151; }
         .flow-detail-heading { margin-bottom:3px; font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.04em; }
-        .flow-detail-heading strong { color:#4B5563; font-weight:700; }
+        .flow-detail-heading strong {
+            color:#1F2937;
+            font-size:12px;
+            font-weight:600;
+            letter-spacing:normal;
+            text-transform:none;
+        }
         .flow-detail-row { display:grid; grid-template-columns:minmax(0, 1fr) 74px 36px; align-items:center; gap:2px; margin-bottom:2px; }
         .flow-detail-name { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:11px; font-weight:500; color:#6B7280; }
         .flow-detail-value { text-align:right; white-space:nowrap; font-size:12px; font-weight:600; color:#1F2937; }
