@@ -4765,18 +4765,38 @@
                 btn.classList.add('open');
             }
         }
-        function selectModalDD(ddId, value, label) {
-            const hiddenId = ddId === 'dd-type' ? 'uni-type' : ddId === 'dd-project' ? 'uni-project' : 'uni-investor-input';
-            const hidden = document.getElementById(hiddenId);
-            if (hidden) hidden.value = value;
-            if (ddId === 'dd-investor') {
-                const investorDropdown = document.getElementById('dd-investor');
-                if (investorDropdown) investorDropdown.dataset.selectedValue = value;
+        function setInvestorSelection(value) {
+            const selected = String(value || '').trim() || 'Юнион Эскей';
+            const dropdown = document.getElementById('dd-investor');
+            const hidden = document.getElementById('uni-investor-input');
+            const label = document.getElementById('dd-investor-label');
+            const menu = document.getElementById('dd-investor-menu');
+
+            // Одно действие меняет сразу все элементы. Главное правило: имя,
+            // которое видно в поле, — это то же имя, которое будет отправлено.
+            if (dropdown) dropdown.dataset.selectedInvestor = selected;
+            if (hidden) hidden.value = selected;
+            if (label) label.textContent = selected;
+            if (menu) {
+                menu.querySelectorAll('.modal-dd-item').forEach(btn => {
+                    btn.classList.toggle('selected', btn.textContent.trim() === selected);
+                });
             }
-            const lbl = document.getElementById(ddId + '-label');
-            if (lbl) lbl.textContent = label;
-            document.querySelectorAll('#' + ddId + '-menu .modal-dd-item').forEach(i => i.classList.remove('selected'));
-            if (event && event.currentTarget) event.currentTarget.classList.add('selected');
+            return selected;
+        }
+
+        function selectModalDD(ddId, value, label) {
+            if (ddId === 'dd-investor') {
+                setInvestorSelection(value);
+            } else {
+                const hiddenId = ddId === 'dd-type' ? 'uni-type' : ddId === 'dd-project' ? 'uni-project' : 'add-project-partner';
+                const hidden = document.getElementById(hiddenId);
+                if (hidden) hidden.value = value;
+                const lbl = document.getElementById(ddId + '-label');
+                if (lbl) lbl.textContent = label;
+                document.querySelectorAll('#' + ddId + '-menu .modal-dd-item').forEach(i => i.classList.remove('selected'));
+                if (typeof event !== 'undefined' && event.currentTarget) event.currentTarget.classList.add('selected');
+            }
             const menu = document.getElementById(ddId + '-menu');
             if (menu) menu.style.display = 'none';
             const btn = document.querySelector('#' + ddId + ' .modal-dd-btn');
@@ -4825,16 +4845,19 @@
                     btn.setAttribute('onclick', `selectModalDD('dd-investor','${newName}','${newName}')`);
                 }
             });
-            const selected = setVal || dropdown?.dataset.selectedValue || (hidden?.value) || 'Юнион Эскей';
-            if (hidden) hidden.value = selected;
-            if (label) label.textContent = selected;
-            if (dropdown) dropdown.dataset.selectedValue = selected;
+            const selected = setVal || dropdown?.dataset.selectedInvestor || label?.textContent || hidden?.value || 'Юнион Эскей';
+            setInvestorSelection(selected);
         }
+
         function getSelectedInvestor() {
-            const dropdown = document.getElementById('dd-investor');
-            const hidden = document.getElementById('uni-investor-input');
             const label = document.getElementById('dd-investor-label');
-            return String(dropdown?.dataset.selectedValue || hidden?.value || label?.textContent || 'Юнион Эскей').trim() || 'Юнион Эскей';
+            const dropdown = document.getElementById('dd-investor');
+            const visibleValue = String(label?.textContent || '').trim();
+            // На сохранение берём видимое пользователю имя. Это защищает от
+            // любых старых скрытых значений после обновления формы.
+            return setInvestorSelection(
+                visibleValue || dropdown?.dataset.selectedInvestor || 'Юнион Эскей'
+            );
         }
 
         const CAT_LISTS = { project: [], income: [], general: [], personal: [] };
@@ -5006,18 +5029,16 @@
                 `<button class="modal-dd-item${String(p.id)===String(firstId)?' selected':''}" onclick="selectModalDD('dd-project','${p.id}','${p.name}')">${p.name}</button>`
             ).join('');
             
-            projSelect.onchange = updateInvestorDatalist;
+            projSelect.onchange = updateInvestorDatalistOptions;
             
             document.getElementById('uni-date').value = new Date().toISOString().split('T')[0];
             syncDateDisplay('uni-date');
             document.getElementById('uni-comment').value = '';
             document.getElementById('uni-amount').value = '';
             document.getElementById('uni-category-input').value = '';
-            // Сбрасываем поле инвестора при открытии
-            const investorInput = document.getElementById('uni-investor-input');
-            const investorDropdown = document.getElementById('dd-investor');
-            if (investorInput) investorInput.value = 'Юнион Эскей';
-            if (investorDropdown) investorDropdown.dataset.selectedValue = 'Юнион Эскей';
+            // При каждом новом расходе начинаем с одного согласованного
+            // значения и не переносим плательщика из предыдущей операции.
+            setInvestorSelection('Юнион Эскей');
             
             document.getElementById('universal-modal').classList.remove('hidden'); 
             
