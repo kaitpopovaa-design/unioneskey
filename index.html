@@ -4769,6 +4769,10 @@
             const hiddenId = ddId === 'dd-type' ? 'uni-type' : ddId === 'dd-project' ? 'uni-project' : 'uni-investor-input';
             const hidden = document.getElementById(hiddenId);
             if (hidden) hidden.value = value;
+            if (ddId === 'dd-investor') {
+                const investorDropdown = document.getElementById('dd-investor');
+                if (investorDropdown) investorDropdown.dataset.selectedValue = value;
+            }
             const lbl = document.getElementById(ddId + '-label');
             if (lbl) lbl.textContent = label;
             document.querySelectorAll('#' + ddId + '-menu .modal-dd-item').forEach(i => i.classList.remove('selected'));
@@ -4799,10 +4803,11 @@
             }
         });
 
-        function updateInvestorDatalist(setVal) {
+        function syncInvestorDropdown(setVal) {
             const menu = document.getElementById('dd-investor-menu');
             const hidden = document.getElementById('uni-investor-input');
             const label = document.getElementById('dd-investor-label');
+            const dropdown = document.getElementById('dd-investor');
             if (!menu) return;
             // Обновляем имена из PARTNER_CONFIG (на случай переименований)
             const nameMap = {
@@ -4820,9 +4825,16 @@
                     btn.setAttribute('onclick', `selectModalDD('dd-investor','${newName}','${newName}')`);
                 }
             });
-            const selected = setVal || (hidden?.value) || 'Юнион Эскей';
+            const selected = setVal || dropdown?.dataset.selectedValue || (hidden?.value) || 'Юнион Эскей';
             if (hidden) hidden.value = selected;
             if (label) label.textContent = selected;
+            if (dropdown) dropdown.dataset.selectedValue = selected;
+        }
+        function getSelectedInvestor() {
+            const dropdown = document.getElementById('dd-investor');
+            const hidden = document.getElementById('uni-investor-input');
+            const label = document.getElementById('dd-investor-label');
+            return String(dropdown?.dataset.selectedValue || hidden?.value || label?.textContent || 'Юнион Эскей').trim() || 'Юнион Эскей';
         }
 
         const CAT_LISTS = { project: [], income: [], general: [], personal: [] };
@@ -4979,7 +4991,7 @@
                 _catInp.value = '';
                 _catInp.placeholder = 'Материалы, Зарплата, Топливо...';
             }
-            updateInvestorDatalist();
+            updateInvestorDatalistOptions();
             refreshOperationCategoryOptions();
             const projSelect = document.getElementById('uni-project');
             const projMenu = document.getElementById('dd-project-menu');
@@ -5003,11 +5015,14 @@
             document.getElementById('uni-category-input').value = '';
             // Сбрасываем поле инвестора при открытии
             const investorInput = document.getElementById('uni-investor-input');
-            if (investorInput) investorInput.value = ''; // пустое поле
+            const investorDropdown = document.getElementById('dd-investor');
+            if (investorInput) investorInput.value = 'Юнион Эскей';
+            if (investorDropdown) investorDropdown.dataset.selectedValue = 'Юнион Эскей';
             
             document.getElementById('universal-modal').classList.remove('hidden'); 
             
-            updateInvestorDatalist();
+            updateInvestorDatalistOptions();
+            syncInvestorDropdown('Юнион Эскей');
             toggleUniModalFields();
             document.body.style.overflow = 'hidden';
         }
@@ -5026,7 +5041,7 @@
             let p;
             
             if (type === 'project') {
-                const investorVal = document.getElementById('uni-investor-input').value.trim() || 'Юнион Эскей';
+                const investorVal = getSelectedInvestor();
                 p = { 
                     action: 'addExpense', 
                     projectId: document.getElementById('uni-project').value, 
@@ -5037,7 +5052,7 @@
                     investor: investorVal 
                 };
             } else if (type === 'withdrawal') {
-                const investorVal = document.getElementById('uni-investor-input').value.trim() || 'Юнион Эскей';
+                const investorVal = getSelectedInvestor();
                 p = API_CAPABILITIES.withdrawalLedger ? {
                     action: 'addWithdrawal',
                     projectId: document.getElementById('uni-project').value,
@@ -5055,7 +5070,7 @@
                     investor: investorVal
                 };
             } else if (type === 'income') {
-                const investorVal = document.getElementById('uni-investor-input').value.trim() || 'Юнион Эскей';
+                const investorVal = getSelectedInvestor();
                 p = {
                     action: 'addIncome',
                     projectId: document.getElementById('uni-project').value,
@@ -5134,12 +5149,12 @@
                 if (submitBtn)  submitBtn.textContent = 'Сохранить поступление';
             } else if (isWithdrawal) {
                 if (invLabel) invLabel.textContent = 'Кто выводит';
-                if (invInput) { updateInvestorDatalist(); invInput.placeholder = 'Юнион Эскей / Коля...'; }
+                if (invInput) { updateInvestorDatalistOptions(); syncInvestorDropdown(); invInput.placeholder = 'Юнион Эскей / Коля...'; }
                 if (modalTitle) modalTitle.textContent = 'Вывод прибыли';
                 if (submitBtn)  submitBtn.textContent = 'Сохранить';
             } else {
                 if (invLabel) invLabel.textContent = 'Кто оплатил / вложил';
-                if (invInput) { updateInvestorDatalist(); invInput.placeholder = 'Общие / Юнион Эскей / Дима...'; }
+                if (invInput) { updateInvestorDatalistOptions(); syncInvestorDropdown(); invInput.placeholder = 'Общие / Юнион Эскей / Дима...'; }
                 if (catLabel) catLabel.textContent = 'Категория / Назначение';
                 if (modalTitle) modalTitle.textContent = 'Новая операция';
                 if (submitBtn)  submitBtn.textContent = 'Сохранить';
@@ -5230,7 +5245,7 @@
         }
 
         // ДИНАМИЧЕСКИЙ ВЫВОД ИНВЕСТОРОВ С ПОДДЕРЖКОЙ СВОБОДНОГО ВВОДА
-        function updateInvestorDatalist() {
+        function updateInvestorDatalistOptions() {
             const datalist = document.getElementById('investor-options');
             if (!datalist) return;
 
