@@ -104,9 +104,8 @@
             #structure-grid { min-height:336px; }
         }
 
-        /* Видимую рамку даты рисует контейнер. На iOS сам input остаётся
-           кликабельным, но текст даты показывает наша ровная подпись: Safari
-           больше не может сдвинуть цифры вверх или изменить их размер. */
+        /* Поле даты остаётся нативным и видимым: так оно редактируется во
+           всех браузерах, в том числе в истории операций. */
         .date-input-frame {
             position:relative;
             box-sizing:border-box;
@@ -127,12 +126,16 @@
             width:100% !important;
             height:100% !important;
             margin:0 !important;
-            padding:0 !important;
-            opacity:0 !important;
+            padding:0 12px !important;
+            opacity:1 !important;
+            color:#374151 !important;
+            background:transparent !important;
+            font-size:16px !important;
+            line-height:20px !important;
             cursor:pointer;
         }
         .date-display {
-            display:flex;
+            display:none;
             align-items:center;
             position:absolute;
             inset:0;
@@ -929,9 +932,10 @@
                         <input type="hidden" id="edit-operation-person" value="Юнион Эскей">
                     </div>
                 </div>
-                <div class="space-y-1">
+                <div class="space-y-1" id="edit-operation-category-wrap">
                     <label id="edit-operation-category-label-text" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Категория / назначение</label>
-                    <input type="text" id="edit-operation-category" list="category-options-edit" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple" autocomplete="off" placeholder="Выберите или введите свою..." translate="no" spellcheck="false" lang="ru">
+                    <input type="text" id="edit-operation-category" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple" autocomplete="off" placeholder="Выберите или введите свою..." onfocus="openEditCategoryDD(this)" onclick="openEditCategoryDD(this)" oninput="openEditCategoryDD(this)" onkeydown="if(event.key === 'Escape') hideEditCategoryDD()" translate="no" spellcheck="false" lang="ru">
+                    <div id="edit-operation-category-dd" class="mt-1 max-h-40 overflow-y-auto rounded-xl border border-gray-200 bg-white p-1 shadow-lg" style="display:none" role="listbox" aria-label="Варианты категории"></div>
                 </div>
                 <div class="space-y-1">
                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Комментарий</label>
@@ -2564,7 +2568,7 @@
                     <td class="px-4 py-4 text-center access-col min-w-[190px] w-[190px]">${accessCellHtml}</td>
                     <td class="px-4 py-4 text-center min-w-[170px] w-[170px]">${statusCellHtml}</td>
                     <td class="px-6 py-4 text-right whitespace-nowrap">
-                        <button onclick="openUniversalModal('project', ${p.id})" class="text-brand-purple hover:text-brand-purpleHover font-bold text-xs mr-2">+ Расход</button>
+                        <button onclick="openUniversalModal('project', ${p.id})" class="text-brand-purple hover:text-brand-purpleHover font-bold text-xs mr-2">+ Операция</button>
                         <button onclick="openHistoryModalById(${p.id})" class="text-gray-400 font-bold text-xs hover:text-brand-purple transition-all mr-2">История</button>
                     </td>
                 </tr>`;
@@ -3881,6 +3885,13 @@
                 add(currentValue, currentValue === 'general' ? 'Общий расход' : currentValue === 'withdrawal' ? 'Вывод прибыли' : 'Личный вывод');
                 return list;
             }
+            if (kind === 'income') {
+                getIncomePayerOptions().forEach(name => add(name));
+                // Старое некорректное значение оставляем только в редактируемой
+                // записи, чтобы его можно было увидеть и заменить.
+                add(currentValue || 'Заказчик');
+                return list;
+            }
             add('Общие');
             add('Юнион Эскей');
             const access = normalizeName(String((project && project.partnerAccess) || '').trim());
@@ -3915,18 +3926,52 @@
             if (btn) btn.classList.remove('open');
         }
 
-        function renderEditOperationPeople(options, selected) {
+        function selectCustomEditIncomePayer() {
+            const input = document.getElementById('edit-income-payer-custom-input');
+            const payer = String(input?.value || '').trim();
+            if (!payer) {
+                if (input) input.focus();
+                return;
+            }
+            setEditOperationPerson(payer);
+        }
+
+        function renderEditOperationPeople(options, selected, allowCustomPayer) {
             const menu = document.getElementById('dd-edit-operation-person-menu');
             if (!menu) return;
-            menu.replaceChildren(...options.map(option => {
+            const items = [];
+            if (allowCustomPayer) {
+                const createBox = document.createElement('div');
+                createBox.className = 'flex gap-2 px-1 pb-2 mb-1 border-b border-gray-100';
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = 'edit-income-payer-custom-input';
+                input.placeholder = 'Введите заказчика';
+                input.className = 'min-w-0 flex-1 h-9 px-3 rounded-lg border border-gray-200 text-sm outline-none focus:border-brand-purple';
+                input.addEventListener('keydown', event => {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        selectCustomEditIncomePayer();
+                    }
+                });
+                const addButton = document.createElement('button');
+                addButton.type = 'button';
+                addButton.className = 'shrink-0 px-3 h-9 rounded-lg text-sm font-semibold text-brand-purple bg-purple-50 hover:bg-purple-100';
+                addButton.textContent = 'Выбрать';
+                addButton.addEventListener('click', selectCustomEditIncomePayer);
+                createBox.append(input, addButton);
+                items.push(createBox);
+            }
+            options.forEach(option => {
                 const button = document.createElement('button');
                 button.type = 'button';
                 button.className = 'modal-dd-item';
                 button.dataset.value = option.value;
                 button.textContent = option.label;
                 button.addEventListener('click', () => setEditOperationPerson(option.value));
-                return button;
-            }));
+                items.push(button);
+            });
+            menu.replaceChildren(...items);
             setEditOperationPerson(selected);
         }
 
@@ -3947,8 +3992,8 @@
             document.getElementById('edit-operation-amount').value = formatNumberWithSpaces(record.amount || 0);
             document.getElementById('edit-operation-category').value = record.category || '';
             document.getElementById('edit-operation-comment').value = record.comment || '';
-            const selected = isCompany ? (record.type || 'general') : (record.investor || 'Юнион Эскей');
-            renderEditOperationPeople(getEditOperationPeople(config.kind, config.project, selected), selected);
+            const selected = isCompany ? (record.type || 'general') : isIncome ? (record.investor || 'Заказчик') : (record.investor || 'Юнион Эскей');
+            renderEditOperationPeople(getEditOperationPeople(config.kind, config.project, selected), selected, isIncome);
             document.getElementById('edit-operation-modal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
@@ -3956,6 +4001,7 @@
         function closeEditOperationModal() {
             editingOperation = null;
             document.getElementById('edit-operation-modal').classList.add('hidden');
+            hideEditCategoryDD();
             const menu = document.getElementById('dd-edit-operation-person-menu');
             if (menu) menu.style.display = 'none';
             const btn = document.querySelector('#dd-edit-operation-person .modal-dd-btn');
@@ -3970,7 +4016,7 @@
             const newAmount = parseFormattedNumber(document.getElementById('edit-operation-amount').value);
             const newCategory = document.getElementById('edit-operation-category').value || 'Без категории';
             const newComment = document.getElementById('edit-operation-comment').value || '';
-            const newPerson = document.getElementById('edit-operation-person').value;
+            let newPerson = document.getElementById('edit-operation-person').value;
             if (!newDate || !newAmount || newAmount <= 0) {
                 showNotification('Укажите дату и сумму больше нуля.', 'error');
                 return;
@@ -4771,31 +4817,94 @@
             const hidden = document.getElementById('uni-investor-input');
             const label = document.getElementById('dd-investor-label');
             const menu = document.getElementById('dd-investor-menu');
-
-            // Одно действие меняет сразу все элементы. Главное правило: имя,
-            // которое видно в поле, — это то же имя, которое будет отправлено.
             if (dropdown) dropdown.dataset.selectedInvestor = selected;
             if (hidden) hidden.value = selected;
             if (label) label.textContent = selected;
-            if (menu) {
-                menu.querySelectorAll('.modal-dd-item').forEach(btn => {
-                    btn.classList.toggle('selected', btn.textContent.trim() === selected);
-                });
-            }
+            if (menu) menu.querySelectorAll('.modal-dd-item').forEach(button => {
+                button.classList.toggle('selected', button.dataset.value === selected || button.textContent.trim() === selected);
+            });
             return selected;
+        }
+
+        function makeInvestorMenu(options, allowCustomPayer) {
+            const menu = document.getElementById('dd-investor-menu');
+            if (!menu) return;
+            const items = [];
+            if (allowCustomPayer) {
+                const createBox = document.createElement('div');
+                createBox.className = 'flex gap-2 px-1 pb-2 mb-1 border-b border-gray-100';
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = 'income-payer-custom-input';
+                input.placeholder = 'Введите заказчика';
+                input.className = 'min-w-0 flex-1 h-9 px-3 rounded-lg border border-gray-200 text-sm outline-none focus:border-brand-purple';
+                input.addEventListener('keydown', event => {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        selectCustomIncomePayer();
+                    }
+                });
+                const addButton = document.createElement('button');
+                addButton.type = 'button';
+                addButton.className = 'shrink-0 px-3 h-9 rounded-lg text-sm font-semibold text-brand-purple bg-purple-50 hover:bg-purple-100';
+                addButton.textContent = 'Выбрать';
+                addButton.addEventListener('click', selectCustomIncomePayer);
+                createBox.append(input, addButton);
+                items.push(createBox);
+            }
+            options.forEach(value => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'modal-dd-item';
+                button.dataset.value = value;
+                button.textContent = value;
+                button.addEventListener('click', () => selectModalDD('dd-investor', value, value));
+                items.push(button);
+            });
+            menu.replaceChildren(...items);
+        }
+
+        function selectCustomIncomePayer() {
+            const input = document.getElementById('income-payer-custom-input');
+            const payer = String(input?.value || '').trim();
+            if (!payer) {
+                if (input) input.focus();
+                return;
+            }
+            selectModalDD('dd-investor', payer, payer);
+        }
+
+        function getPartnerPayerOptions() {
+            return [...new Set([
+                'Общие',
+                'Юнион Эскей',
+                PARTNER_CONFIG.dima?.name || 'Дима',
+                PARTNER_CONFIG.kolya?.name || 'Коля',
+                PARTNER_CONFIG.partner3?.name || 'АВ-Промстрой',
+                PARTNER_CONFIG.partner4?.name || 'Партнёр 4'
+            ].map(value => String(value || '').trim()).filter(Boolean))];
+        }
+
+        function getIncomePayerOptions() {
+            const partnerNames = new Set(getPartnerPayerOptions().map(normalizeName));
+            const knownPayers = (data || []).flatMap(project =>
+                (project.incomes || []).map(income => String(income.investor || '').trim())
+            ).filter(value => value && !partnerNames.has(normalizeName(value)));
+            return [...new Set(['Заказчик', 'Урал Трансмаш', 'Завод №9', ...knownPayers])];
         }
 
         function selectModalDD(ddId, value, label) {
             if (ddId === 'dd-investor') {
                 setInvestorSelection(value);
             } else {
-                const hiddenId = ddId === 'dd-type' ? 'uni-type' : ddId === 'dd-project' ? 'uni-project' : 'add-project-partner';
-                const hidden = document.getElementById(hiddenId);
+                const hiddenId = ddId === 'dd-type' ? 'uni-type' : ddId === 'dd-project' ? 'uni-project' : ddId === 'dd-add-partner' ? 'add-project-partner' : '';
+                const hidden = hiddenId ? document.getElementById(hiddenId) : null;
                 if (hidden) hidden.value = value;
                 const lbl = document.getElementById(ddId + '-label');
                 if (lbl) lbl.textContent = label;
-                document.querySelectorAll('#' + ddId + '-menu .modal-dd-item').forEach(i => i.classList.remove('selected'));
-                if (typeof event !== 'undefined' && event.currentTarget) event.currentTarget.classList.add('selected');
+                document.querySelectorAll('#' + ddId + '-menu .modal-dd-item').forEach(button => {
+                    button.classList.toggle('selected', button.dataset.value === String(value));
+                });
             }
             const menu = document.getElementById(ddId + '-menu');
             if (menu) menu.style.display = 'none';
@@ -4809,7 +4918,6 @@
                     const ph = {income:'Аванс по договору, Оплата этапа...', general:'Бухгалтерия, Налоги, Аренда...', personal:'Личный вывод, Дивиденды...'};
                     catEl.placeholder = ph[value] || 'Материалы, Зарплата, Топливо...';
                     catEl.value = '';
-                    // Safari: сбрасываем список и привязываем заново
                     catEl._catListId = value==='income' ? 'income-category-options' : value==='general' ? 'general-category-options' : value==='personal' ? 'personal-category-options' : 'expense-category-options';
                 }
                 toggleUniModalFields();
@@ -4824,40 +4932,27 @@
         });
 
         function syncInvestorDropdown(setVal) {
-            const menu = document.getElementById('dd-investor-menu');
-            const hidden = document.getElementById('uni-investor-input');
-            const label = document.getElementById('dd-investor-label');
             const dropdown = document.getElementById('dd-investor');
-            if (!menu) return;
-            // Обновляем имена из PARTNER_CONFIG (на случай переименований)
-            const nameMap = {
-                'Юнион Эскей': PARTNER_CONFIG.director?.name || 'Юнион Эскей',
-                'Дима': PARTNER_CONFIG.dima?.name || 'Дима',
-                'Коля': PARTNER_CONFIG.kolya?.name || 'Коля',
-                'АВ-Промстрой': PARTNER_CONFIG.partner3?.name || 'АВ-Промстрой',
-                'Партнёр 4': PARTNER_CONFIG.partner4?.name || 'Партнёр 4'
-            };
-            menu.querySelectorAll('.modal-dd-item').forEach(btn => {
-                const oldName = btn.textContent.trim();
-                const newName = nameMap[oldName];
-                if (newName && newName !== oldName) {
-                    btn.textContent = newName;
-                    btn.setAttribute('onclick', `selectModalDD('dd-investor','${newName}','${newName}')`);
-                }
-            });
-            const selected = setVal || dropdown?.dataset.selectedInvestor || label?.textContent || hidden?.value || 'Юнион Эскей';
-            setInvestorSelection(selected);
+            const label = document.getElementById('dd-investor-label');
+            const desired = String(setVal || dropdown?.dataset.selectedInvestor || label?.textContent || '').trim();
+            const options = getPartnerPayerOptions();
+            makeInvestorMenu(options, false);
+            return setInvestorSelection(options.includes(desired) ? desired : 'Юнион Эскей');
+        }
+
+        function syncIncomePayerDropdown(setVal) {
+            const dropdown = document.getElementById('dd-investor');
+            const label = document.getElementById('dd-investor-label');
+            const desired = String(setVal || dropdown?.dataset.selectedInvestor || label?.textContent || '').trim();
+            const options = getIncomePayerOptions();
+            makeInvestorMenu(options, true);
+            return setInvestorSelection(options.includes(desired) ? desired : 'Заказчик');
         }
 
         function getSelectedInvestor() {
-            const label = document.getElementById('dd-investor-label');
             const dropdown = document.getElementById('dd-investor');
-            const visibleValue = String(label?.textContent || '').trim();
-            // На сохранение берём видимое пользователю имя. Это защищает от
-            // любых старых скрытых значений после обновления формы.
-            return setInvestorSelection(
-                visibleValue || dropdown?.dataset.selectedInvestor || 'Юнион Эскей'
-            );
+            const label = document.getElementById('dd-investor-label');
+            return setInvestorSelection(label?.textContent || dropdown?.dataset.selectedInvestor || 'Юнион Эскей');
         }
 
         const CAT_LISTS = { project: [], income: [], general: [], personal: [] };
@@ -4979,6 +5074,49 @@
 
         function filterCatDD(inp) { openCatDD(inp); }
 
+        function getEditCategoryType() {
+            if (!editingOperation) return 'project';
+            if (editingOperation.kind === 'income') return 'income';
+            if (editingOperation.kind === 'company') {
+                return editingOperation.record && editingOperation.record.type === 'personal' ? 'personal' : 'general';
+            }
+            return 'project';
+        }
+
+        function hideEditCategoryDD() {
+            const dd = document.getElementById('edit-operation-category-dd');
+            if (dd) dd.style.display = 'none';
+        }
+
+        function openEditCategoryDD(inp) {
+            const dd = document.getElementById('edit-operation-category-dd');
+            if (!inp || !dd) return;
+            buildCatLists();
+            const query = String(inp.value || '').trim().toLowerCase();
+            const type = getEditCategoryType();
+            const values = (CAT_LISTS[type] || CAT_LISTS.project)
+                .filter(value => value && (!query || value.toLowerCase().includes(query)));
+            if (!values.length) {
+                hideEditCategoryDD();
+                return;
+            }
+            dd.replaceChildren(...values.map(value => {
+                const option = document.createElement('button');
+                option.type = 'button';
+                option.className = 'modal-dd-item';
+                option.textContent = value;
+                option.addEventListener('click', () => setEditCategory(value));
+                return option;
+            }));
+            dd.style.display = 'block';
+        }
+
+        function setEditCategory(value) {
+            const inp = document.getElementById('edit-operation-category');
+            if (inp) inp.value = value;
+            hideEditCategoryDD();
+        }
+
         function pickCatOpt(val, el) {
             const inp = document.getElementById('uni-category-input');
             if (inp) { inp.value = val; inp.blur(); }
@@ -4990,6 +5128,9 @@
             if (e.target.id !== 'uni-category-input' && !e.target.closest('#cat-dd')) {
                 const dd = document.getElementById('cat-dd');
                 if (dd) dd.style.display = 'none';
+            }
+            if (!e.target.closest('#edit-operation-category-wrap')) {
+                hideEditCategoryDD();
             }
         });
 
@@ -5038,12 +5179,12 @@
             document.getElementById('uni-category-input').value = '';
             // При каждом новом расходе начинаем с одного согласованного
             // значения и не переносим плательщика из предыдущей операции.
-            setInvestorSelection('Юнион Эскей');
+            setInvestorSelection(PARTNER_CONFIG.director?.name || 'Юнион Эскей');
             
             document.getElementById('universal-modal').classList.remove('hidden'); 
             
             updateInvestorDatalistOptions();
-            syncInvestorDropdown('Юнион Эскей');
+            syncInvestorDropdown(PARTNER_CONFIG.director?.name || 'Юнион Эскей');
             toggleUniModalFields();
             document.body.style.overflow = 'hidden';
         }
@@ -5156,32 +5297,33 @@
 
             // Лейблы и плейсхолдеры
             const invLabel = document.getElementById('uni-investor-label');
-            const invInput = document.getElementById('uni-investor-input');
             const catLabel = document.getElementById('uni-category-label');
+            const catInput = document.getElementById('uni-category-input');
             const modalTitle = document.getElementById('uni-modal-title');
             const submitBtn  = document.getElementById('btn-save-universal');
 
             if (isIncome) {
                 if (invLabel) invLabel.textContent = 'От кого поступление';
-                if (invInput) { invInput.innerHTML = '<option>Урал Трансмаш</option><option>Заказчик</option>'; invInput.placeholder = 'Урал Трансмаш, Завод №9...'; }
+                syncIncomePayerDropdown();
                 if (catLabel) catLabel.textContent = 'Основание поступления';
                 if (catInput) { catInput._catListId = 'income-category-options'; catInput.placeholder = 'Аванс по договору, Оплата этапа...'; }
                 if (modalTitle) modalTitle.textContent = 'Новое поступление';
                 if (submitBtn)  submitBtn.textContent = 'Сохранить поступление';
             } else if (isWithdrawal) {
                 if (invLabel) invLabel.textContent = 'Кто выводит';
-                if (invInput) { updateInvestorDatalistOptions(); syncInvestorDropdown(); invInput.placeholder = 'Юнион Эскей / Коля...'; }
+                updateInvestorDatalistOptions();
+                syncInvestorDropdown();
                 if (modalTitle) modalTitle.textContent = 'Вывод прибыли';
                 if (submitBtn)  submitBtn.textContent = 'Сохранить';
             } else {
                 if (invLabel) invLabel.textContent = 'Кто оплатил / вложил';
-                if (invInput) { updateInvestorDatalistOptions(); syncInvestorDropdown(); invInput.placeholder = 'Общие / Юнион Эскей / Дима...'; }
+                updateInvestorDatalistOptions();
+                syncInvestorDropdown();
                 if (catLabel) catLabel.textContent = 'Категория / Назначение';
                 if (modalTitle) modalTitle.textContent = 'Новая операция';
                 if (submitBtn)  submitBtn.textContent = 'Сохранить';
             }
 
-            const catInput = document.getElementById('uni-category-input');
             if (catInput) {
                 const typeVal = _currentModalType || document.getElementById('uni-type')?.value || 'project';
                 const dlMap = { income:'income-category-options', general:'general-category-options', personal:'personal-category-options' };
