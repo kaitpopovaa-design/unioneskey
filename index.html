@@ -770,10 +770,16 @@
                 <div class="bg-white p-5 sm:p-6 rounded-[2rem] border shadow-soft">
                     <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
                         <h3 class="font-bold text-brand-dark text-sm">Финансовый поток</h3>
-                        <div class="flex items-center gap-1.5" id="flow-year-btns">
-                            <button onclick="setFlowYear(2026)" id="flow-btn-2026" class="px-3 py-1 rounded-lg text-[11px] font-bold bg-[#EDE9FE] text-[#5B21B6] transition-all">2026</button>
-                            <button onclick="setFlowYear(2027)" id="flow-btn-2027" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-gray-100 transition-all">2027</button>
-                            <button onclick="setFlowYear('all')" id="flow-btn-all" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-gray-100 transition-all">Все</button>
+                        <div class="flex items-center gap-2 flex-wrap justify-end">
+                            <div class="flex items-center gap-1 rounded-xl bg-gray-50 p-1" id="flow-mode-btns">
+                                <button onclick="setFlowMode('union')" id="flow-mode-union" class="px-3 py-1 rounded-lg text-[11px] font-bold bg-white text-[#5B21B6] shadow-sm transition-all">Юнион Эскей</button>
+                                <button onclick="setFlowMode('all')" id="flow-mode-all" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-white transition-all">ЮЭ + партнеры</button>
+                            </div>
+                            <div class="flex items-center gap-1.5" id="flow-year-btns">
+                                <button onclick="setFlowYear(2026)" id="flow-btn-2026" class="px-3 py-1 rounded-lg text-[11px] font-bold bg-[#EDE9FE] text-[#5B21B6] transition-all">2026</button>
+                                <button onclick="setFlowYear(2027)" id="flow-btn-2027" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-gray-100 transition-all">2027</button>
+                                <button onclick="setFlowYear('all')" id="flow-btn-all" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-gray-100 transition-all">Все</button>
+                            </div>
                         </div>
                     </div>
                     <div class="h-64 sm:h-80" id="barChart-wrapper"><canvas id="barChart"></canvas></div>
@@ -2983,6 +2989,35 @@
             renderCharts();
         }
 
+        function getFlowMode() {
+            if (window._flowMode === 'all' || window._flowMode === 'union') return window._flowMode;
+            try {
+                window._flowMode = localStorage.getItem('flow_mode') === 'all' ? 'all' : 'union';
+            } catch (e) {
+                window._flowMode = 'union';
+            }
+            return window._flowMode;
+        }
+
+        function syncFlowModeButtons(mode) {
+            ['union', 'all'].forEach(value => {
+                const btn = document.getElementById('flow-mode-' + value);
+                if (!btn) return;
+                btn.className = value === mode
+                    ? 'px-3 py-1 rounded-lg text-[11px] font-bold bg-white text-[#5B21B6] shadow-sm transition-all'
+                    : 'px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-white transition-all';
+            });
+        }
+
+        function setFlowMode(mode) {
+            window._flowMode = mode === 'all' ? 'all' : 'union';
+            try { localStorage.setItem('flow_mode', window._flowMode); } catch (e) {}
+            syncFlowModeButtons(window._flowMode);
+            const detail = document.getElementById('flow-detail');
+            if (detail) detail.classList.add('hidden');
+            renderCharts();
+        }
+
         function setFlowYear(year) {
             window._flowYear = year;
             // Подсвечиваем активную кнопку
@@ -3012,6 +3047,8 @@
             if (currentRole === 'director') {
                 // ── Финансовый поток — по выбранному году ──
                 const flowYear = window._flowYear || 2026;
+                const flowMode = getFlowMode();
+                syncFlowModeButtons(flowMode);
                 const today2 = new Date();
                 const targetMonths = [];
 
@@ -3020,8 +3057,10 @@
                     const allMonths = new Set();
                     filtered.forEach(p => {
                         (p.incomes||[]).forEach(i => { const m=getYearMonth(i.date); if(m) allMonths.add(m); });
-                        p.expenses.forEach(e => { const m=getYearMonth(e.date); if(m) allMonths.add(m); });
+                        getProjectOperationalExpenses(p).forEach(e => { const m=getYearMonth(e.date); if(m) allMonths.add(m); });
+                        getProjectWithdrawals(p.id).forEach(w => { const m=getYearMonth(w.date); if(m) allMonths.add(m); });
                     });
+                    companyTransactions.forEach(t => { const m=getYearMonth(t.date); if(m) allMonths.add(m); });
                     [...allMonths].sort().forEach(m => targetMonths.push(m));
                     if (targetMonths.length === 0) {
                         for (let mo = 1; mo <= 12; mo++) targetMonths.push(`2026-${String(mo).padStart(2,'0')}`);
@@ -3034,14 +3073,62 @@
                 const monthlyData = {};
                 targetMonths.forEach(m => { monthlyData[m] = { in: 0, out: 0, incomeItems: [], expenseItems: [] }; });
 
+                const addFlowOutflow = (date, category, amount, meta = {}) => {
+                    const month = getYearMonth(date);
+                    const value = Math.max(0, Number(amount || 0));
+                    if (!monthlyData[month] || value <= 0) return;
+                    monthlyData[month].out += value;
+                    monthlyData[month].expenseItems.push({ category, amount: value, ...meta });
+                };
+
                 filtered.forEach(p => {
                     (p.incomes||[]).forEach(i => {
                         const m = getYearMonth(i.date);
                         if (monthlyData[m]) { monthlyData[m].in += i.amount; monthlyData[m].incomeItems.push({name:p.name, category:i.category, amount:i.amount, investor:i.investor}); }
                     });
-                    p.expenses.forEach(e => {
-                        const m = getYearMonth(e.date);
-                        if (monthlyData[m]) { monthlyData[m].out += e.amount; monthlyData[m].expenseItems.push({name:p.name, category:e.category, amount:e.amount, investor:e.investor}); }
+
+                    getProjectOperationalExpenses(p).forEach(e => {
+                        const fullAmount = Math.max(0, Number(e.amount || 0));
+                        let companyAmount = fullAmount;
+                        let category = e.category || 'Без категории';
+
+                        if (flowMode === 'union') {
+                            if (isCommonInvestor(e.investor)) {
+                                companyAmount = Math.round(fullAmount / 2);
+                                category += ' · доля ЮЭ 50%';
+                            } else if (!isUnionEskeyRecipient(e.investor)) {
+                                companyAmount = 0;
+                            }
+                        }
+
+                        addFlowOutflow(e.date, category, companyAmount, {
+                            name: p.name,
+                            investor: e.investor,
+                            source: 'project-expense'
+                        });
+                    });
+
+                    getProjectWithdrawals(p.id).forEach(w => {
+                        const recipient = getCanonicalParticipantName(w.person || w.investor || 'Юнион Эскей');
+                        addFlowOutflow(
+                            w.date,
+                            `${normalizePayoutType(w.payoutType || w.type)} · ${recipient}`,
+                            w.amount,
+                            { name: p.name, investor: recipient, source: 'project-payout' }
+                        );
+                    });
+                });
+
+                companyTransactions.forEach(t => {
+                    const category = t.category || 'Без категории';
+                    const flowCategory = t.type === 'general'
+                        ? `Траты компании · ${category}`
+                        : (t.type === 'withdrawal'
+                            ? `Вывод прибыли ЮЭ · ${category}`
+                            : `Личный вывод · ${category}`);
+                    addFlowOutflow(t.date, flowCategory, t.amount, {
+                        investor: 'Юнион Эскей',
+                        source: 'company'
                     });
                 });
 
@@ -3062,7 +3149,7 @@
                         labels: barLabels,
                         datasets: [
                             { label: 'Поступило', data: targetMonths.map(m => monthlyData[m].in),  backgroundColor: bgIn,  borderRadius: 4 },
-                            { label: 'Расходы',   data: targetMonths.map(m => monthlyData[m].out), backgroundColor: bgOut, borderRadius: 4 }
+                            { label: 'Ушло',      data: targetMonths.map(m => monthlyData[m].out), backgroundColor: bgOut, borderRadius: 4 }
                         ]
                     },
                     options: {
@@ -3080,7 +3167,7 @@
                             d.incomeItems.forEach(i => { byProject[i.name]=(byProject[i.name]||0)+i.amount; });
                             const totalIn = d.in;
 
-                            // Расходы — группируем по категории
+                            // Все списания — группируем по категории
                             const byCategory = {};
                             d.expenseItems.forEach(e => { byCategory[e.category]=(byCategory[e.category]||0)+e.amount; });
                             const totalOut = d.out;
@@ -3091,7 +3178,7 @@
                             </div>
                             <div class="flow-cols">
                                 <div>
-                                    <div class="flow-detail-heading">Расходы <strong>${formatMoney(totalOut)}</strong></div>
+                                    <div class="flow-detail-heading">Ушло <strong>${formatMoney(totalOut)}</strong></div>
                                     ${Object.entries(byCategory).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
                                         const pct = totalOut>0 ? Math.round(v/totalOut*100) : 0;
                                         return `<div class="flow-detail-row">
