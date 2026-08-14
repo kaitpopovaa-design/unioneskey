@@ -3167,9 +3167,15 @@
                             d.incomeItems.forEach(i => { byProject[i.name]=(byProject[i.name]||0)+i.amount; });
                             const totalIn = d.in;
 
-                            // Все списания — группируем по категории
+                            // Все списания — группируем по категории.
+                            // Для операций объекта добавляем его название только в расшифровке,
+                            // чтобы одинаковые категории (например, «Зарплата») не смешивались.
                             const byCategory = {};
-                            d.expenseItems.forEach(e => { byCategory[e.category]=(byCategory[e.category]||0)+e.amount; });
+                            d.expenseItems.forEach(e => {
+                                const isProjectItem = e.name && (e.source === 'project-expense' || e.source === 'project-payout');
+                                const displayCategory = isProjectItem ? `${e.category} · ${e.name}` : e.category;
+                                byCategory[displayCategory] = (byCategory[displayCategory] || 0) + e.amount;
+                            });
                             const totalOut = d.out;
 
                             let html = `<div style="display:flex;justify-content:space-between;align-items:center;" class="mb-3">
