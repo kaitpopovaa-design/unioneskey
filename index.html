@@ -716,7 +716,6 @@
                             <span class="stat-card-hint" role="tooltip">Историческая сумма расходов объектов, оплаченных конкретными партнерами. Общие расходы 50/50 сюда не входят и возвраты эту цифру не уменьшают.</span>
                         </div>
                         <p id="partner-investment" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
-                        <p class="text-[9px] sm:text-[10px] font-medium text-gray-400 mt-0.5">Возвращено: <span id="partner-capital-returned" class="font-semibold text-gray-500">0 ₽</span></p>
                     </div>
                     <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
                         <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
@@ -2796,14 +2795,12 @@
 
             if (currentRole === 'director') {
                 // Применяем фильтр по периоду
-                let filteredInc = [], filteredExp = [], filteredPartnerProfit = [], filteredUnionProfit = [], filteredPartnerReturns = [], filteredComp = [];
+                let filteredInc = [], filteredExp = [], filteredPartnerProfit = [], filteredUnionProfit = [], filteredComp = [];
                 data.forEach(p => {
                     filteredInc.push(...filterByPeriod(p.incomes || [], 'date'));
                     filteredExp.push(...filterByPeriod(getProjectOperationalExpenses(p), 'date'));
                     filteredPartnerProfit.push(...filterByPeriod(getProjectPartnerProfitPayouts(p.id), 'date'));
                     filteredUnionProfit.push(...filterByPeriod(getProjectUnionProfitPayouts(p.id), 'date'));
-                    filteredPartnerReturns.push(...filterByPeriod(getProjectCapitalReturns(p.id), 'date')
-                        .filter(w => !isUnionEskeyRecipient(w.person || w.investor)));
                 });
                 filteredComp = filterByPeriod(companyTransactions, 'date');
                 
@@ -2813,7 +2810,6 @@
                 const pFactPartnerInvestment = filteredExp
                     .filter(e => !isCommonInvestor(e.investor) && !isUnionEskeyRecipient(e.investor))
                     .reduce((sum, e) => sum + e.amount, 0);
-                const pFactPartnerReturned = sumAmounts(filteredPartnerReturns);
                 const pFactPartnerProfitPaid = sumAmounts(filteredPartnerProfit);
                 const pCompGen  = filteredComp.filter(t => t.type==='general').reduce((s,t) => s + t.amount, 0);
                 const pCompPers = filteredComp.filter(t => t.type==='personal').reduce((s,t) => s + t.amount, 0);
@@ -2844,7 +2840,6 @@
                 document.getElementById('planned-revenue').innerText = formatMoney(expectedReceipts);
                 document.getElementById('direct-expense').innerText = formatMoney(pFactDirectCost);
                 document.getElementById('partner-investment').innerText = formatMoney(pFactPartnerInvestment);
-                document.getElementById('partner-capital-returned').innerText = formatMoney(pFactPartnerReturned);
                 document.getElementById('partner-profit-paid').innerText = formatMoney(pFactPartnerProfitPaid);
                 document.getElementById('general-expense').innerText = formatMoney(pCompGen);
                 document.getElementById('net-profit').innerText = formatMoney(netProfit);
@@ -4001,12 +3996,25 @@
                     <td class="px-4 sm:px-6 py-3 text-center font-semibold whitespace-nowrap">${formatMoney(w.amount || 0)}</td>
                     <td class="px-4 sm:px-6 py-3 text-center text-gray-400">${escapeTrashText(w.comment || '—')}</td>
                     <td class="px-4 sm:px-6 py-3 text-center whitespace-nowrap">${canManage ? `
-                        <div class="flex gap-2 justify-center items-center">
+                        <div id="withdrawal-actions-${Number(projectId)}-${idx}" class="flex gap-2 justify-center items-center">
                             <button onclick="startEditWithdrawal(${Number(projectId)}, ${idx})" class="text-[#7C3AED] hover:underline text-xs font-bold">Изменить</button>
-                            <button onclick="deleteWithdrawal('${escapeTrashText(w.id)}', ${Number(projectId)})" class="text-[#93C5FD] hover:text-[#60A5FA] hover:underline text-xs font-bold">Удалить</button>
+                            <button onclick="askDeleteWithdrawal(${Number(projectId)}, ${idx})" class="text-[#93C5FD] hover:text-[#60A5FA] hover:underline text-xs font-bold">Удалить</button>
                         </div>` : '—'}</td>
                 </tr>
             `).join('');
+        }
+
+        function askDeleteWithdrawal(projectId, displayIdx) {
+            const container = document.getElementById(`withdrawal-actions-${projectId}-${displayIdx}`);
+            if (!container) return;
+            container.innerHTML = `
+                <div class="flex items-center gap-1.5 bg-[#FFF7ED] py-0.5 px-2 rounded-lg border border-[#FED7AA]/50">
+                    <span class="text-[11px] font-semibold text-gray-500">Удалить?</span>
+                    <button onclick="deleteWithdrawal(${projectId}, ${displayIdx})" class="text-gray-600 hover:text-gray-800 transition-colors font-bold">Да</button>
+                    <span class="text-gray-300">|</span>
+                    <button onclick="renderWithdrawalHistoryTable(${projectId})" class="text-gray-500 hover:text-gray-700 transition-colors">Нет</button>
+                </div>
+            `;
         }
 
         function getSortedProjectWithdrawals(projectId) {
@@ -4569,14 +4577,19 @@
             showNotification('Операция перенесена в выбранный раздел', 'success');
         }
 
-        async function deleteWithdrawal(id, projectId) {
-            const item = profitWithdrawals.find(w => String(w.id) === String(id));
-            if (!item || !confirm(`Удалить выплату ${formatMoney(item.amount)}? Она попадёт в корзину.`)) return;
-            const sent = await sendPost({ action: 'deleteWithdrawal', id }, false);
-            if (!sent) return;
-            await refreshServerData();
+        async function deleteWithdrawal(projectId, displayIdx) {
+            const item = getSortedProjectWithdrawals(projectId)[displayIdx];
+            if (!item) return;
+
+            // sendPost сразу убирает запись из локального журнала через
+            // simulateOfflinePost. Поэтому строка исчезает без закрытия окна
+            // и без ожидания повторной загрузки Google Таблицы.
+            const sendRequest = sendPost({ action: 'deleteWithdrawal', id: item.id }, false);
             renderWithdrawalHistoryTable(projectId);
             renderCharts();
+
+            const sent = await sendRequest;
+            if (!sent) return;
             showNotification('Выплата перемещена в корзину', 'success');
         }
 
