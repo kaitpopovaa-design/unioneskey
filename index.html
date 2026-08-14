@@ -908,6 +908,34 @@
                 <button type="button" onclick="closeEditOperationModal()" class="text-gray-300 hover:text-gray-500 text-2xl leading-none transition-colors ml-4">&times;</button>
             </div>
             <form onsubmit="event.preventDefault(); saveEditOperation();" class="px-6 pt-4 pb-5 space-y-3 overflow-y-auto overflow-x-hidden" translate="no">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Тип операции</label>
+                    <div class="modal-dd" id="dd-edit-operation-type">
+                        <button type="button" class="modal-dd-btn" style="font-weight:400;" onclick="toggleModalDD('dd-edit-operation-type')">
+                            <span id="dd-edit-operation-type-label">Расход по объекту</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
+                        <div class="modal-dd-menu" id="dd-edit-operation-type-menu">
+                            <button class="modal-dd-item" data-value="project" onclick="setEditOperationType('project')" type="button">Расход по объекту</button>
+                            <button class="modal-dd-item" data-value="income" onclick="setEditOperationType('income')" type="button">Поступление по объекту</button>
+                            <button class="modal-dd-item" data-value="general" onclick="setEditOperationType('general')" type="button">Общий расход компании</button>
+                            <button class="modal-dd-item" data-value="personal" onclick="setEditOperationType('personal')" type="button">Личный вывод</button>
+                            <button class="modal-dd-item" data-value="withdrawal" onclick="setEditOperationType('withdrawal')" type="button">Вывод прибыли по объекту</button>
+                        </div>
+                        <input type="hidden" id="edit-operation-type" value="project">
+                    </div>
+                </div>
+                <div class="space-y-1" id="edit-operation-project-wrap">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Объект</label>
+                    <div class="modal-dd" id="dd-edit-operation-project">
+                        <button type="button" class="modal-dd-btn" style="font-weight:400;" onclick="toggleModalDD('dd-edit-operation-project')">
+                            <span id="dd-edit-operation-project-label">Выберите объект</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
+                        <div class="modal-dd-menu" id="dd-edit-operation-project-menu"></div>
+                        <input type="hidden" id="edit-operation-project" value="">
+                    </div>
+                </div>
                 <div class="grid grid-cols-2 gap-3 date-sum-grid" style="grid-template-columns:1fr 1fr;">
                     <div class="space-y-1 min-w-0">
                         <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Дата</label>
@@ -921,7 +949,7 @@
                         <input type="text" id="edit-operation-amount" oninput="formatInputSpaces(this)" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-bold outline-none focus:border-brand-purple" autocomplete="off" translate="no" spellcheck="false" lang="ru" required>
                     </div>
                 </div>
-                <div class="space-y-1">
+                <div class="space-y-1" id="edit-operation-person-wrap">
                     <label id="edit-operation-person-label-text" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Кто оплатил / вложил</label>
                     <div class="modal-dd" id="dd-edit-operation-person">
                         <button type="button" class="modal-dd-btn" style="font-weight:400;" onclick="toggleModalDD('dd-edit-operation-person')">
@@ -997,11 +1025,11 @@
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                             </button>
                             <div class="modal-dd-menu" id="dd-type-menu">
-                                <button class="modal-dd-item selected" onclick="selectModalDD('dd-type','project','Расход по объекту')">Расход по объекту</button>
-                                <button class="modal-dd-item" onclick="selectModalDD('dd-type','income','Поступление по объекту')">Поступление по объекту</button>
-                                <button class="modal-dd-item" onclick="selectModalDD('dd-type','general','Общий расход компании')">Общий расход компании</button>
-                                <button class="modal-dd-item" onclick="selectModalDD('dd-type','withdrawal','Вывод прибыли')">Вывод прибыли</button>
-                                <button class="modal-dd-item" onclick="selectModalDD('dd-type','personal','Личные траты')">Личные траты</button>
+                                <button class="modal-dd-item selected" data-value="project" onclick="selectModalDD('dd-type','project','Расход по объекту')" type="button">Расход по объекту</button>
+                                <button class="modal-dd-item" data-value="income" onclick="selectModalDD('dd-type','income','Поступление по объекту')" type="button">Поступление по объекту</button>
+                                <button class="modal-dd-item" data-value="general" onclick="selectModalDD('dd-type','general','Общий расход компании')" type="button">Общий расход компании</button>
+                                <button class="modal-dd-item" data-value="withdrawal" onclick="selectModalDD('dd-type','withdrawal','Вывод прибыли')" type="button">Вывод прибыли</button>
+                                <button class="modal-dd-item" data-value="personal" onclick="selectModalDD('dd-type','personal','Личный вывод')" type="button">Личный вывод</button>
                             </div>
                             <input type="hidden" id="uni-type" value="project">
                         </div>
@@ -1548,6 +1576,20 @@
                 .trim();
         }
 
+        function findOperationIndex(collection, record, fields) {
+            if (!Array.isArray(collection) || !record) return -1;
+            if (record.rowIndex) {
+                const rowMatch = collection.findIndex(item => Number(item.rowIndex) === Number(record.rowIndex));
+                if (rowMatch !== -1) return rowMatch;
+            }
+            const sameObject = collection.indexOf(record);
+            if (sameObject !== -1) return sameObject;
+            return collection.findIndex(item => fields.every(field => {
+                if (field === 'amount') return Number(item[field]) === Number(record[field]);
+                return String(item[field] ?? '') === String(record[field] ?? '');
+            }));
+        }
+
         // Вспомогательная функция для извлечения "Год-Месяц"
         function getYearMonth(dateStr) {
             if (!dateStr) return "";
@@ -1989,14 +2031,16 @@
                         category: payload.category,
                         amount: Number(payload.amount),
                         comment: payload.comment || '',
-                        investor: payload.investor || 'Юнион Эскей'
+                        investor: payload.investor || 'Заказчик'
                     });
                     proj.paid = proj.incomes.reduce((sum, i) => sum + i.amount, 0);
                 }
             } else if (payload.action === 'deleteIncome') {
                 const proj = data.find(p => Number(p.id) === Number(payload.projectId));
                 if (proj && proj.incomes) {
-                    const idx = proj.incomes.findIndex(i => i.date === payload.date && i.category === payload.category && Number(i.amount) === Number(payload.amount) && i.comment === payload.comment);
+                    const idx = payload.rowIndex
+                        ? proj.incomes.findIndex(i => Number(i.rowIndex) === Number(payload.rowIndex))
+                        : proj.incomes.findIndex(i => i.date === payload.date && i.category === payload.category && Number(i.amount) === Number(payload.amount) && i.comment === payload.comment);
                     if (idx !== -1) {
                         proj.incomes.splice(idx, 1);
                         proj.paid = proj.incomes.reduce((sum, i) => sum + i.amount, 0);
@@ -2010,6 +2054,18 @@
                     category: payload.category,
                     comment: payload.comment || ''
                 });
+            } else if (payload.action === 'addWithdrawal') {
+                profitWithdrawals.push({
+                    id: 'local-' + Date.now() + '-' + Math.random().toString(16).slice(2),
+                    projectId: Number(payload.projectId),
+                    date: payload.date,
+                    person: payload.person || 'Юнион Эскей',
+                    amount: Number(payload.amount),
+                    comment: payload.comment || ''
+                });
+            } else if (payload.action === 'deleteWithdrawal') {
+                const idx = profitWithdrawals.findIndex(item => String(item.id) === String(payload.id));
+                if (idx !== -1) profitWithdrawals.splice(idx, 1);
             } else if (payload.action === 'addProject') {
                 const nextId = data.length ? Math.max(...data.map(p => p.id)) + 1 : 1;
                 data.push({
@@ -3523,7 +3579,7 @@
         function startEditCompanyExpense(idx) {
             let sorted = [...companyTransactions].sort((a,b) => new Date(b.date) - new Date(a.date));
             const t = sorted[idx];
-            const origIdx = companyTransactions.findIndex(x => x.date === t.date && x.type === t.type && x.amount === t.amount && x.category === t.category && x.comment === t.comment);
+            const origIdx = findOperationIndex(companyTransactions, t, ['date', 'type', 'amount', 'category', 'comment']);
             if (origIdx === -1) return;
             openEditOperationModal({ kind:'company', origIdx, record:t });
         }
@@ -3566,10 +3622,13 @@
             }
             let sorted = [...companyTransactions].sort((a,b) => new Date(b.date) - new Date(a.date));
             const t = sorted[displayIdx];
-            const origIdx = companyTransactions.findIndex(x => x.date === t.date && x.type === t.type && x.amount === t.amount && x.category === t.category && x.comment === t.comment);
+            const origIdx = findOperationIndex(companyTransactions, t, ['date', 'type', 'amount', 'category', 'comment']);
             if (origIdx === -1) return;
 
-            await sendPost({
+            // sendPost удаляет запись из локального массива синхронно, ещё до
+            // сетевого ожидания. Сразу перерисовываем окно и не возвращаем в
+            // него устаревшую строку преждевременным GET-запросом.
+            const sendRequest = sendPost({
                 action: 'deleteCompanyExpense',
                 rowIndex: t.rowIndex,
                 date: t.date,
@@ -3579,8 +3638,12 @@
                 comment: t.comment,
                 investor: t.investor || 'Юнион Эскей'
             }, false);
-            await refreshServerData();
             renderCompanyHistoryTable();
+            renderTable();
+            renderCharts();
+
+            const sent = await sendRequest;
+            if (!sent) return;
             showNotification('Расход перемещён в Корзину', 'success');
         }
 
@@ -3872,6 +3935,79 @@
             }, 900);
         }
 
+        const EDIT_OPERATION_TYPE_LABELS = {
+            project: 'Расход по объекту',
+            income: 'Поступление по объекту',
+            general: 'Общий расход компании',
+            personal: 'Личный вывод',
+            withdrawal: 'Вывод прибыли по объекту'
+        };
+
+        function getInitialEditOperationType(config) {
+            if (config?.kind === 'income') return 'income';
+            if (config?.kind === 'company') {
+                const companyType = String(config?.record?.type || 'general');
+                return ['general', 'personal', 'withdrawal'].includes(companyType) ? companyType : 'general';
+            }
+            return 'project';
+        }
+
+        function setEditOperationProject(projectId, projectName) {
+            const hidden = document.getElementById('edit-operation-project');
+            const label = document.getElementById('dd-edit-operation-project-label');
+            if (hidden) hidden.value = String(projectId || '');
+            if (label) label.textContent = projectName || 'Выберите объект';
+            document.querySelectorAll('#dd-edit-operation-project-menu .modal-dd-item').forEach(item => {
+                item.classList.toggle('selected', item.dataset.value === String(projectId));
+            });
+            const menu = document.getElementById('dd-edit-operation-project-menu');
+            const btn = document.querySelector('#dd-edit-operation-project .modal-dd-btn');
+            if (menu) menu.style.display = 'none';
+            if (btn) btn.classList.remove('open');
+            updateEditOperationFields(false);
+        }
+
+        function renderEditOperationProjects(selectedId) {
+            const menu = document.getElementById('dd-edit-operation-project-menu');
+            if (!menu) return '';
+            const projects = getFilteredProjects();
+            const selectedProject = projects.find(project => String(project.id) === String(selectedId)) || projects[0];
+            const items = projects.map(project => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'modal-dd-item';
+                button.dataset.value = String(project.id);
+                button.textContent = project.name;
+                button.addEventListener('click', () => setEditOperationProject(project.id, project.name));
+                return button;
+            });
+            menu.replaceChildren(...items);
+            const resolvedId = selectedProject ? String(selectedProject.id) : '';
+            const hidden = document.getElementById('edit-operation-project');
+            const label = document.getElementById('dd-edit-operation-project-label');
+            if (hidden) hidden.value = resolvedId;
+            if (label) label.textContent = selectedProject?.name || 'Нет доступных объектов';
+            items.forEach(item => item.classList.toggle('selected', item.dataset.value === resolvedId));
+            return resolvedId;
+        }
+
+        function setEditOperationType(type) {
+            if (!Object.prototype.hasOwnProperty.call(EDIT_OPERATION_TYPE_LABELS, type)) return;
+            const hidden = document.getElementById('edit-operation-type');
+            const previousType = hidden?.value || '';
+            if (hidden) hidden.value = type;
+            const label = document.getElementById('dd-edit-operation-type-label');
+            if (label) label.textContent = EDIT_OPERATION_TYPE_LABELS[type];
+            document.querySelectorAll('#dd-edit-operation-type-menu .modal-dd-item').forEach(item => {
+                item.classList.toggle('selected', item.dataset.value === type);
+            });
+            const menu = document.getElementById('dd-edit-operation-type-menu');
+            const btn = document.querySelector('#dd-edit-operation-type .modal-dd-btn');
+            if (menu) menu.style.display = 'none';
+            if (btn) btn.classList.remove('open');
+            updateEditOperationFields(previousType !== type);
+        }
+
         function getEditOperationPeople(kind, project, currentValue) {
             const list = [];
             const add = (value, label) => {
@@ -3975,25 +4111,71 @@
             setEditOperationPerson(selected);
         }
 
+        function updateEditOperationFields(resetPerson) {
+            const type = document.getElementById('edit-operation-type')?.value || 'project';
+            const needsProject = type === 'project' || type === 'income' || type === 'withdrawal';
+            const isIncome = type === 'income';
+            const isCompany = type === 'general' || type === 'personal';
+            const isWithdrawal = type === 'withdrawal';
+
+            document.getElementById('edit-operation-project-wrap')?.classList.toggle('hidden', !needsProject);
+            document.getElementById('edit-operation-person-wrap')?.classList.toggle('hidden', isCompany);
+            document.getElementById('edit-operation-category-wrap')?.classList.toggle('hidden', isWithdrawal);
+
+            const categoryLabel = document.getElementById('edit-operation-category-label-text');
+            const categoryInput = document.getElementById('edit-operation-category');
+            const personLabel = document.getElementById('edit-operation-person-label-text');
+            if (categoryLabel) categoryLabel.textContent = isIncome ? 'Основание поступления' : 'Категория / назначение';
+            if (categoryInput) {
+                categoryInput.placeholder = isIncome
+                    ? 'Аванс по договору, Оплата этапа...'
+                    : isCompany
+                        ? (type === 'personal' ? 'Личный вывод, Дивиденды, Транспорт...' : 'Бухгалтерия, Налоги, Аренда...')
+                        : 'Материалы, Зарплата, Топливо...';
+            }
+
+            if (!isCompany) {
+                const projectId = document.getElementById('edit-operation-project')?.value;
+                const project = data.find(item => String(item.id) === String(projectId));
+                const currentPerson = document.getElementById('edit-operation-person')?.value || '';
+                const selected = resetPerson
+                    ? (isIncome ? 'Заказчик' : 'Юнион Эскей')
+                    : (currentPerson || (isIncome ? 'Заказчик' : 'Юнион Эскей'));
+                if (personLabel) personLabel.textContent = isIncome ? 'От кого поступление' : isWithdrawal ? 'Кто выводит' : 'Кто оплатил / вложил';
+                renderEditOperationPeople(
+                    getEditOperationPeople(isIncome ? 'income' : 'expense', project, selected),
+                    selected,
+                    isIncome
+                );
+            }
+
+            hideEditCategoryDD();
+        }
+
         function openEditOperationModal(config) {
             editingOperation = config;
-            const isIncome = config.kind === 'income';
-            const isCompany = config.kind === 'company';
             const record = config.record || {};
-            const title = isCompany ? 'Изменить трату' : isIncome ? 'Изменить поступление' : 'Изменить расход';
-            const subtitle = isCompany ? 'Изменения сохранятся в истории компании' : 'Изменения сохранятся в истории объекта';
-            document.getElementById('edit-operation-title').textContent = title;
-            document.getElementById('edit-operation-subtitle').textContent = subtitle;
-            document.getElementById('edit-operation-person-label-text').textContent = isCompany ? 'Тип траты' : isIncome ? 'От кого поступление' : 'Кто оплатил / вложил';
-            document.getElementById('edit-operation-category-label-text').textContent = isIncome ? 'Основание поступления' : 'Категория / назначение';
-            document.getElementById('edit-operation-category').placeholder = isIncome ? 'Аванс по договору, Оплата этапа...' : isCompany ? 'Бухгалтерия, Налоги, Аренда...' : 'Материалы, Зарплата, Топливо...';
+            const initialType = getInitialEditOperationType(config);
+            const initialProjectId = config.projectId || config.project?.id || '';
+            document.getElementById('edit-operation-title').textContent = 'Изменить операцию';
+            document.getElementById('edit-operation-subtitle').textContent = 'Можно изменить тип операции и объект';
             document.getElementById('edit-operation-date').value = record.date || '';
             syncDateDisplay('edit-operation-date');
             document.getElementById('edit-operation-amount').value = formatNumberWithSpaces(record.amount || 0);
             document.getElementById('edit-operation-category').value = record.category || '';
             document.getElementById('edit-operation-comment').value = record.comment || '';
-            const selected = isCompany ? (record.type || 'general') : isIncome ? (record.investor || 'Заказчик') : (record.investor || 'Юнион Эскей');
-            renderEditOperationPeople(getEditOperationPeople(config.kind, config.project, selected), selected, isIncome);
+            document.getElementById('edit-operation-type').value = initialType;
+            document.getElementById('dd-edit-operation-type-label').textContent = EDIT_OPERATION_TYPE_LABELS[initialType];
+            document.querySelectorAll('#dd-edit-operation-type-menu .modal-dd-item').forEach(item => {
+                item.classList.toggle('selected', item.dataset.value === initialType);
+            });
+            renderEditOperationProjects(initialProjectId);
+            const selectedPerson = config.kind === 'income'
+                ? (record.investor || 'Заказчик')
+                : (record.investor || record.person || 'Юнион Эскей');
+            document.getElementById('edit-operation-person').value = selectedPerson;
+            document.getElementById('dd-edit-operation-person-label').textContent = selectedPerson;
+            updateEditOperationFields(false);
             document.getElementById('edit-operation-modal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
@@ -4002,61 +4184,155 @@
             editingOperation = null;
             document.getElementById('edit-operation-modal').classList.add('hidden');
             hideEditCategoryDD();
-            const menu = document.getElementById('dd-edit-operation-person-menu');
-            if (menu) menu.style.display = 'none';
-            const btn = document.querySelector('#dd-edit-operation-person .modal-dd-btn');
-            if (btn) btn.classList.remove('open');
+            ['dd-edit-operation-type', 'dd-edit-operation-project', 'dd-edit-operation-person'].forEach(id => {
+                const menu = document.getElementById(id + '-menu');
+                const btn = document.querySelector('#' + id + ' .modal-dd-btn');
+                if (menu) menu.style.display = 'none';
+                if (btn) btn.classList.remove('open');
+            });
             document.body.style.overflow = 'hidden';
+        }
+
+        function buildMovedOperationAddPayload(type, values) {
+            if (type === 'project') {
+                return { action:'addExpense', projectId:values.projectId, date:values.date, category:values.category, amount:values.amount, comment:values.comment, investor:values.person };
+            }
+            if (type === 'income') {
+                return { action:'addIncome', projectId:values.projectId, date:values.date, category:values.category, amount:values.amount, comment:values.comment, investor:values.person };
+            }
+            if (type === 'general' || type === 'personal') {
+                return { action:'addCompanyExpense', date:values.date, type, amount:values.amount, category:values.category, comment:values.comment, investor:'Юнион Эскей' };
+            }
+            if (type === 'withdrawal') {
+                return API_CAPABILITIES.withdrawalLedger
+                    ? { action:'addWithdrawal', projectId:values.projectId, date:values.date, person:values.person, amount:values.amount, comment:values.comment }
+                    : { action:'addExpense', projectId:values.projectId, date:values.date, category:'Вывод прибыли', amount:values.amount, comment:values.comment || values.person, investor:values.person };
+            }
+            return null;
+        }
+
+        function buildOriginalOperationDeletePayload(editing, oldRecord) {
+            if (editing.kind === 'company') {
+                return { action:'deleteCompanyExpense', rowIndex:oldRecord.rowIndex, date:oldRecord.date, type:oldRecord.type, amount:oldRecord.amount, category:oldRecord.category, comment:oldRecord.comment, investor:oldRecord.investor || 'Юнион Эскей' };
+            }
+            if (editing.kind === 'income') {
+                return { action:'deleteIncome', projectId:editing.projectId, rowIndex:oldRecord.rowIndex, date:oldRecord.date, category:oldRecord.category, amount:oldRecord.amount, comment:oldRecord.comment, investor:oldRecord.investor || 'Заказчик' };
+            }
+            return { action:'deleteExpense', projectId:editing.projectId, rowIndex:oldRecord.rowIndex, date:oldRecord.date, category:oldRecord.category, amount:oldRecord.amount, comment:oldRecord.comment, investor:oldRecord.investor || 'Юнион Эскей' };
+        }
+
+        function getEditingOperationRecord(editing) {
+            if (editing.kind === 'company') return companyTransactions[editing.origIdx];
+            const project = data.find(item => Number(item.id) === Number(editing.projectId));
+            if (!project) return null;
+            const collection = editing.kind === 'income' ? (project.incomes || []) : (project.expenses || []);
+            return collection[editing.origIdx] || null;
         }
 
         async function saveEditOperation() {
             const editing = editingOperation;
             if (!editing) return;
+            const targetType = document.getElementById('edit-operation-type')?.value || '';
+            if (!Object.prototype.hasOwnProperty.call(EDIT_OPERATION_TYPE_LABELS, targetType)) {
+                showNotification('Выберите корректный тип операции.', 'error');
+                return;
+            }
             const newDate = document.getElementById('edit-operation-date').value;
             const newAmount = parseFormattedNumber(document.getElementById('edit-operation-amount').value);
             const newCategory = document.getElementById('edit-operation-category').value || 'Без категории';
             const newComment = document.getElementById('edit-operation-comment').value || '';
-            let newPerson = document.getElementById('edit-operation-person').value;
+            const newPerson = document.getElementById('edit-operation-person').value || (targetType === 'income' ? 'Заказчик' : 'Юнион Эскей');
+            const targetProjectId = document.getElementById('edit-operation-project')?.value || '';
+            const needsProject = targetType === 'project' || targetType === 'income' || targetType === 'withdrawal';
             if (!newDate || !newAmount || newAmount <= 0) {
                 showNotification('Укажите дату и сумму больше нуля.', 'error');
                 return;
             }
+            if (needsProject && !targetProjectId) {
+                showNotification('Выберите объект для операции.', 'error');
+                return;
+            }
 
-            if (editing.kind === 'company') {
-                const oldTx = Object.assign({}, companyTransactions[editing.origIdx]);
-                if (!oldTx) return;
-                companyTransactions[editing.origIdx] = { ...oldTx, date:newDate, type:newPerson, amount:newAmount, category:newCategory, comment:newComment };
+            const storedRecord = getEditingOperationRecord(editing);
+            if (!storedRecord) {
+                showNotification('Не удалось найти исходную операцию. Обновите страницу и повторите.', 'error');
+                return;
+            }
+            const oldRecord = { ...storedRecord };
+            const sameCompanyStorage = editing.kind === 'company' && (targetType === 'general' || targetType === 'personal');
+            const sameProjectExpense = editing.kind === 'expense' && targetType === 'project' && Number(editing.projectId) === Number(targetProjectId);
+            const sameProjectIncome = editing.kind === 'income' && targetType === 'income' && Number(editing.projectId) === Number(targetProjectId);
+
+            if (sameCompanyStorage) {
+                companyTransactions[editing.origIdx] = { ...oldRecord, date:newDate, type:targetType, amount:newAmount, category:newCategory, comment:newComment };
                 closeEditOperationModal();
                 renderTable(); renderCharts(); renderCompanyHistoryTable();
                 await sendPost({
                     action:'editCompanyExpense',
-                    oldDate:oldTx.date, oldType:oldTx.type, oldAmount:oldTx.amount, oldCategory:oldTx.category, oldComment:oldTx.comment,
-                    newDate, newType:newPerson, newAmount, newCategory, newComment,
-                    newInvestor:oldTx.investor || 'Юнион Эскей'
+                    oldDate:oldRecord.date, oldType:oldRecord.type, oldAmount:oldRecord.amount, oldCategory:oldRecord.category, oldComment:oldRecord.comment,
+                    newDate, newType:targetType, newAmount, newCategory, newComment,
+                    newInvestor:oldRecord.investor || 'Юнион Эскей'
                 }, false);
                 showNotification('Операция изменена', 'success');
                 return;
             }
 
-            const project = data.find(item => Number(item.id) === Number(editing.projectId));
-            if (!project) return;
-            const collection = editing.kind === 'income' ? (project.incomes || []) : (project.expenses || []);
-            const oldRecord = Object.assign({}, collection[editing.origIdx]);
-            if (!oldRecord) return;
-            collection[editing.origIdx] = { ...oldRecord, date:newDate, category:newCategory, amount:newAmount, comment:newComment, investor:newPerson };
-            if (editing.kind === 'income') project.paid = collection.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-            else project.cost = collection.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+            if (sameProjectExpense || sameProjectIncome) {
+                const project = data.find(item => Number(item.id) === Number(editing.projectId));
+                const collection = sameProjectIncome ? project.incomes : project.expenses;
+                collection[editing.origIdx] = { ...oldRecord, date:newDate, category:newCategory, amount:newAmount, comment:newComment, investor:newPerson };
+                if (sameProjectIncome) project.paid = collection.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+                else project.cost = collection.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+                closeEditOperationModal();
+                renderTable(); renderCharts();
+                if (sameProjectIncome) renderIncomeHistoryTable(editing.projectId);
+                else renderHistoryTable(editing.projectId);
+                await sendPost({
+                    action: sameProjectIncome ? 'editIncome' : 'editExpense',
+                    projectId:editing.projectId,
+                    oldDate:oldRecord.date, oldCategory:oldRecord.category, oldAmount:oldRecord.amount, oldComment:oldRecord.comment, oldInvestor:oldRecord.investor || (sameProjectIncome ? 'Заказчик' : 'Юнион Эскей'),
+                    newDate, newCategory, newAmount, newComment, newInvestor:newPerson
+                }, false);
+                showNotification(sameProjectIncome ? 'Поступление изменено' : 'Расход изменён', 'success');
+                return;
+            }
+
+            if (!API_CAPABILITIES.operationTrash && editing.kind !== 'withdrawal') {
+                showNotification('Для переноса операции нужно обновить Google Apps Script с поддержкой Корзины.', 'error');
+                return;
+            }
+
+            const values = { projectId:targetProjectId, date:newDate, amount:newAmount, category:newCategory, comment:newComment, person:newPerson };
+            const addPayload = buildMovedOperationAddPayload(targetType, values);
+            const deletePayload = buildOriginalOperationDeletePayload(editing, oldRecord);
+            if (!addPayload || !deletePayload) {
+                showNotification('Не удалось подготовить перенос операции.', 'error');
+                return;
+            }
+
+            const added = await sendPost(addPayload, false);
+            if (!added) {
+                showNotification('Не удалось создать операцию в новом разделе. Исходная запись не удалена.', 'error');
+                return;
+            }
+
+            const deleteRequest = sendPost(deletePayload, false);
             closeEditOperationModal();
-            renderTable(); renderCharts();
-            if (editing.kind === 'income') renderIncomeHistoryTable(editing.projectId);
-            else renderHistoryTable(editing.projectId);
-            await sendPost({
-                action: editing.kind === 'income' ? 'editIncome' : 'editExpense',
-                projectId:editing.projectId,
-                oldDate:oldRecord.date, oldCategory:oldRecord.category, oldAmount:oldRecord.amount, oldComment:oldRecord.comment, oldInvestor:oldRecord.investor || 'Юнион Эскей',
-                newDate, newCategory, newAmount, newComment, newInvestor:newPerson
-            }, false);
-            showNotification(editing.kind === 'income' ? 'Поступление изменено' : 'Расход изменен', 'success');
+            renderTable();
+            renderCharts();
+            renderCompanyHistoryTable();
+            if (currentHistoryProjectId) {
+                renderHistoryTable(currentHistoryProjectId);
+                renderIncomeHistoryTable(currentHistoryProjectId);
+                renderWithdrawalHistoryTable(currentHistoryProjectId);
+            }
+
+            const removed = await deleteRequest;
+            if (!removed) {
+                showNotification('Новая операция создана, но старую не удалось убрать. Удалите старую запись вручную.', 'error');
+                return;
+            }
+            showNotification('Операция перенесена в выбранный раздел', 'success');
         }
 
         async function deleteWithdrawal(id, projectId) {
@@ -4405,7 +4681,7 @@
             let sorted = [...project.expenses].sort((a,b) => new Date(b.date) - new Date(a.date));
             const exp = sorted[idx];
             if (!exp) return;
-            const origIdx = project.expenses.findIndex(e => e.date === exp.date && e.category === exp.category && e.amount === exp.amount && e.comment === exp.comment);
+            const origIdx = findOperationIndex(project.expenses, exp, ['date', 'category', 'amount', 'comment', 'investor']);
             if (origIdx === -1) return;
             openEditOperationModal({ kind:'expense', projectId:Number(projectId), project, origIdx, record:exp });
             return;
@@ -4493,10 +4769,10 @@
             else if (currentRole === 'partner4') sorted = sorted.filter(e => e.investor === PARTNER_CONFIG.partner4.name || e.investor === 'Юнион Эскей');
             
             const exp = sorted[displayIdx];
-            const origIdx = project.expenses.findIndex(e => e.date === exp.date && e.category === exp.category && e.amount === exp.amount && e.comment === exp.comment);
+            const origIdx = findOperationIndex(project.expenses, exp, ['date', 'category', 'amount', 'comment', 'investor']);
             if (origIdx === -1) return;
 
-            await sendPost({
+            const sendRequest = sendPost({
                 action: 'deleteExpense',
                 projectId: projectId,
                 rowIndex: exp.rowIndex,
@@ -4506,8 +4782,12 @@
                 comment: exp.comment,
                 investor: exp.investor || 'Юнион Эскей'
             }, false);
-            await refreshServerData();
             renderHistoryTable(projectId);
+            renderTable();
+            renderCharts();
+
+            const sent = await sendRequest;
+            if (!sent) return;
             showNotification('Расход перемещён в Корзину', 'success');
         }
 
@@ -4533,7 +4813,7 @@
             let sorted = [...(project.incomes || [])].sort((a,b) => new Date(b.date) - new Date(a.date));
             const inc = sorted[idx];
             if (!inc) return;
-            const origIdx = project.incomes.findIndex(i => i.date === inc.date && i.category === inc.category && i.amount === inc.amount && i.comment === inc.comment);
+            const origIdx = findOperationIndex(project.incomes, inc, ['date', 'category', 'amount', 'comment', 'investor']);
             if (origIdx === -1) return;
             openEditOperationModal({ kind:'income', projectId:Number(projectId), project, origIdx, record:inc });
             return;
@@ -4612,14 +4892,16 @@
             let sorted = [...(project.incomes || [])].sort((a,b) => new Date(b.date) - new Date(a.date));
 
             const inc = sorted[displayIdx];
-            const origIdx = project.incomes.findIndex(i => i.date === inc.date && i.category === inc.category && i.amount === inc.amount && i.comment === inc.comment);
+            const origIdx = findOperationIndex(project.incomes, inc, ['date', 'category', 'amount', 'comment', 'investor']);
             if (origIdx === -1) return;
 
-            project.incomes.splice(origIdx, 1);
-            project.paid = project.incomes.reduce((sum, i) => sum + i.amount, 0);
+            // Не удаляем вручную второй раз: sendPost уже делает одно точное
+            // оптимистичное удаление через simulateOfflinePost.
+            const sendRequest = sendPost({ action: 'deleteIncome', projectId: projectId, rowIndex: inc.rowIndex, date: inc.date, category: inc.category, amount: inc.amount, comment: inc.comment, investor: inc.investor || 'Юнион Эскей' }, false);
             renderTable(); renderCharts(); renderIncomeHistoryTable(projectId);
 
-            await sendPost({ action: 'deleteIncome', projectId: projectId, rowIndex: inc.rowIndex, date: inc.date, category: inc.category, amount: inc.amount, comment: inc.comment, investor: inc.investor || 'Юнион Эскей' }, false);
+            const sent = await sendRequest;
+            if (!sent) return;
             showNotification('Поступление удалено', 'success');
         }
 
@@ -5075,12 +5357,8 @@
         function filterCatDD(inp) { openCatDD(inp); }
 
         function getEditCategoryType() {
-            if (!editingOperation) return 'project';
-            if (editingOperation.kind === 'income') return 'income';
-            if (editingOperation.kind === 'company') {
-                return editingOperation.record && editingOperation.record.type === 'personal' ? 'personal' : 'general';
-            }
-            return 'project';
+            const selectedType = document.getElementById('edit-operation-type')?.value;
+            return ['project', 'income', 'general', 'personal'].includes(selectedType) ? selectedType : 'project';
         }
 
         function hideEditCategoryDD() {
@@ -5147,13 +5425,33 @@
 
         function openUniversalModal(type, pid) {
             initCatInput(); 
-            _currentModalType = 'project';
+            const allowedTypes = Object.keys(EDIT_OPERATION_TYPE_LABELS);
+            const initialType = allowedTypes.includes(type) ? type : 'project';
+            _currentModalType = initialType;
+            const typeHidden = document.getElementById('uni-type');
+            const typeLabel = document.getElementById('dd-type-label');
+            if (typeHidden) typeHidden.value = initialType;
+            if (typeLabel) typeLabel.textContent = EDIT_OPERATION_TYPE_LABELS[initialType] || 'Расход по объекту';
+            document.querySelectorAll('#dd-type-menu .modal-dd-item').forEach(button => {
+                button.classList.toggle('selected', button.dataset.value === initialType);
+            });
             const _catInp = document.getElementById('uni-category-input');
             if (_catInp) {
-                _catInp.dataset.cattype = 'project';
-                _catInp._catListId = 'expense-category-options';
+                _catInp.dataset.cattype = initialType;
+                _catInp._catListId = initialType === 'income'
+                    ? 'income-category-options'
+                    : initialType === 'general'
+                        ? 'general-category-options'
+                        : initialType === 'personal'
+                            ? 'personal-category-options'
+                            : 'expense-category-options';
                 _catInp.value = '';
-                _catInp.placeholder = 'Материалы, Зарплата, Топливо...';
+                const placeholders = {
+                    income:'Аванс по договору, Оплата этапа...',
+                    general:'Бухгалтерия, Налоги, Аренда...',
+                    personal:'Личный вывод, Дивиденды...'
+                };
+                _catInp.placeholder = placeholders[initialType] || 'Материалы, Зарплата, Топливо...';
             }
             updateInvestorDatalistOptions();
             refreshOperationCategoryOptions();
@@ -5167,7 +5465,7 @@
             const projLabel = document.getElementById('dd-project-label');
             if (projLabel) projLabel.textContent = firstName;
             if (projMenu) projMenu.innerHTML = projects.map(p =>
-                `<button class="modal-dd-item${String(p.id)===String(firstId)?' selected':''}" onclick="selectModalDD('dd-project','${p.id}','${p.name}')">${p.name}</button>`
+                `<button class="modal-dd-item${String(p.id)===String(firstId)?' selected':''}" data-value="${p.id}" onclick="selectModalDD('dd-project','${p.id}','${p.name}')" type="button">${p.name}</button>`
             ).join('');
             
             projSelect.onchange = updateInvestorDatalistOptions;
@@ -5179,12 +5477,13 @@
             document.getElementById('uni-category-input').value = '';
             // При каждом новом расходе начинаем с одного согласованного
             // значения и не переносим плательщика из предыдущей операции.
-            setInvestorSelection(PARTNER_CONFIG.director?.name || 'Юнион Эскей');
+            setInvestorSelection(initialType === 'income' ? 'Заказчик' : 'Юнион Эскей');
             
             document.getElementById('universal-modal').classList.remove('hidden'); 
             
             updateInvestorDatalistOptions();
-            syncInvestorDropdown(PARTNER_CONFIG.director?.name || 'Юнион Эскей');
+            if (initialType === 'income') syncIncomePayerDropdown('Заказчик');
+            else syncInvestorDropdown('Юнион Эскей');
             toggleUniModalFields();
             document.body.style.overflow = 'hidden';
         }
@@ -5198,9 +5497,27 @@
             if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = "Отправка..."; }
             
             const typeEl = document.getElementById('uni-type');
-            const type = typeEl ? typeEl.value : 'project';
+            const type = typeEl ? typeEl.value : '';
             const categoryVal = document.getElementById('uni-category-input').value.trim() || 'Без категории';
+            const amountVal = parseFormattedNumber(document.getElementById('uni-amount').value);
+            const allowedTypes = Object.keys(EDIT_OPERATION_TYPE_LABELS);
             let p;
+
+            if (!allowedTypes.includes(type)) {
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Сохранить'; }
+                showNotification('Не удалось определить тип операции. Выберите тип ещё раз.', 'error');
+                return;
+            }
+            if (!amountVal || amountVal <= 0) {
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Сохранить'; }
+                showNotification('Сумма операции должна быть больше нуля.', 'error');
+                return;
+            }
+            if (['project', 'income', 'withdrawal'].includes(type) && !document.getElementById('uni-project').value) {
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Сохранить'; }
+                showNotification('Выберите объект для операции.', 'error');
+                return;
+            }
             
             if (type === 'project') {
                 const investorVal = getSelectedInvestor();
@@ -5209,7 +5526,7 @@
                     projectId: document.getElementById('uni-project').value, 
                     date: document.getElementById('uni-date').value, 
                     category: categoryVal, 
-                    amount: parseFormattedNumber(document.getElementById('uni-amount').value), 
+                    amount: amountVal,
                     comment: document.getElementById('uni-comment').value, 
                     investor: investorVal 
                 };
@@ -5220,14 +5537,14 @@
                     projectId: document.getElementById('uni-project').value,
                     date: document.getElementById('uni-date').value,
                     person: investorVal,
-                    amount: parseFormattedNumber(document.getElementById('uni-amount').value),
+                    amount: amountVal,
                     comment: document.getElementById('uni-comment').value
                 } : {
                     action: 'addExpense',
                     projectId: document.getElementById('uni-project').value,
                     date: document.getElementById('uni-date').value,
                     category: 'Вывод прибыли',
-                    amount: parseFormattedNumber(document.getElementById('uni-amount').value),
+                    amount: amountVal,
                     comment: document.getElementById('uni-comment').value || investorVal,
                     investor: investorVal
                 };
@@ -5238,19 +5555,23 @@
                     projectId: document.getElementById('uni-project').value,
                     date: document.getElementById('uni-date').value,
                     category: categoryVal,
-                    amount: parseFormattedNumber(document.getElementById('uni-amount').value),
+                    amount: amountVal,
                     comment: document.getElementById('uni-comment').value,
                     investor: investorVal
                 };
-            } else {
+            } else if (type === 'general' || type === 'personal') {
                 p = {
                     action: 'addCompanyExpense',
                     date: document.getElementById('uni-date').value,
                     type: type, 
-                    amount: parseFormattedNumber(document.getElementById('uni-amount').value),
+                    amount: amountVal,
                     category: categoryVal,
                     comment: document.getElementById('uni-comment').value
                 };
+            } else {
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Сохранить'; }
+                showNotification('Этот тип операции пока не поддерживается.', 'error');
+                return;
             }
             
             // Локальные данные обновляются внутри sendPost до сетевого ожидания.
@@ -5263,11 +5584,6 @@
 
             const requestSent = await sendRequest;
             if (!requestSent) return;
-            if (isLive()) {
-                try { await refreshServerData(); } catch (e) { console.warn('Не удалось сразу обновить операцию:', e); }
-            }
-            renderTable();
-            renderCharts();
             showNotification(type === 'income' ? 'Поступление сохранено' : 'Операция сохранена', 'success');
         }
 
@@ -5277,8 +5593,10 @@
 
         // ПЕРЕКЛЮЧЕНИЕ ОТОБРАЖЕНИЯ ПОЛЕЙ В УНИВЕРСАЛЬНОЙ МОДАЛКЕ
         function toggleUniModalFields() {
-            // Используем _currentModalType (надёжнее чем DOM uni-type)
-            const type = _currentModalType || document.getElementById('uni-type')?.value || 'project';
+            // Скрытое поле формы — единственный источник истины. Так подпись и
+            // реально отправляемое действие больше не могут разойтись.
+            const type = document.getElementById('uni-type')?.value || _currentModalType || 'project';
+            _currentModalType = type;
             const isIncome     = type === 'income';
             const isWithdrawal = type === 'withdrawal';
             const isProj       = type === 'project' || type === 'income';
@@ -5325,12 +5643,12 @@
             }
 
             if (catInput) {
-                const typeVal = _currentModalType || document.getElementById('uni-type')?.value || 'project';
+                const typeVal = document.getElementById('uni-type')?.value || _currentModalType || 'project';
                 const dlMap = { income:'income-category-options', general:'general-category-options', personal:'personal-category-options' };
                 catInput.removeAttribute('list');
                 if (!isIncome) {
                     const phMap = { general:'Бухгалтерия, Налоги, Аренда офиса...', personal:'Личный вывод, Дивиденды, Транспорт...', withdrawal:'' };
-                    catInput.placeholder = phMap[_currentModalType] || 'Материалы, Зарплата, Топливо...';
+                    catInput.placeholder = phMap[typeVal] || 'Материалы, Зарплата, Топливо...';
                 }
             }
 
@@ -5339,7 +5657,7 @@
 
         // ОБНОВЛЕНИЕ СПИСКА КАТЕГОРИЙ В УНИВЕРСАЛЬНОЙ МОДАЛКЕ ДОБАВЛЕНИЯ
         function updateCategoryDatalist() {
-            const type = _currentModalType || document.getElementById('uni-type')?.value || 'project';
+            const type = document.getElementById('uni-type')?.value || _currentModalType || 'project';
             const datalist = document.getElementById('category-options');
             if (!datalist) return;
 
