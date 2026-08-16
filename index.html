@@ -1810,8 +1810,7 @@
         }
 
         // Единая правая карточка для каждого объекта, включая «Генераторы».
-        // Все суммы здесь всегда считаются за всё время объекта, поэтому
-        // месячный переключатель слева не меняет историю расчетов с людьми.
+        // Для генераторов операция-фильтр передается с общей месячной навигации.
         function buildParticipantSettlementCardHtml(project, options = {}) {
             const includeOperation = typeof options.includeOperation === 'function'
                 ? options.includeOperation
@@ -4025,9 +4024,6 @@
             const generatorSettlementCardHtml = buildParticipantSettlementCardHtml(genProj, {
                 includeOperation: generatorSettlementPeriodFilter
             });
-            const generatorSettlementPeriodLabel = isMonth
-                ? `${MONTH_NAMES_RU_FULL[month] || month} ${year}`
-                : 'все время объекта';
             const generatorTax = Math.round(incSum * 0.06);
             const generatorCleanProfit = net - generatorTax;
             const generatorSortedCategories = genActiveCats.slice().sort((a, b) => genCatSums[b] - genCatSums[a]);
@@ -4090,6 +4086,13 @@
                     <div class="flex items-start justify-between gap-3 mb-3">
                         <div><h4 class="font-bold text-brand-dark text-base">${escapeTrashText(genProj.name)}</h4><p class="text-[10px] font-bold text-brand-purple uppercase tracking-wider mt-1">Расчеты с участниками</p></div>
                         <button type="button" onclick="openHistoryModalById(${Number(genProj.id)}); setTimeout(() => switchHistoryTab('withdrawals'), 0)" class="project-action-link rounded-lg px-2 py-1 text-[11px] font-bold text-brand-purple">Выводы</button>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 mb-3">
+                        ${navHtml}
+                        <div class="flex bg-gray-100 rounded-xl p-0.5 text-[10px] font-bold shrink-0">
+                            <button onclick="setGeneratorsView('month')" class="px-2 py-1 rounded-lg transition-all ${isMonth ? 'bg-white shadow text-brand-purple' : 'text-gray-400 hover:text-gray-600'}">Мес</button>
+                            <button onclick="setGeneratorsView('total')" class="px-2 py-1 rounded-lg transition-all ${!isMonth ? 'bg-white shadow text-brand-purple' : 'text-gray-400 hover:text-gray-600'}">Все</button>
+                        </div>
                     </div>
                     ${generatorSettlementCardHtml}
                 </article>
