@@ -1700,15 +1700,11 @@
             return { investedByRecipient, returnedByRecipient, profitByRecipient, reinvestedByRecipient };
         }
 
-        function isGeneratorsProject(project) {
-            return normalizeName(project?.name || '').includes('генератор');
-        }
-
         function hideUnionPayoutsForCurrentViewer(project) {
-            // В «Генераторах» у Коли остаётся прежний полный доступ.
-            // В строительных объектах партнёры видят свои расчеты и
-            // реинвестирование, но не суммы, которые получила Юнион Эскей.
-            return currentRole !== 'director' && !isGeneratorsProject(project);
+            // Во всех объектах партнёры видят только свои расчёты и
+            // реинвестирование. Возврат вложений и вывод чистой прибыли
+            // Union SK остаются внутренними данными режима Union SK.
+            return currentRole !== 'director';
         }
 
         function withoutUnionEskeyAmount(summary) {
@@ -6357,7 +6353,12 @@
 
         function openUniversalModal(type, pid) {
             initCatInput(); 
-            const allowedTypes = Object.keys(EDIT_OPERATION_TYPE_LABELS);
+            // Партнёры заносят только операции по доступным им объектам.
+            // Внутренние операции Union SK им недоступны.
+            const isPartnerUser = currentRole !== 'director';
+            const allowedTypes = isPartnerUser
+                ? ['project', 'income']
+                : Object.keys(EDIT_OPERATION_TYPE_LABELS);
             const initialType = allowedTypes.includes(type) ? type : 'project';
             _currentModalType = initialType;
             const typeHidden = document.getElementById('uni-type');
@@ -6366,6 +6367,7 @@
             if (typeLabel) typeLabel.textContent = EDIT_OPERATION_TYPE_LABELS[initialType] || 'Расход по объекту';
             document.querySelectorAll('#dd-type-menu .modal-dd-item').forEach(button => {
                 button.classList.toggle('selected', button.dataset.value === initialType);
+                button.classList.toggle('hidden', !allowedTypes.includes(button.dataset.value));
             });
             const _catInp = document.getElementById('uni-category-input');
             if (_catInp) {
@@ -6412,7 +6414,10 @@
             selectModalDD('dd-personal-settlement', 'Вывод прибыли', 'Вывод прибыли');
             // При каждом новом расходе начинаем с одного согласованного
             // значения и не переносим плательщика из предыдущей операции.
-            setInvestorSelection(initialType === 'income' ? 'Заказчик' : 'Юнион Эскей');
+            const partnerName = PARTNER_CONFIG[currentRole]?.name || 'Юнион Эскей';
+            setInvestorSelection(initialType === 'income'
+                ? 'Заказчик'
+                : (isPartnerUser ? partnerName : 'Юнион Эскей'));
             
             document.getElementById('universal-modal').classList.remove('hidden'); 
             
@@ -6441,6 +6446,11 @@
             if (!allowedTypes.includes(type)) {
                 if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Сохранить'; }
                 showNotification('Не удалось определить тип операции. Выберите тип ещё раз.', 'error');
+                return;
+            }
+            if (currentRole !== 'director' && !['project', 'income'].includes(type)) {
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Сохранить'; }
+                showNotification('Партнёр может добавить только расход или поступление по объекту.', 'error');
                 return;
             }
             if (!amountVal || amountVal <= 0) {
@@ -6477,7 +6487,9 @@
             }
             
             if (type === 'project') {
-                const investorVal = getSelectedInvestor();
+                const investorVal = currentRole !== 'director'
+                    ? (PARTNER_CONFIG[currentRole]?.name || getSelectedInvestor())
+                    : getSelectedInvestor();
                 p = { 
                     action: 'addExpense', 
                     projectId: document.getElementById('uni-project').value, 
@@ -6595,7 +6607,8 @@
 
             // В общих и личных тратах плательщик всегда Юнион Эскей.
             const invWrapper = document.getElementById('uni-investor-wrapper');
-            if (invWrapper) invWrapper.classList.toggle('hidden', type === 'general' || isPersonal);
+            const partnerPayerLocked = currentRole !== 'director' && type === 'project';
+            if (invWrapper) invWrapper.classList.toggle('hidden', type === 'general' || isPersonal || partnerPayerLocked);
 
             const payoutTypeWrapper = document.getElementById('uni-payout-type-wrapper');
             if (payoutTypeWrapper) payoutTypeWrapper.classList.toggle('hidden', !isWithdrawal);
@@ -6631,7 +6644,8 @@
             } else {
                 if (invLabel) invLabel.textContent = 'Кто оплатил / вложил';
                 updateInvestorDatalistOptions();
-                syncInvestorDropdown();
+                const partnerPayer = currentRole !== 'director' ? PARTNER_CONFIG[currentRole]?.name : '';
+                syncInvestorDropdown(partnerPayer || undefined);
                 if (catLabel) catLabel.textContent = 'Категория / Назначение';
                 if (modalTitle) modalTitle.textContent = 'Новая операция';
                 if (submitBtn)  submitBtn.textContent = 'Сохранить';
@@ -7025,6 +7039,7 @@
             const directorCards = document.getElementById('director-cards');
             const mainChartsWrapper = document.getElementById('main-charts-wrapper');
             const topActions = document.getElementById('top-actions');
+            const companyHistoryButton = document.getElementById('btn-company-history');
 
             // Жесткое скрытие директорских панелей для всех партнеров
             if (authRole === 'director' && currentRole === 'director') {
@@ -7034,7 +7049,13 @@
             } else {
                 if (directorCards) directorCards.classList.add('hidden'); 
                 if (mainChartsWrapper) mainChartsWrapper.classList.add('hidden');
-                if (topActions) topActions.classList.add('hidden');
+                // Кнопка «+ Операция» нужна партнёрам для их объектов;
+                // история и все операции компании остаются только у Union SK.
+                if (topActions) topActions.classList.remove('hidden');
+                if (companyHistoryButton) companyHistoryButton.classList.add('hidden');
+            }
+            if (authRole === 'director' && currentRole === 'director' && companyHistoryButton) {
+                companyHistoryButton.classList.remove('hidden');
             }
 
             // Динамически меняем заголовок кабинета
