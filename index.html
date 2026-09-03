@@ -948,7 +948,7 @@
                 </div>
                 <div class="pt-2 flex gap-2 justify-end shrink-0">
                     <button type="button" onclick="closeEditWithdrawalModal()" class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors">Отмена</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl text-sm font-bold text-white bg-brand-purple hover:bg-brand-purpleHover shadow-md transition-all">Сохранить</button>
+                    <button type="submit" id="btn-save-edit-operation" class="px-5 py-2 rounded-xl text-sm font-bold text-white bg-brand-purple hover:bg-brand-purpleHover shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed">Сохранить</button>
                 </div>
             </form>
         </div>
@@ -1071,7 +1071,7 @@
             <div class="px-6 pt-6 pb-4 border-b border-gray-100 flex justify-between items-start shrink-0">
                 <div>
                     <h3 class="text-xl font-bold text-brand-dark">История компании</h3>
-                    <p class="text-xs text-gray-400 mt-0.5">Операции, не привязанные к выручке конкретного объекта</p>
+                    <p class="text-xs text-gray-400 mt-0.5">Внутренние расходы, доходы, личные выводы и движение денег компании</p>
                 </div>
                 <button onclick="closeCompanyHistoryModal()" class="text-gray-300 hover:text-gray-500 text-2xl leading-none transition-colors ml-4">&times;</button>
             </div>
@@ -1216,8 +1216,16 @@
                         </div>
                         <div class="space-y-1">
                             <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Сумма (₽)</label>
-                            <input type="text" id="uni-amount" oninput="formatInputSpaces(this)" placeholder="0" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-bold outline-none focus:border-brand-purple transition-all" autocomplete="off" name="amt_x7p1" translate="no" spellcheck="false" lang="ru" required>
+                            <input type="text" id="uni-amount" oninput="formatInputSpaces(this); syncSingleTaxSourceAmount(); updateTaxSourceSummary();" placeholder="0" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-bold outline-none focus:border-brand-purple transition-all" autocomplete="off" name="amt_x7p1" translate="no" spellcheck="false" lang="ru" required>
                         </div>
+                    </div>
+                    <div id="uni-tax-sources-wrapper" class="space-y-2 hidden rounded-2xl border border-purple-100 bg-purple-50/30 p-3">
+                        <div class="flex items-center justify-between gap-3">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Из каких объектов взяты деньги</label>
+                            <button type="button" onclick="addTaxSourceRow()" class="text-[11px] font-bold text-brand-purple hover:text-brand-purpleHover">+ Добавить объект</button>
+                        </div>
+                        <div id="uni-tax-sources-list" class="space-y-2"></div>
+                        <p id="uni-tax-sources-total" class="text-[10px] text-gray-400 leading-snug">Распределите всю сумму платежа по объектам-источникам.</p>
                     </div>
                     <div class="space-y-1" id="uni-category-wrapper" style="position:relative;">
                         <label id="uni-category-label" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Категория / Назначение</label>
@@ -1452,7 +1460,7 @@
         };
 
         let data = [], companyTransactions = [], profitWithdrawals = [], authRole = null, currentRole = null;
-        let API_CAPABILITIES = { apiVersion: 0, projectTrash: false, operationTrash: false, withdrawalLedger: false, withdrawalTypes: false, withdrawalReinvestment: false, companySettlementTypes: false, companyGeneralSettlementTypes: false, projectTrashRecordId: false, projectTaxSettings: false, projectOrder: false, projectOrderInitialized: false };
+        let API_CAPABILITIES = { apiVersion: 0, projectTrash: false, operationTrash: false, withdrawalLedger: false, withdrawalTypes: false, withdrawalReinvestment: false, companySettlementTypes: false, companyGeneralSettlementTypes: false, projectTrashRecordId: false, projectTaxSettings: false, projectOrder: false, projectOrderInitialized: false, taxPaymentSources: false };
         
         let chartsInstance = { 
             bar: null, 
@@ -1604,6 +1612,44 @@
 
         function isCompanyIncomeTransaction(transaction) {
             return String(transaction?.type || '') === 'companyIncome';
+        }
+
+
+        function isTaxPaymentTransaction(transaction) {
+            return String(transaction?.type || '') === 'taxPayment';
+        }
+
+        function normalizeTaxSourceBreakdown(value) {
+            let rows = value;
+            if (typeof rows === 'string') { try { rows = JSON.parse(rows || '[]'); } catch (e) { rows = []; } }
+            if (!Array.isArray(rows)) return [];
+            const merged = new Map();
+            rows.forEach(row => {
+                const projectId = Number(row?.projectId || row?.id || 0);
+                const amount = Math.max(0, Number(row?.amount || 0));
+                if (!projectId || !amount) return;
+                const project = data.find(item => Number(item.id) === projectId);
+                const projectName = String(row?.projectName || row?.name || project?.name || ('ID ' + projectId));
+                if (!merged.has(projectId)) merged.set(projectId, { projectId, projectName, amount: 0 });
+                merged.get(projectId).amount += amount;
+            });
+            return Array.from(merged.values());
+        }
+
+        function getTaxPaymentSourceSummary(transaction) {
+            return normalizeTaxSourceBreakdown(transaction?.sourceBreakdown)
+                .map(row => `${row.projectName} — ${formatMoney(row.amount)}`).join(' · ');
+        }
+
+        function getProjectTaxPaymentAmount(projectId, includeOperation = null) {
+            if (currentRole !== 'director') return 0;
+            return companyTransactions.reduce((sum, transaction) => {
+                if (!isTaxPaymentTransaction(transaction)) return sum;
+                if (typeof includeOperation === 'function' && !includeOperation(transaction)) return sum;
+                const source = normalizeTaxSourceBreakdown(transaction.sourceBreakdown)
+                    .find(row => Number(row.projectId) === Number(projectId));
+                return sum + Number(source?.amount || 0);
+            }, 0);
         }
 
         const COMPANY_SETTLEMENT_META_KEY = 'ues_company_settlement_meta_v1';
@@ -1985,11 +2031,24 @@
                 payoutsVisibleToViewer ? breakdown.profitByRecipient : withoutUnionEskeyAmount(breakdown.profitByRecipient),
                 'Нет выводов прибыли'
             );
+            const taxPaymentAmount = getProjectTaxPaymentAmount(project.id, includeOperation);
+            // Директор всегда видит отдельную строку уплаты налогов, даже если пока 0 ₽.
+            // Так понятно, где смотреть фактическое движение денег объекта на налоги.
+            const taxPaymentHtml = currentRole === 'director'
+                ? `<div class="border-t border-gray-100 mt-3 pt-3 director-only">
+                    <div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:2px 0 3px;">
+                        <span class="text-xs text-gray-600 font-medium">В налоги</span>
+                        <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;white-space:nowrap;font-variant-numeric:tabular-nums;">${formatMoney(taxPaymentAmount)}</span>
+                        <span></span>
+                    </div>
+                </div>`
+                : '';
             return `
                 <div class="border-t border-gray-100 pt-3"><div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Вложено участниками</div>${fundedRowsHtml}</div>
                 <div class="border-t border-gray-100 mt-3 pt-3"><div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Доли чистой прибыли</div>${profitSharesHtml}</div>
                 <div class="border-t border-gray-100 mt-3 pt-3"><div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Возвращено вложений</div>${returnedCapitalHtml}</div>
                 <div class="border-t border-gray-100 mt-3 pt-3"><div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Реинвестировано</div>${reinvestedHtml}</div>
+                ${taxPaymentHtml}
                 <div class="border-t border-gray-100 mt-3 pt-3"><div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Выведено прибыли</div>${withdrawnProfitHtml}</div>
             `;
         }
@@ -2111,6 +2170,7 @@
         let currentHistoryProjectId = null;
         let editingWithdrawal = null;
         let editingOperation = null;
+        let editOperationSavePromise = null;
 
         function formatDateForField(value) {
             if (!value) return 'Выберите дату';
@@ -2409,7 +2469,8 @@
                         projectTrashRecordId: jsonData?.capabilities?.projectTrashRecordId === true,
                         projectTaxSettings: jsonData?.capabilities?.projectTaxSettings === true,
                         projectOrder: jsonData?.capabilities?.projectOrder === true,
-                        projectOrderInitialized: jsonData?.capabilities?.projectOrderInitialized === true
+                        projectOrderInitialized: jsonData?.capabilities?.projectOrderInitialized === true,
+                        taxPaymentSources: jsonData?.capabilities?.taxPaymentSources === true
                     };
                     
                     // Считываем доступы партнеров, если они вернулись с сервера без перезаписи цветов
@@ -2495,7 +2556,8 @@
                         serverOperationTrash = jsonData.operationTrash.map(t => ({
                             ...t,
                             projectId: Number(t.projectId || 0),
-                            amount: parseFormattedNumber(t.amount)
+                            amount: parseFormattedNumber(t.amount),
+                            sourceBreakdown: normalizeTaxSourceBreakdown(t.sourceBreakdown)
                         }));
                     }
 
@@ -2506,7 +2568,8 @@
                             rowIndex: Number(tx.rowIndex || 0),
                             amount: parseFormattedNumber(tx.amount),
                             sourceProjectId: Number(tx.sourceProjectId || 0),
-                            settlementType: normalizePersonalSettlementType(tx.settlementType || tx.personalSettlementType)
+                            settlementType: normalizePersonalSettlementType(tx.settlementType || tx.personalSettlementType),
+                            sourceBreakdown: normalizeTaxSourceBreakdown(tx.sourceBreakdown)
                         }));
                     }
 
@@ -2625,6 +2688,11 @@
                 showNotification('Данные успешно синхронизированы с Google Sheets!');
             } catch (e) {
                 console.warn("Сетевой сбой при инициализации Google Sheets. Переход в оффлайн-режим...", e);
+                const demoBanner = document.getElementById('demo-banner');
+                if (demoBanner) {
+                    const reason = String(e?.message || 'неизвестная ошибка');
+                    demoBanner.textContent = '⚠️ Не удалось подключиться к Google Таблице: ' + reason;
+                }
                 loadLocalFallback();
             } finally {
                 document.getElementById('sync-screen').classList.add('hidden');
@@ -2755,7 +2823,8 @@
                     comment: payload.comment || '',
                     investor: payload.investor || 'Юнион Эскей',
                     settlementType: normalizePersonalSettlementType(payload.settlementType || payload.personalSettlementType),
-                    sourceProjectId: Number(payload.sourceProjectId || 0)
+                    sourceProjectId: Number(payload.sourceProjectId || 0),
+                    sourceBreakdown: normalizeTaxSourceBreakdown(payload.sourceBreakdown)
                 });
                 companyTransactions.push(transaction);
                 persistCompanySettlementMeta(transaction);
@@ -2839,7 +2908,15 @@
 
         // Глобальная функция отправки данных на сервер Google Sheets
         async function sendPost(payload, reload = false) {
-            simulateOfflinePost(payload);
+            // Оптимистичная перерисовка не должна обрывать реальную запись в Google
+            // Sheets. Раньше ошибка интерфейса могла возникнуть уже после локального
+            // добавления строки, но до POST — окно оставалось открытым и повторный
+            // клик создавал ещё одну копию.
+            try {
+                simulateOfflinePost(payload);
+            } catch (uiError) {
+                console.error('Ошибка локального обновления после операции:', uiError);
+            }
             if (!isLive()) return false;
 
             try {
@@ -3040,7 +3117,9 @@
                     ? `${recordLabel} · Объект: ${escapeTrashText(t.projectName || ('ID ' + t.projectId))}`
                     : (isCompanyIncomeTransaction(t)
                         ? 'Доход компании'
-                        : (t.type === 'personal' ? 'Личный вывод' : t.type === 'withdrawal' ? 'Вывод прибыли' : 'Расход компании'));
+                        : (isTaxPaymentTransaction(t)
+                            ? `Уплата налога${getTaxPaymentSourceSummary(t) ? ` · ${escapeTrashText(getTaxPaymentSourceSummary(t))}` : ''}`
+                            : (t.type === 'personal' ? 'Личный вывод' : t.type === 'withdrawal' ? 'Вывод прибыли' : 'Расход компании')));
                 return `
                     <div class="py-3 border-b border-gray-100 last:border-b-0">
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -3769,11 +3848,14 @@
                     }
                     const sourceProject = data.find(project => Number(project.id) === Number(t.sourceProjectId || 0));
                     const personalSettlement = normalizePersonalSettlementType(t.settlementType || t.personalSettlementType);
-                    const flowCategory = t.type === 'general'
-                        ? `Траты компании · ${category}`
-                        : (t.type === 'withdrawal'
-                            ? `Вывод прибыли ЮЭ · ${category}`
-                            : `${personalSettlement === 'Возврат вложений' ? 'Возврат вложений ЮЭ' : 'Личный вывод из прибыли'}${sourceProject ? ` · ${sourceProject.name}` : ''} · ${category}`);
+                    const taxSourceSummary = isTaxPaymentTransaction(t) ? getTaxPaymentSourceSummary(t) : '';
+                    const flowCategory = isTaxPaymentTransaction(t)
+                        ? `Уплата налога компании${taxSourceSummary ? ` · ${taxSourceSummary}` : ''}`
+                        : t.type === 'general'
+                            ? `Траты компании · ${category}`
+                            : (t.type === 'withdrawal'
+                                ? `Вывод прибыли ЮЭ · ${category}`
+                                : `${personalSettlement === 'Возврат вложений' ? 'Возврат вложений ЮЭ' : 'Личный вывод из прибыли'}${sourceProject ? ` · ${sourceProject.name}` : ''} · ${category}`);
                     addFlowOutflow(t.date, flowCategory, t.amount, {
                         investor: 'Юнион Эскей',
                         source: 'company'
@@ -4446,6 +4528,7 @@
             sorted.forEach((t, idx) => {
                 const isIncome = isCompanyIncomeTransaction(t);
                 const isGeneral = t.type === 'general';
+                const isTaxPayment = isTaxPaymentTransaction(t);
                 const sourceProject = data.find(project => Number(project.id) === Number(t.sourceProjectId || 0));
                 const settlementType = normalizePersonalSettlementType(t.settlementType || t.personalSettlementType);
                 const settlementSuffix = sourceProject && settlementType
@@ -4454,9 +4537,14 @@
                 const personalType = settlementType === 'Возврат вложений' ? 'Личный вывод · возврат вложений' : 'Личный вывод из прибыли';
                 const typeStr = isIncome
                     ? 'Доход компании'
-                    : isGeneral
-                        ? `Расход компании${settlementSuffix}`
-                        : (t.type === 'withdrawal' ? 'Вывод прибыли' : `${personalType}${sourceProject ? ` · ${sourceProject.name}` : ''}`);
+                    : isTaxPayment
+                        ? 'Уплата налога'
+                        : isGeneral
+                            ? `Расход компании${settlementSuffix}`
+                            : (t.type === 'withdrawal' ? 'Вывод прибыли' : `${personalType}${sourceProject ? ` · ${sourceProject.name}` : ''}`);
+                const purposeText = isTaxPayment
+                    ? (getTaxPaymentSourceSummary(t) || 'Источник не указан')
+                    : (t.category || '—');
                 const canEdit = currentRole === 'director';
 
                 const actionHtml = canEdit ? `
@@ -4470,10 +4558,10 @@
                 tbody.innerHTML += `
                     <tr id="company-row-${idx}" class="hover:bg-gray-50/80 transition-colors border-b border-gray-50">
                         <td class="px-4 sm:px-6 py-3 text-xs text-gray-500 whitespace-nowrap" style="text-align:center;">${t.date}</td>
-                        <td class="px-4 sm:px-6 py-3 text-xs font-medium text-gray-700 whitespace-nowrap" style="text-align:center;">${typeStr}</td>
+                        <td class="px-4 sm:px-6 py-3 text-xs font-medium text-gray-700 whitespace-nowrap" style="text-align:center;">${escapeTrashText(typeStr)}</td>
                         <td class="px-4 sm:px-6 py-3 text-xs font-semibold text-gray-800 whitespace-nowrap" style="text-align:center;">${amountText}</td>
-                        <td class="px-4 sm:px-6 py-3 text-xs text-gray-700" style="text-align:center;"><span title="${t.category}">${t.category}</span></td>
-                        <td class="px-4 sm:px-6 py-3 text-xs text-gray-400" style="text-align:center;min-width:140px;max-width:240px;white-space:normal;">${t.comment || '—'}</td>
+                        <td class="px-4 sm:px-6 py-3 text-xs text-gray-700" style="text-align:center;"><span title="${escapeTrashText(purposeText)}">${escapeTrashText(purposeText)}</span></td>
+                        <td class="px-4 sm:px-6 py-3 text-xs text-gray-400" style="text-align:center;min-width:140px;max-width:240px;white-space:normal;">${escapeTrashText(t.comment || '—')}</td>
                         <td class="px-4 sm:px-6 py-3 text-center whitespace-nowrap">${actionHtml}</td>
                     </tr>
                 `;
@@ -4499,7 +4587,31 @@
             const t = sorted[idx];
             const origIdx = findOperationIndex(companyTransactions, t, ['date', 'type', 'amount', 'category', 'comment']);
             if (origIdx === -1) return;
+            if (isTaxPaymentTransaction(t)) {
+                openTaxPaymentEdit(origIdx);
+                return;
+            }
             openEditOperationModal({ kind:'company', origIdx, record:t });
+        }
+
+        function openTaxPaymentEdit(origIdx) {
+            const record = companyTransactions[origIdx];
+            if (!record || !isTaxPaymentTransaction(record) || currentRole !== 'director') return;
+            openUniversalModal('taxPayment');
+            editingTaxPaymentOrigIdx = origIdx;
+            const dateInput = document.getElementById('uni-date');
+            const amountInput = document.getElementById('uni-amount');
+            const commentInput = document.getElementById('uni-comment');
+            if (dateInput) dateInput.value = record.date || '';
+            syncDateDisplay('uni-date');
+            if (amountInput) amountInput.value = formatNumberWithSpaces(record.amount);
+            if (commentInput) commentInput.value = record.comment || '';
+            resetTaxSourceRows(record.sourceBreakdown);
+            const title = document.getElementById('uni-modal-title');
+            const saveBtn = document.getElementById('btn-save-universal');
+            if (title) title.textContent = 'Изменить уплату налога';
+            if (saveBtn) saveBtn.textContent = 'Сохранить';
+            updateTaxSourceSummary();
         }
 
         async function saveEditCompanyExpense(origIdx, displayIdx) {
@@ -4559,6 +4671,7 @@
             renderCompanyHistoryTable();
             renderTable();
             renderCharts();
+            refreshGeneratorsCard();
 
             const sent = await sendRequest;
             if (!sent) return;
@@ -5078,6 +5191,7 @@
             general: 'Расход компании',
             companyIncome: 'Доход компании',
             personal: 'Личный вывод',
+            taxPayment: 'Уплата налога',
             withdrawal: 'Расчёт по объекту'
         };
 
@@ -5085,7 +5199,7 @@
             if (config?.kind === 'income') return 'income';
             if (config?.kind === 'company') {
                 const companyType = String(config?.record?.type || 'general');
-                return ['general', 'companyIncome', 'personal', 'withdrawal'].includes(companyType) ? companyType : 'general';
+                return ['general', 'companyIncome', 'personal', 'taxPayment', 'withdrawal'].includes(companyType) ? companyType : 'general';
             }
             return 'project';
         }
@@ -5351,8 +5465,16 @@
             hideEditCategoryDD();
         }
 
+        function setEditOperationSaving(isSaving) {
+            const btn = document.getElementById('btn-save-edit-operation');
+            if (!btn) return;
+            btn.disabled = Boolean(isSaving);
+            btn.textContent = isSaving ? 'Сохраняю…' : 'Сохранить';
+        }
+
         function openEditOperationModal(config) {
             editingOperation = config;
+            setEditOperationSaving(Boolean(editOperationSavePromise));
             const record = config.record || {};
             const initialType = getInitialEditOperationType(config);
             const initialProjectId = initialType === 'personal' || initialType === 'general'
@@ -5437,7 +5559,25 @@
             return collection[editing.origIdx] || null;
         }
 
-        async function saveEditOperation() {
+        function saveEditOperation() {
+            // Один перенос/редактирование за раз. Повторные клики по «Сохранить»
+            // используют уже запущенный запрос и не создают дубли операций.
+            if (editOperationSavePromise) return editOperationSavePromise;
+            setEditOperationSaving(true);
+            editOperationSavePromise = saveEditOperationImpl()
+                .catch(error => {
+                    console.error('Ошибка сохранения операции:', error);
+                    showNotification('Не удалось сохранить операцию. Обновите страницу и повторите.', 'error');
+                    return false;
+                })
+                .finally(() => {
+                    editOperationSavePromise = null;
+                    setEditOperationSaving(false);
+                });
+            return editOperationSavePromise;
+        }
+
+        async function saveEditOperationImpl() {
             const editing = editingOperation;
             if (!editing) return;
             const targetType = document.getElementById('edit-operation-type')?.value || '';
@@ -6507,7 +6647,8 @@
                     income:'Аванс по договору, Оплата этапа...',
                     general:'Бухгалтерия, Налоги, Аренда...',
                     companyIncome:'Прочий доход, Возмещение, Бонус...',
-                    personal:'Личный вывод, Дивиденды...'
+                    personal:'Личный вывод, Дивиденды...',
+                    taxPayment:'Уплата налога'
                 };
                 catEl.placeholder = placeholders[value] || 'Материалы, Зарплата, Топливо...';
                 catEl._catListId = value === 'income'
@@ -6524,7 +6665,7 @@
         }
 
         function getOperationScopeForType(type) {
-            if (type === 'general' || type === 'companyIncome' || type === 'personal') return 'company';
+            if (type === 'general' || type === 'companyIncome' || type === 'personal' || type === 'taxPayment') return 'company';
             if (type === 'withdrawal') return 'settlement';
             return 'project';
         }
@@ -6563,7 +6704,8 @@
                 options = [
                     { value:'general', label:'Расход' },
                     { value:'companyIncome', label:'Доход' },
-                    { value:'personal', label:'Личный вывод' }
+                    { value:'personal', label:'Личный вывод' },
+                    { value:'taxPayment', label:'Уплата налога' }
                 ];
             } else {
                 options = [{ value:'withdrawal', label:'Расчёт' }];
@@ -6871,10 +7013,113 @@
             inp.addEventListener('keydown', function(e) { if(e.key==='Escape') hideCatDropdown(); });
         }
 
+        let editingTaxPaymentOrigIdx = -1;
+
+        function getTaxSourceProjectOptions(selectedId = '') {
+            const selected = String(selectedId || '');
+            return ['<option value="">Выберите объект</option>']
+                .concat(data.map(project => `<option value="${Number(project.id)}" ${String(project.id) === selected ? 'selected' : ''}>${escapeTrashText(project.name)}</option>`))
+                .join('');
+        }
+
+        function addTaxSourceRow(source = null) {
+            const list = document.getElementById('uni-tax-sources-list');
+            if (!list) return;
+            const row = document.createElement('div');
+            const projectId = Number(source?.projectId || 0);
+            const amount = Number(source?.amount || 0);
+            row.className = 'tax-source-row grid gap-2 items-center';
+            row.style.gridTemplateColumns = 'minmax(0,1fr) 120px 28px';
+            row.dataset.autoAmount = source ? 'false' : 'true';
+            row.innerHTML = `
+                <select class="tax-source-project w-full h-10 bg-white border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple" aria-label="Объект-источник">
+                    ${getTaxSourceProjectOptions(projectId)}
+                </select>
+                <input type="text" class="tax-source-amount w-full h-10 bg-white border border-gray-200 rounded-xl px-3 text-sm font-semibold outline-none focus:border-brand-purple" placeholder="0 ₽" value="${amount > 0 ? formatNumberWithSpaces(amount) : ''}" aria-label="Сумма из объекта">
+                <button type="button" class="h-10 text-gray-300 hover:text-red-400 text-xl" title="Убрать источник">×</button>
+            `;
+            const select = row.querySelector('.tax-source-project');
+            const amountInput = row.querySelector('.tax-source-amount');
+            const removeBtn = row.querySelector('button');
+            select?.addEventListener('change', updateTaxSourceSummary);
+            amountInput?.addEventListener('input', () => {
+                row.dataset.autoAmount = 'false';
+                formatInputSpaces(amountInput);
+                updateTaxSourceSummary();
+            });
+            removeBtn?.addEventListener('click', () => {
+                row.remove();
+                if (!list.querySelector('.tax-source-row')) addTaxSourceRow();
+                updateTaxSourceSummary();
+            });
+            list.appendChild(row);
+            syncSingleTaxSourceAmount();
+            updateTaxSourceSummary();
+        }
+
+        function resetTaxSourceRows(sources = []) {
+            const list = document.getElementById('uni-tax-sources-list');
+            if (!list) return;
+            list.innerHTML = '';
+            const rows = normalizeTaxSourceBreakdown(sources);
+            if (rows.length) rows.forEach(row => addTaxSourceRow(row));
+            else addTaxSourceRow();
+            updateTaxSourceSummary();
+        }
+
+        function syncSingleTaxSourceAmount() {
+            if ((document.getElementById('uni-type')?.value || '') !== 'taxPayment') return;
+            const rows = Array.from(document.querySelectorAll('#uni-tax-sources-list .tax-source-row'));
+            if (rows.length !== 1) return;
+            const row = rows[0];
+            if (row.dataset.autoAmount === 'false') return;
+            const amountInput = row.querySelector('.tax-source-amount');
+            const total = parseFormattedNumber(document.getElementById('uni-amount')?.value || '');
+            if (amountInput) amountInput.value = total > 0 ? formatNumberWithSpaces(total) : '';
+        }
+
+        function collectTaxSourceBreakdown() {
+            return Array.from(document.querySelectorAll('#uni-tax-sources-list .tax-source-row'))
+                .map(row => {
+                    const projectId = Number(row.querySelector('.tax-source-project')?.value || 0);
+                    const amount = parseFormattedNumber(row.querySelector('.tax-source-amount')?.value || '');
+                    const project = data.find(item => Number(item.id) === projectId);
+                    return { projectId, projectName: project?.name || '', amount };
+                })
+                .filter(row => row.projectId || row.amount);
+        }
+
+        function updateTaxSourceSummary() {
+            const hint = document.getElementById('uni-tax-sources-total');
+            if (!hint) return;
+            const total = parseFormattedNumber(document.getElementById('uni-amount')?.value || '');
+            const distributed = collectTaxSourceBreakdown().reduce((sum, row) => sum + Number(row.amount || 0), 0);
+            const left = total - distributed;
+            if (!(total > 0)) {
+                hint.textContent = 'Распределите всю сумму платежа по объектам-источникам.';
+                hint.className = 'text-[10px] text-gray-400 leading-snug';
+                return;
+            }
+            hint.textContent = `Распределено ${formatMoney(distributed)} из ${formatMoney(total)}${Math.abs(left) > 0.5 ? ` · осталось ${formatMoney(left)}` : ' · готово'}`;
+            hint.className = Math.abs(left) <= 0.5 ? 'text-[10px] text-emerald-600 leading-snug font-semibold' : 'text-[10px] text-gray-400 leading-snug';
+        }
+
+        function validateTaxSourceBreakdown(totalAmount) {
+            const rows = collectTaxSourceBreakdown();
+            if (!rows.length) return { ok:false, message:'Укажите, из какого объекта взяты деньги на налог.' };
+            if (rows.some(row => !row.projectId || !(row.amount > 0))) return { ok:false, message:'У каждого источника выберите объект и укажите сумму.' };
+            const ids = rows.map(row => Number(row.projectId));
+            if (new Set(ids).size !== ids.length) return { ok:false, message:'Один объект указан дважды. Объедините сумму в одну строку.' };
+            const distributed = rows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+            if (Math.abs(distributed - Number(totalAmount || 0)) > 0.5) return { ok:false, message:`Сумма по объектам должна быть равна платежу: ${formatMoney(totalAmount)}.` };
+            return { ok:true, rows: normalizeTaxSourceBreakdown(rows) };
+        }
+
         function openUniversalModal(type, pid) {
+            editingTaxPaymentOrigIdx = -1;
             initCatInput();
             const isPartnerUser = currentRole !== 'director';
-            const requestedType = ['project','income','general','companyIncome','personal','withdrawal'].includes(type) ? type : 'project';
+            const requestedType = ['project','income','general','companyIncome','personal','taxPayment','withdrawal'].includes(type) ? type : 'project';
             const initialType = isPartnerUser && !['project','income'].includes(requestedType) ? 'project' : requestedType;
             const initialScope = getOperationScopeForType(initialType);
 
@@ -6932,6 +7177,7 @@
             syncDateDisplay('uni-date');
             document.getElementById('uni-comment').value = '';
             document.getElementById('uni-amount').value = '';
+            resetTaxSourceRows();
             document.getElementById('uni-category-input').value = '';
             selectModalDD('dd-payout-type', 'Вывод прибыли', 'Вывод прибыли');
 
@@ -6949,7 +7195,7 @@
             document.body.style.overflow = 'hidden';
         }
 
-        function closeUniversalModal() { document.getElementById('universal-modal').classList.add('hidden'); document.body.style.overflow = ''; }
+        function closeUniversalModal() { document.getElementById('universal-modal').classList.add('hidden'); document.body.style.overflow = ''; editingTaxPaymentOrigIdx = -1; }
         
         async function saveUniversalExpense() {
             const submitBtn = document.querySelector('#btn-save-universal');
@@ -6962,7 +7208,7 @@
             const amountVal = parseFormattedNumber(document.getElementById('uni-amount')?.value || '');
             const projectId = document.getElementById('uni-project')?.value || '';
             const commentVal = document.getElementById('uni-comment')?.value || '';
-            const allowedTypes = ['project','income','general','companyIncome','personal','withdrawal'];
+            const allowedTypes = ['project','income','general','companyIncome','personal','taxPayment','withdrawal'];
             let payload = null;
 
             const fail = message => {
@@ -7052,7 +7298,20 @@
                     comment:commentVal,
                     investor:'Юнион Эскей',
                     settlementType:'',
-                    sourceProjectId:''
+                    sourceProjectId:'',
+                    sourceBreakdown:[]
+                };
+            } else if (type === 'taxPayment') {
+                if (!API_CAPABILITIES.taxPaymentSources) {
+                    fail('Сначала обновите Google Apps Script до версии 15 — иначе источники уплаты налога не сохранятся.');
+                    return;
+                }
+                const sourceValidation = validateTaxSourceBreakdown(amountVal);
+                if (!sourceValidation.ok) { fail(sourceValidation.message); return; }
+                payload = {
+                    action:'addCompanyExpense', date:dateVal, type:'taxPayment', amount:amountVal,
+                    category:'Уплата налога', comment:commentVal, investor:'Юнион Эскей',
+                    settlementType:'', sourceProjectId:'', sourceBreakdown:sourceValidation.rows
                 };
             } else if (type === 'personal') {
                 payload = {
@@ -7073,11 +7332,31 @@
                 return;
             }
 
+            if (type === 'taxPayment' && editingTaxPaymentOrigIdx >= 0) {
+                const editIdx = editingTaxPaymentOrigIdx;
+                const oldTx = { ...companyTransactions[editIdx] };
+                const newTx = { ...oldTx, date:payload.date, type:'taxPayment', amount:payload.amount, category:'Уплата налога', comment:payload.comment, investor:'Юнион Эскей', settlementType:'', sourceProjectId:0, sourceBreakdown:normalizeTaxSourceBreakdown(payload.sourceBreakdown) };
+                companyTransactions[editIdx] = newTx;
+                const editRequest = sendPost({
+                    action:'editCompanyExpense', rowIndex:oldTx.rowIndex || '',
+                    oldDate:oldTx.date, oldType:oldTx.type, oldAmount:oldTx.amount, oldCategory:oldTx.category, oldComment:oldTx.comment,
+                    newDate:newTx.date, newType:newTx.type, newAmount:newTx.amount, newCategory:newTx.category, newComment:newTx.comment,
+                    newInvestor:'Юнион Эскей', newSettlementType:'', newSourceProjectId:'', newSourceBreakdown:newTx.sourceBreakdown
+                }, false);
+                closeUniversalModal();
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Сохранить'; }
+                renderTable(); renderCharts(); renderCompanyHistoryTable(); refreshGeneratorsCard();
+                const sent = await editRequest;
+                if (sent) showNotification('Уплата налога изменена', 'success');
+                return;
+            }
+
             const sendRequest = sendPost(payload, false);
             closeUniversalModal();
             if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Сохранить'; }
             renderTable();
             renderCharts();
+            refreshGeneratorsCard();
             if (!document.getElementById('company-history-modal')?.classList.contains('hidden')) {
                 renderCompanyHistoryTable();
             }
@@ -7090,7 +7369,9 @@
                     ? 'Доход компании сохранён'
                     : type === 'general'
                         ? 'Расход компании сохранён'
-                        : type === 'personal'
+                        : type === 'taxPayment'
+                            ? 'Уплата налога сохранена'
+                            : type === 'personal'
                             ? 'Личный вывод сохранён'
                             : type === 'withdrawal'
                                 ? 'Расчёт по объекту сохранён'
@@ -7112,6 +7393,7 @@
             const isCompanyExpense = type === 'general';
             const isCompanyIncome = type === 'companyIncome';
             const isPersonal = type === 'personal';
+            const isTaxPayment = type === 'taxPayment';
             const isWithdrawal = type === 'withdrawal';
             const needsProject = isProjectExpense || isProjectIncome || isPersonal || isWithdrawal;
 
@@ -7132,7 +7414,7 @@
 
             const invWrapper = document.getElementById('uni-investor-wrapper');
             const partnerPayerLocked = currentRole !== 'director' && isProjectExpense;
-            if (invWrapper) invWrapper.classList.toggle('hidden', isCompanyExpense || isCompanyIncome || isPersonal || partnerPayerLocked);
+            if (invWrapper) invWrapper.classList.toggle('hidden', isCompanyExpense || isCompanyIncome || isPersonal || isTaxPayment || partnerPayerLocked);
 
             const payoutTypeWrapper = document.getElementById('uni-payout-type-wrapper');
             if (payoutTypeWrapper) payoutTypeWrapper.classList.toggle('hidden', !isWithdrawal);
@@ -7144,7 +7426,11 @@
             if (personalSettlementWrapper) personalSettlementWrapper.classList.toggle('hidden', !isPersonal);
 
             const catWrapper = document.getElementById('uni-category-wrapper');
-            if (catWrapper) catWrapper.classList.toggle('hidden', isWithdrawal);
+            if (catWrapper) catWrapper.classList.toggle('hidden', isWithdrawal || isTaxPayment);
+
+            const taxSourcesWrapper = document.getElementById('uni-tax-sources-wrapper');
+            if (taxSourcesWrapper) taxSourcesWrapper.classList.toggle('hidden', !isTaxPayment);
+            if (isTaxPayment) { syncSingleTaxSourceAmount(); updateTaxSourceSummary(); }
 
             const invLabel = document.getElementById('uni-investor-label');
             const catLabel = document.getElementById('uni-category-label');
@@ -7177,6 +7463,10 @@
                     catInput.placeholder = 'Бухгалтерия, Налоги, Аренда офиса...';
                 }
                 if (modalTitle) modalTitle.textContent = 'Расход компании';
+                if (submitBtn) submitBtn.textContent = 'Сохранить';
+            } else if (isTaxPayment) {
+                if (catInput) { catInput.dataset.cattype = 'general'; catInput.value = 'Уплата налога'; }
+                if (modalTitle) modalTitle.textContent = editingTaxPaymentOrigIdx >= 0 ? 'Изменить уплату налога' : 'Уплата налога';
                 if (submitBtn) submitBtn.textContent = 'Сохранить';
             } else if (isPersonal) {
                 if (catLabel) catLabel.textContent = 'На что / категория';
