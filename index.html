@@ -495,7 +495,7 @@
             z-index: 120;
             left: 0;
             top: calc(100% + 8px);
-            width: min(260px, calc(100vw - 48px));
+            width: min(240px, calc(100vw - 56px));
             padding: 9px 10px;
             border: 1px solid #DDD6FE;
             border-radius: 10px;
@@ -514,7 +514,6 @@
             pointer-events: none;
         }
         .stat-card-label:hover .stat-card-hint,
-        .stat-card-label:focus .stat-card-hint,
         .stat-card-label.is-open .stat-card-hint {
             opacity: 1;
             visibility: visible;
@@ -699,73 +698,87 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="cards-structure-row">
                     <!-- Сводные плашки в два столбика -->
                     <div id="director-cards" class="grid grid-cols-2 gap-3">
-                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="order:3;cursor:default;user-select:none;">
-                        <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
-                            <span>Прямые затраты</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
-                            <span class="stat-card-hint" role="tooltip">Все операционные расходы по объектам за выбранный период. Выплаты прибыли, возврат вложений и траты компании сюда не входят.</span>
-                        </div>
-                        <p id="direct-expense" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
-                    </div>
-                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="order:1;cursor:default;user-select:none;">
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
                         <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
                             <span>Ожидаемые поступления</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
                             <span class="stat-card-hint" role="tooltip">Сколько денег еще должно поступить по заключенным договорам: сумма договора минус уже поступившие деньги. Это остаток на сегодня, поэтому он не делится по прошлым периодам.</span>
                         </div>
                         <p id="planned-revenue" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
                     </div>
-                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="order:2;cursor:default;user-select:none;">
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
                         <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
                             <span>Выручка (факт)</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
                             <span class="stat-card-hint" role="tooltip">Все поступления по объектам за выбранный период.</span>
                         </div>
                         <p id="total-revenue" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
                     </div>
-                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="order:7;cursor:default;user-select:none;">
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
                         <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
-                            <span>Прямые затраты Юнион</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
-                            <span class="stat-card-hint" role="tooltip">Расходы объектов, оплаченные Юнион Эскей. В расходах «Общие» сюда включается половина суммы.</span>
+                            <span>Прямые затраты</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
+                            <span class="stat-card-hint" role="tooltip">Все операционные расходы по объектам за выбранный период. Выплаты участникам, фактическая уплата налогов и траты компании сюда не входят.</span>
+                        </div>
+                        <p id="direct-expense" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
+                    </div>
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
+                        <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
+                            <span>Налоги</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
+                            <span class="stat-card-hint" role="tooltip">Налоговая нагрузка, уже учтенная в экономике объектов за выбранный период. Это начисление для расчета прибыли, а не фактическая квартальная оплата со счета.</span>
+                        </div>
+                        <p id="project-tax-total" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
+                    </div>
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
+                        <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
+                            <span>Чистая прибыль объектов</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
+                            <span class="stat-card-hint" role="tooltip">Общий результат объектов после прямых затрат и начисленных налогов, но до распределения прибыли между Юнион Эскей и партнерами.</span>
+                        </div>
+                        <p id="projects-net-profit" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
+                    </div>
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
+                        <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
+                            <span>Оплачено Юнион</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
+                            <span class="stat-card-hint" role="tooltip">Прямые расходы объектов, фактически профинансированные Юнион Эскей. В расходах «Общие 50/50» сюда относится половина суммы.</span>
                         </div>
                         <p id="union-direct-expense" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
                     </div>
-                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="order:4;cursor:default;user-select:none;">
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" onclick="if(!event.target.closest('.stat-card-label')) openDashboardBreakdown('invested')" style="cursor:pointer;user-select:none;" title="Нажми, чтобы посмотреть по партнерам">
                         <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
-                            <span>Прямые затраты партнеров</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
-                            <span class="stat-card-hint" role="tooltip">Расходы объектов, оплаченные партнерами. В расходах «Общие» сюда включается половина суммы. В карточках объектов по-прежнему видно вклад каждого конкретного человека.</span>
+                            <span>Оплачено партнерами</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
+                            <span class="stat-card-hint" role="tooltip">Сколько прямых расходов объектов оплатили партнеры за выбранный период. Нажми на плашку, чтобы увидеть разбивку по людям.</span>
                         </div>
                         <p id="partner-direct-expense" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
                     </div>
-                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="order:6;cursor:default;user-select:none;">
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" onclick="if(!event.target.closest('.stat-card-label')) openDashboardBreakdown('returned')" style="cursor:pointer;user-select:none;" title="Нажми, чтобы посмотреть по партнерам">
                         <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
-                            <span>Возвращено партнерам</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
-                            <span class="stat-card-hint" role="tooltip">Сколько партнерам уже вернули из их вложений. Это не прибыль и не уменьшает исторический вклад.</span>
+                            <span>Возвращено вложений</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
+                            <span class="stat-card-hint" role="tooltip">Фактически возвращенные партнерам вложения. Историческая сумма того, кто сколько оплатил, от этого не уменьшается. Нажми на плашку для разбивки.</span>
                         </div>
                         <p id="partner-capital-returned" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
                     </div>
-                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="order:5;cursor:default;user-select:none;">
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" onclick="if(!event.target.closest('.stat-card-label')) openDashboardBreakdown('profit')" style="cursor:pointer;user-select:none;" title="Нажми, чтобы посмотреть по партнерам">
                         <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
-                            <span>Выведено прибыли партнерам</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
-                            <span class="stat-card-hint" role="tooltip">Сколько чистой прибыли по объектам партнеры уже получили. Возврат их вложений сюда не входит.</span>
+                            <span>Выплачено прибыли партнерам</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
+                            <span class="stat-card-hint" role="tooltip">Сколько чистой прибыли по объектам партнеры уже получили за выбранный период. Возврат вложений сюда не входит. Нажми на плашку для разбивки.</span>
                         </div>
                         <p id="partner-profit-paid" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
                     </div>
-                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="order:8;cursor:default;user-select:none;">
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
                         <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
                             <span>Траты компании</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
-                            <span class="stat-card-hint" role="tooltip">Налоги, бухгалтерия, реклама, офис и другие траты Юнион Эскей, не привязанные к конкретному объекту.</span>
+                            <span class="stat-card-hint" role="tooltip">Бухгалтерия, реклама, офис и другие операционные траты Юнион Эскей, не привязанные к конкретному объекту. Фактическая уплата налогов сюда не входит, чтобы не уменьшать прибыль второй раз.</span>
                         </div>
                         <p id="general-expense" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
                     </div>
-                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="order:9;cursor:default;user-select:none;">
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
                         <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
                             <span>Прибыль Юнион</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
-                            <span id="union-profit-hint" class="stat-card-hint" role="tooltip">Вся чистая прибыль Юнион Эскей: доля после расходов и налога по настройке каждого объекта, плюс доходы компании, минус траты компании, включая уже выведенные на личные цели суммы. Возвраты вложений сюда не входят.</span>
+                            <span id="union-profit-hint" class="stat-card-hint" role="tooltip">Часть чистой прибыли объектов, относящаяся к Юнион Эскей, плюс доходы компании и минус траты компании. Фактическая уплата уже начисленного налога повторно прибыль не уменьшает.</span>
                         </div>
                         <p id="net-profit" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
                     </div>
-                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="order:10;cursor:default;user-select:none;">
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
                         <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
                             <span>Личный вывод</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
-                            <span class="stat-card-hint" role="tooltip">Сколько из чистой прибыли Юнион Эскей уже выведено или потрачено с расчетного счета на личные цели. Это не возврат вложений и не расход компании.</span>
+                            <span class="stat-card-hint" role="tooltip">Сколько из чистой прибыли Юнион Эскей уже выведено или потрачено на личные цели. Это не возврат вложений и не расход компании.</span>
                         </div>
                         <p id="personal-expense" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
                     </div>
@@ -793,12 +806,11 @@
             <div id="main-charts-wrapper">
                 <div class="bg-white p-5 sm:p-6 rounded-[2rem] border shadow-soft">
                     <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
-                        <h3 class="font-bold text-brand-dark text-sm">Финансовый поток</h3>
+                        <div>
+                            <h3 class="font-bold text-brand-dark text-sm">Движение денег Юнион Эскей</h3>
+                            <p class="text-[10px] text-gray-400 mt-0.5">Фактические поступления и списания ЮЭ по месяцам; расходы, оплаченные партнерами, здесь не дублируются.</p>
+                        </div>
                         <div class="flex items-center gap-2 flex-wrap justify-end">
-                            <div class="flex items-center gap-1 rounded-xl bg-gray-50 p-1" id="flow-mode-btns">
-                                <button onclick="setFlowMode('union')" id="flow-mode-union" class="px-3 py-1 rounded-lg text-[11px] font-bold bg-white text-[#5B21B6] shadow-sm transition-all">Юнион Эскей</button>
-                                <button onclick="setFlowMode('all')" id="flow-mode-all" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-white transition-all">ЮЭ + партнеры</button>
-                            </div>
                             <div class="flex items-center gap-1.5" id="flow-year-btns">
                                 <button onclick="setFlowYear(2026)" id="flow-btn-2026" class="px-3 py-1 rounded-lg text-[11px] font-bold bg-[#EDE9FE] text-[#5B21B6] transition-all">2026</button>
                                 <button onclick="setFlowYear(2027)" id="flow-btn-2027" class="px-3 py-1 rounded-lg text-[11px] font-semibold text-gray-500 hover:bg-gray-100 transition-all">2027</button>
@@ -1216,7 +1228,8 @@
                         </div>
                         <div class="space-y-1">
                             <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Сумма (₽)</label>
-                            <input type="text" id="uni-amount" oninput="formatInputSpaces(this); syncSingleTaxSourceAmount(); updateTaxSourceSummary();" placeholder="0" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-bold outline-none focus:border-brand-purple transition-all" autocomplete="off" name="amt_x7p1" translate="no" spellcheck="false" lang="ru" required>
+                            <input type="text" id="uni-amount" oninput="formatInputSpaces(this); updateTaxSourceSummary();" placeholder="0" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-bold outline-none focus:border-brand-purple transition-all" autocomplete="off" name="amt_x7p1" translate="no" spellcheck="false" lang="ru" required>
+                                <p id="uni-amount-tax-hint" class="hidden mt-1 text-[10px] text-gray-400 leading-snug">Сумма для уплаты налога собирается автоматически из объектов ниже.</p>
                         </div>
                     </div>
                     <div id="uni-tax-sources-wrapper" class="space-y-2 hidden rounded-2xl border border-purple-100 bg-purple-50/30 p-3">
@@ -1225,7 +1238,8 @@
                             <button type="button" onclick="addTaxSourceRow()" class="text-[11px] font-bold text-brand-purple hover:text-brand-purpleHover">+ Добавить объект</button>
                         </div>
                         <div id="uni-tax-sources-list" class="space-y-2"></div>
-                        <p id="uni-tax-sources-total" class="text-[10px] text-gray-400 leading-snug">Распределите всю сумму платежа по объектам-источникам.</p>
+                        <p id="uni-tax-sources-total" class="text-[10px] text-gray-400 leading-snug">Выберите объекты и укажите суммы — итог соберётся автоматически.</p>
+                        <datalist id="tax-source-project-options"></datalist>
                     </div>
                     <div class="space-y-1" id="uni-category-wrapper" style="position:relative;">
                         <label id="uni-category-label" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Категория / Назначение</label>
@@ -1434,6 +1448,20 @@
                 <button onclick="closeMonthlyModal()" class="text-3xl leading-none hover:text-brand-purple transition-colors">&times;</button>
             </div>
             <div id="monthly-modal-content" class="overflow-y-auto flex-1 p-5 sm:p-6 space-y-4"></div>
+        </div>
+    </div>
+
+    <!-- Разбивка сводных плашек по партнёрам -->
+    <div id="dashboard-breakdown-modal" class="fixed inset-0 bg-gray-950/40 backdrop-blur-sm z-[70] hidden flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target === this) closeDashboardBreakdown()">
+        <div class="bg-white rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-fade-in border">
+            <div class="px-6 py-5 border-b border-gray-100 flex items-start justify-between gap-4">
+                <div>
+                    <h3 id="dashboard-breakdown-title" class="text-lg font-bold text-brand-dark">По партнёрам</h3>
+                    <p class="text-xs text-gray-400 mt-1">За выбранный период</p>
+                </div>
+                <button type="button" onclick="closeDashboardBreakdown()" class="text-gray-300 hover:text-gray-500 text-2xl leading-none">&times;</button>
+            </div>
+            <div id="dashboard-breakdown-content" class="px-6 py-5 space-y-2 max-h-[60vh] overflow-y-auto"></div>
         </div>
     </div>
 
@@ -3338,9 +3366,10 @@
             if (!grid) return;
             const order = [
                 'planned-revenue', 'total-revenue',
-                'direct-expense', 'partner-direct-expense',
-                'partner-profit-paid', 'partner-capital-returned',
-                'union-direct-expense', 'general-expense',
+                'direct-expense', 'project-tax-total',
+                'projects-net-profit', 'union-direct-expense',
+                'partner-direct-expense', 'partner-capital-returned',
+                'partner-profit-paid', 'general-expense',
                 'net-profit', 'personal-expense'
             ];
             order.forEach(id => {
@@ -3348,6 +3377,80 @@
                 const card = value?.closest('.bg-transparent');
                 if (card) grid.appendChild(card);
             });
+        }
+
+        function getDashboardPartnerBreakdown(kind) {
+            const summary = {};
+            const add = (name, amount) => {
+                const value = Math.max(0, Number(amount || 0));
+                if (!value) return;
+                const key = String(name || 'Без имени');
+                summary[key] = (summary[key] || 0) + value;
+            };
+
+            if (kind === 'invested') {
+                data.forEach(project => {
+                    filterByPeriod(getProjectOperationalExpenses(project), 'date').forEach(expense => {
+                        const amount = Math.max(0, Number(expense.amount || 0));
+                        if (!amount) return;
+                        if (isCommonInvestor(expense.investor)) {
+                            add('Общие 50/50', amount / 2);
+                        } else if (!isUnionEskeyRecipient(expense.investor)) {
+                            add(getCanonicalParticipantName(expense.investor), amount);
+                        }
+                    });
+                });
+            } else if (kind === 'returned') {
+                data.forEach(project => {
+                    filterByPeriod(getProjectPartnerCapitalReturns(project.id), 'date').forEach(item => {
+                        add(getCanonicalParticipantName(item.person || item.investor), item.amount);
+                    });
+                });
+            } else if (kind === 'profit') {
+                data.forEach(project => {
+                    filterByPeriod(getProjectPartnerProfitPayouts(project.id), 'date').forEach(item => {
+                        add(getCanonicalParticipantName(item.person || item.investor), item.amount);
+                    });
+                });
+            }
+            return summary;
+        }
+
+        function openDashboardBreakdown(kind) {
+            if (currentRole !== 'director') return;
+            const titles = {
+                invested: 'Оплачено партнёрами',
+                returned: 'Возвращено вложений',
+                profit: 'Выплачено прибыли партнёрам'
+            };
+            const summary = getDashboardPartnerBreakdown(kind);
+            const rows = Object.entries(summary)
+                .filter(([, amount]) => Number(amount) > 0)
+                .sort((a, b) => Number(b[1]) - Number(a[1]));
+            const total = rows.reduce((sum, [, amount]) => sum + Number(amount || 0), 0);
+            const title = document.getElementById('dashboard-breakdown-title');
+            const content = document.getElementById('dashboard-breakdown-content');
+            const modal = document.getElementById('dashboard-breakdown-modal');
+            if (title) title.textContent = titles[kind] || 'По партнёрам';
+            if (content) {
+                content.innerHTML = rows.length
+                    ? rows.map(([name, amount]) => `<div class="flex items-center justify-between gap-4 py-2 border-b border-gray-100 last:border-0">
+                        <span class="text-sm font-medium text-gray-600">${escapeTrashText(name)}</span>
+                        <span class="text-sm font-bold text-gray-800 whitespace-nowrap">${formatMoney(amount)}</span>
+                    </div>`).join('') + `<div class="flex items-center justify-between gap-4 pt-3 mt-1 border-t border-gray-200">
+                        <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Итого</span>
+                        <span class="text-sm font-bold text-brand-dark whitespace-nowrap">${formatMoney(total)}</span>
+                    </div>`
+                    : '<div class="py-6 text-center text-sm text-gray-300 italic">За выбранный период операций нет</div>';
+            }
+            if (modal) modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDashboardBreakdown() {
+            const modal = document.getElementById('dashboard-breakdown-modal');
+            if (modal) modal.classList.add('hidden');
+            document.body.style.overflow = '';
         }
 
         function renderTable() {
@@ -3528,6 +3631,17 @@
                 // партнерами (до трёх партнеров). Общие траты компании уменьшают
                 // только итог ЮЭ. Вывод прибыли, возврат вложений и
                 // реинвестирование результат объекта не меняют.
+                const projectTaxTotal = data.reduce((sum, project) => {
+                    const periodIncome = sumAmounts(filterByPeriod(project.incomes || [], 'date'));
+                    return sum + calculateProjectTax(project, periodIncome);
+                }, 0);
+                const projectsNetProfit = data.reduce((sum, project) => {
+                    const periodIncome = sumAmounts(filterByPeriod(project.incomes || [], 'date'));
+                    const periodExpense = sumAmounts(filterByPeriod(getProjectOperationalExpenses(project), 'date'));
+                    const tax = calculateProjectTax(project, periodIncome);
+                    return sum + (periodIncome - periodExpense - tax);
+                }, 0);
+
                 const unionProjectProfit = data.reduce((sum, project) => {
                     const periodIncome = sumAmounts(filterByPeriod(project.incomes || [], 'date'));
                     const periodExpense = sumAmounts(filterByPeriod(getProjectOperationalExpenses(project), 'date'));
@@ -3537,14 +3651,16 @@
                     return sum + Number(unionShare?.amount || 0);
                 }, 0);
                 const personalProfitWithdrawal = pCompPers + sumAmounts(filteredUnionProfit);
-                // В плашке показываем всю заработанную чистую прибыль ЮЭ, а не только
-                // остаток: личные выводы — это уже полученная часть этой прибыли.
-                // Возвраты вложений в personalProfitWithdrawal выше исключены.
+                // Управленческая «Прибыль Юнион» показывает весь объём прибыли ЮЭ,
+                // включая ту часть, которая уже была выведена/потрачена на личные цели.
+                // «Личный вывод» при этом остаётся отдельной плашкой-расшифровкой.
                 const netProfit = unionProjectProfit + pCompIncome - pCompGen + personalProfitWithdrawal;
 
                 document.getElementById('total-revenue').innerText = formatMoney(pFactPaid);
                 document.getElementById('planned-revenue').innerText = formatMoney(expectedReceipts);
                 document.getElementById('direct-expense').innerText = formatMoney(pFactDirectCost);
+                document.getElementById('project-tax-total').innerText = formatMoney(projectTaxTotal);
+                document.getElementById('projects-net-profit').innerText = (projectsNetProfit < 0 ? '−' + formatMoney(Math.abs(projectsNetProfit)) : formatMoney(projectsNetProfit));
                 document.getElementById('union-direct-expense').innerText = formatMoney(pFactUnionDirectCost);
                 document.getElementById('partner-direct-expense').innerText = formatMoney(pFactPartnerDirectCost);
                 document.getElementById('partner-capital-returned').innerText = formatMoney(pFactPartnerCapitalReturned);
@@ -3554,7 +3670,7 @@
                 document.getElementById('personal-expense').innerText = formatMoney(personalProfitWithdrawal);
                 const unionProfitHint = document.getElementById('union-profit-hint');
                 if (unionProfitHint) {
-                    unionProfitHint.textContent = `Чистая прибыль Юнион Эскей ${formatMoney(netProfit)}: доля чистой прибыли объектов — ${formatMoney(unionProjectProfit)}, плюс доходы компании — ${formatMoney(pCompIncome)}, минус траты компании — ${formatMoney(pCompGen)}, плюс уже выведено на личные цели — ${formatMoney(personalProfitWithdrawal)}. Плашка «Личный вывод» показывает эту выведенную часть отдельно. Возвраты вложений сюда не входят.`;
+                    unionProfitHint.textContent = `Прибыль Юнион Эскей ${formatMoney(netProfit)}: доля чистой прибыли объектов — ${formatMoney(unionProjectProfit)}, плюс доходы компании — ${formatMoney(pCompIncome)}, плюс уже использованная лично прибыль — ${formatMoney(personalProfitWithdrawal)}, минус траты компании — ${formatMoney(pCompGen)}. Плашка «Личный вывод» отдельно показывает, сколько из этой прибыли уже потрачено или выведено с расчётного счёта. Возвраты вложений и фактическая уплата уже начисленных налогов сюда не входят.`;
                 }
             }
             
@@ -3670,6 +3786,19 @@
             }
         }
 
+        // На компьютере подсказка не должна «прилипать» после клика:
+        // как только мышь ушла с названия плашки, закрываем её. На сенсорных
+        // устройствах оставляем прежнее поведение — закрытие тапом вне подсказки.
+        document.addEventListener('pointerout', event => {
+            if (!window.matchMedia?.('(hover: hover) and (pointer: fine)').matches) return;
+            const label = event.target.closest?.('.stat-card-label');
+            if (!label) return;
+            if (event.relatedTarget && label.contains(event.relatedTarget)) return;
+            label.classList.remove('is-open');
+            label.setAttribute('aria-expanded', 'false');
+            try { label.blur(); } catch (ignore) {}
+        });
+
         document.addEventListener('click', event => {
             if (!event.target.closest('.stat-card-label')) {
                 document.querySelectorAll('.stat-card-label.is-open').forEach(item => {
@@ -3753,8 +3882,9 @@
             if (currentRole === 'director') {
                 // ── Финансовый поток — по выбранному году ──
                 const flowYear = window._flowYear || 2026;
-                const flowMode = getFlowMode();
-                syncFlowModeButtons(flowMode);
+                // Один график: фактическое движение денег Юнион Эскей.
+                // Расходы, оплаченные партнерами, не считаются списанием ЮЭ.
+                const flowMode = 'union';
                 const today2 = new Date();
                 const targetMonths = [];
 
@@ -3878,8 +4008,8 @@
                     data: {
                         labels: barLabels,
                         datasets: [
-                            { label: 'Поступило', data: targetMonths.map(m => monthlyData[m].in),  backgroundColor: bgIn,  borderRadius: 4 },
-                            { label: 'Ушло',      data: targetMonths.map(m => monthlyData[m].out), backgroundColor: bgOut, borderRadius: 4 }
+                            { label: 'Пришло в ЮЭ', data: targetMonths.map(m => monthlyData[m].in),  backgroundColor: bgIn,  borderRadius: 4 },
+                            { label: 'Ушло из ЮЭ', data: targetMonths.map(m => monthlyData[m].out), backgroundColor: bgOut, borderRadius: 4 }
                         ]
                     },
                     options: {
@@ -7015,35 +7145,66 @@
 
         let editingTaxPaymentOrigIdx = -1;
 
-        function getTaxSourceProjectOptions(selectedId = '') {
-            const selected = String(selectedId || '');
-            return ['<option value="">Выберите объект</option>']
-                .concat(data.map(project => `<option value="${Number(project.id)}" ${String(project.id) === selected ? 'selected' : ''}>${escapeTrashText(project.name)}</option>`))
+        function getTaxSourceProjectsSorted() {
+            return data.slice().sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ru', { sensitivity: 'base' }));
+        }
+
+        function rebuildTaxSourceProjectDatalist() {
+            const datalist = document.getElementById('tax-source-project-options');
+            if (!datalist) return;
+            datalist.innerHTML = getTaxSourceProjectsSorted()
+                .map(project => `<option value="${escapeTrashText(project.name)}"></option>`)
                 .join('');
         }
 
+        function findTaxSourceProjectByName(name) {
+            const normalized = String(name || '').trim().toLowerCase();
+            if (!normalized) return null;
+            return getTaxSourceProjectsSorted().find(project => String(project.name || '').trim().toLowerCase() === normalized) || null;
+        }
+
+        function syncTaxSourceRowProject(row) {
+            if (!row) return null;
+            const nameInput = row.querySelector('.tax-source-project-name');
+            const idInput = row.querySelector('.tax-source-project-id');
+            const project = findTaxSourceProjectByName(nameInput?.value || '');
+            if (idInput) idInput.value = project ? String(project.id) : '';
+            return project;
+        }
+
+        function getTaxSourceProjectNameById(projectId) {
+            const project = data.find(item => Number(item.id) === Number(projectId));
+            return project?.name || '';
+        }
+
         function addTaxSourceRow(source = null) {
+            rebuildTaxSourceProjectDatalist();
             const list = document.getElementById('uni-tax-sources-list');
             if (!list) return;
             const row = document.createElement('div');
             const projectId = Number(source?.projectId || 0);
+            const projectName = String(source?.projectName || getTaxSourceProjectNameById(projectId) || '');
             const amount = Number(source?.amount || 0);
             row.className = 'tax-source-row grid gap-2 items-center';
             row.style.gridTemplateColumns = 'minmax(0,1fr) 120px 28px';
-            row.dataset.autoAmount = source ? 'false' : 'true';
             row.innerHTML = `
-                <select class="tax-source-project w-full h-10 bg-white border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple" aria-label="Объект-источник">
-                    ${getTaxSourceProjectOptions(projectId)}
-                </select>
+                <div class="min-w-0">
+                    <input type="text" class="tax-source-project-name w-full h-10 bg-white border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple" list="tax-source-project-options" placeholder="Выберите объект" value="${escapeTrashText(projectName)}" aria-label="Объект-источник" autocomplete="off" spellcheck="false">
+                    <input type="hidden" class="tax-source-project-id" value="${projectId > 0 ? String(projectId) : ''}">
+                </div>
                 <input type="text" class="tax-source-amount w-full h-10 bg-white border border-gray-200 rounded-xl px-3 text-sm font-semibold outline-none focus:border-brand-purple" placeholder="0 ₽" value="${amount > 0 ? formatNumberWithSpaces(amount) : ''}" aria-label="Сумма из объекта">
                 <button type="button" class="h-10 text-gray-300 hover:text-red-400 text-xl" title="Убрать источник">×</button>
             `;
-            const select = row.querySelector('.tax-source-project');
+            const nameInput = row.querySelector('.tax-source-project-name');
             const amountInput = row.querySelector('.tax-source-amount');
             const removeBtn = row.querySelector('button');
-            select?.addEventListener('change', updateTaxSourceSummary);
+            const onProjectChange = () => {
+                syncTaxSourceRowProject(row);
+                updateTaxSourceSummary();
+            };
+            nameInput?.addEventListener('input', onProjectChange);
+            nameInput?.addEventListener('change', onProjectChange);
             amountInput?.addEventListener('input', () => {
-                row.dataset.autoAmount = 'false';
                 formatInputSpaces(amountInput);
                 updateTaxSourceSummary();
             });
@@ -7053,11 +7214,12 @@
                 updateTaxSourceSummary();
             });
             list.appendChild(row);
-            syncSingleTaxSourceAmount();
+            syncTaxSourceRowProject(row);
             updateTaxSourceSummary();
         }
 
         function resetTaxSourceRows(sources = []) {
+            rebuildTaxSourceProjectDatalist();
             const list = document.getElementById('uni-tax-sources-list');
             if (!list) return;
             list.innerHTML = '';
@@ -7067,23 +7229,21 @@
             updateTaxSourceSummary();
         }
 
-        function syncSingleTaxSourceAmount() {
+        function syncTaxPaymentTotalFromSources() {
             if ((document.getElementById('uni-type')?.value || '') !== 'taxPayment') return;
-            const rows = Array.from(document.querySelectorAll('#uni-tax-sources-list .tax-source-row'));
-            if (rows.length !== 1) return;
-            const row = rows[0];
-            if (row.dataset.autoAmount === 'false') return;
-            const amountInput = row.querySelector('.tax-source-amount');
-            const total = parseFormattedNumber(document.getElementById('uni-amount')?.value || '');
-            if (amountInput) amountInput.value = total > 0 ? formatNumberWithSpaces(total) : '';
+            const totalInput = document.getElementById('uni-amount');
+            if (!totalInput) return;
+            const distributed = Array.from(document.querySelectorAll('#uni-tax-sources-list .tax-source-row'))
+                .reduce((sum, row) => sum + parseFormattedNumber(row.querySelector('.tax-source-amount')?.value || ''), 0);
+            totalInput.value = distributed > 0 ? formatNumberWithSpaces(distributed) : '';
         }
 
         function collectTaxSourceBreakdown() {
             return Array.from(document.querySelectorAll('#uni-tax-sources-list .tax-source-row'))
                 .map(row => {
-                    const projectId = Number(row.querySelector('.tax-source-project')?.value || 0);
+                    const project = syncTaxSourceRowProject(row);
+                    const projectId = Number(row.querySelector('.tax-source-project-id')?.value || project?.id || 0);
                     const amount = parseFormattedNumber(row.querySelector('.tax-source-amount')?.value || '');
-                    const project = data.find(item => Number(item.id) === projectId);
                     return { projectId, projectName: project?.name || '', amount };
                 })
                 .filter(row => row.projectId || row.amount);
@@ -7092,27 +7252,29 @@
         function updateTaxSourceSummary() {
             const hint = document.getElementById('uni-tax-sources-total');
             if (!hint) return;
-            const total = parseFormattedNumber(document.getElementById('uni-amount')?.value || '');
-            const distributed = collectTaxSourceBreakdown().reduce((sum, row) => sum + Number(row.amount || 0), 0);
-            const left = total - distributed;
-            if (!(total > 0)) {
-                hint.textContent = 'Распределите всю сумму платежа по объектам-источникам.';
+            const rows = collectTaxSourceBreakdown();
+            const distributed = rows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+            syncTaxPaymentTotalFromSources();
+            if (!(distributed > 0)) {
+                hint.textContent = 'Выберите объекты и укажите суммы — итог соберётся автоматически.';
                 hint.className = 'text-[10px] text-gray-400 leading-snug';
                 return;
             }
-            hint.textContent = `Распределено ${formatMoney(distributed)} из ${formatMoney(total)}${Math.abs(left) > 0.5 ? ` · осталось ${formatMoney(left)}` : ' · готово'}`;
-            hint.className = Math.abs(left) <= 0.5 ? 'text-[10px] text-emerald-600 leading-snug font-semibold' : 'text-[10px] text-gray-400 leading-snug';
+            hint.textContent = `Итого по объектам: ${formatMoney(distributed)}${rows.some(row => !row.projectId) ? ' · проверьте выбранные объекты' : ''}`;
+            hint.className = rows.some(row => !row.projectId)
+                ? 'text-[10px] text-amber-600 leading-snug font-semibold'
+                : 'text-[10px] text-emerald-600 leading-snug font-semibold';
         }
 
         function validateTaxSourceBreakdown(totalAmount) {
             const rows = collectTaxSourceBreakdown();
-            if (!rows.length) return { ok:false, message:'Укажите, из какого объекта взяты деньги на налог.' };
+            if (!rows.length) return { ok:false, message:'Укажите, из каких объектов взяты деньги на налог.' };
             if (rows.some(row => !row.projectId || !(row.amount > 0))) return { ok:false, message:'У каждого источника выберите объект и укажите сумму.' };
             const ids = rows.map(row => Number(row.projectId));
             if (new Set(ids).size !== ids.length) return { ok:false, message:'Один объект указан дважды. Объедините сумму в одну строку.' };
             const distributed = rows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
-            if (Math.abs(distributed - Number(totalAmount || 0)) > 0.5) return { ok:false, message:`Сумма по объектам должна быть равна платежу: ${formatMoney(totalAmount)}.` };
-            return { ok:true, rows: normalizeTaxSourceBreakdown(rows) };
+            if (!(distributed > 0)) return { ok:false, message:'Сумма уплаты налога должна быть больше нуля.' };
+            return { ok:true, rows: normalizeTaxSourceBreakdown(rows), totalAmount: distributed };
         }
 
         function openUniversalModal(type, pid) {
@@ -7205,7 +7367,7 @@
             const type = document.getElementById('uni-type')?.value || '';
             const dateVal = document.getElementById('uni-date')?.value || '';
             const categoryVal = document.getElementById('uni-category-input')?.value.trim() || 'Без категории';
-            const amountVal = parseFormattedNumber(document.getElementById('uni-amount')?.value || '');
+            let amountVal = parseFormattedNumber(document.getElementById('uni-amount')?.value || '');
             const projectId = document.getElementById('uni-project')?.value || '';
             const commentVal = document.getElementById('uni-comment')?.value || '';
             const allowedTypes = ['project','income','general','companyIncome','personal','taxPayment','withdrawal'];
@@ -7229,7 +7391,7 @@
                 return;
             }
             if (!amountVal || amountVal <= 0) {
-                fail('Сумма операции должна быть больше нуля.');
+                fail(type === 'taxPayment' ? 'Укажите объекты-источники и суммы для оплаты налога.' : 'Сумма операции должна быть больше нуля.');
                 return;
             }
             if (['project','income','personal','withdrawal'].includes(type) && !projectId) {
@@ -7308,6 +7470,9 @@
                 }
                 const sourceValidation = validateTaxSourceBreakdown(amountVal);
                 if (!sourceValidation.ok) { fail(sourceValidation.message); return; }
+                amountVal = Number(sourceValidation.totalAmount || amountVal || 0);
+                const amountInput = document.getElementById('uni-amount');
+                if (amountInput) amountInput.value = amountVal > 0 ? formatNumberWithSpaces(amountVal) : '';
                 payload = {
                     action:'addCompanyExpense', date:dateVal, type:'taxPayment', amount:amountVal,
                     category:'Уплата налога', comment:commentVal, investor:'Юнион Эскей',
@@ -7430,7 +7595,18 @@
 
             const taxSourcesWrapper = document.getElementById('uni-tax-sources-wrapper');
             if (taxSourcesWrapper) taxSourcesWrapper.classList.toggle('hidden', !isTaxPayment);
-            if (isTaxPayment) { syncSingleTaxSourceAmount(); updateTaxSourceSummary(); }
+
+            const amountInput = document.getElementById('uni-amount');
+            const amountTaxHint = document.getElementById('uni-amount-tax-hint');
+            if (amountInput) {
+                amountInput.readOnly = isTaxPayment;
+                amountInput.classList.toggle('bg-purple-50', isTaxPayment);
+                amountInput.classList.toggle('cursor-not-allowed', isTaxPayment);
+                if (!isTaxPayment && amountInput.placeholder === 'Собирается автоматически') amountInput.placeholder = '0';
+                if (isTaxPayment) amountInput.placeholder = 'Собирается автоматически';
+            }
+            if (amountTaxHint) amountTaxHint.classList.toggle('hidden', !isTaxPayment);
+            if (isTaxPayment) { rebuildTaxSourceProjectDatalist(); updateTaxSourceSummary(); }
 
             const invLabel = document.getElementById('uni-investor-label');
             const catLabel = document.getElementById('uni-category-label');
