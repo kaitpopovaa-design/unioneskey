@@ -51,6 +51,2140 @@
             }
         }; } catch(e) { console.warn('Tailwind config error:', e); }
     </script>
+    <!-- Встроенный fallback Tailwind: сайт сохраняет дизайн даже без доступа к CDN -->
+    <style id="tailwind-offline-fallback">
+/*! tailwindcss v4.1.10 | MIT License | https://tailwindcss.com */
+@layer properties;
+:root, :host {
+  --font-sans: Inter, system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+  --color-red-50: oklch(97.1% 0.013 17.38);
+  --color-red-200: oklch(88.5% 0.062 18.334);
+  --color-red-400: oklch(70.4% 0.191 22.216);
+  --color-red-500: oklch(63.7% 0.237 25.331);
+  --color-blue-50: oklch(97% 0.014 254.604);
+  --color-blue-400: oklch(70.7% 0.165 254.624);
+  --color-blue-600: oklch(54.6% 0.245 262.881);
+  --color-purple-50: oklch(97.7% 0.014 308.299);
+  --color-purple-100: oklch(94.6% 0.033 307.174);
+  --color-purple-400: oklch(71.4% 0.203 305.504);
+  --color-purple-500: oklch(62.7% 0.265 303.9);
+  --color-purple-700: oklch(49.6% 0.265 301.924);
+  --color-gray-50: oklch(98.5% 0.002 247.839);
+  --color-gray-100: oklch(96.7% 0.003 264.542);
+  --color-gray-200: oklch(92.8% 0.006 264.531);
+  --color-gray-300: oklch(87.2% 0.01 258.338);
+  --color-gray-400: oklch(70.7% 0.022 261.325);
+  --color-gray-500: oklch(55.1% 0.027 264.364);
+  --color-gray-600: oklch(44.6% 0.03 256.802);
+  --color-gray-700: oklch(37.3% 0.034 259.733);
+  --color-gray-800: oklch(27.8% 0.033 256.848);
+  --color-gray-900: oklch(21% 0.034 264.665);
+  --color-gray-950: oklch(13% 0.028 261.692);
+  --color-white: #fff;
+  --spacing: 0.25rem;
+  --container-sm: 24rem;
+  --container-md: 28rem;
+  --container-lg: 32rem;
+  --container-xl: 36rem;
+  --container-5xl: 64rem;
+  --container-7xl: 80rem;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: calc(1 / 0.75);
+  --text-sm: 0.875rem;
+  --text-sm--line-height: calc(1.25 / 0.875);
+  --text-base: 1rem;
+  --text-base--line-height: calc(1.5 / 1);
+  --text-lg: 1.125rem;
+  --text-lg--line-height: calc(1.75 / 1.125);
+  --text-xl: 1.25rem;
+  --text-xl--line-height: calc(1.75 / 1.25);
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: calc(2 / 1.5);
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: calc(2.25 / 1.875);
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --tracking-tight: -0.025em;
+  --tracking-wider: 0.05em;
+  --tracking-widest: 0.1em;
+  --leading-snug: 1.375;
+  --leading-relaxed: 1.625;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  --animate-spin: spin 1s linear infinite;
+  --blur-sm: 8px;
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  --default-font-family: var(--font-sans);
+  --default-mono-font-family: var(--font-mono);
+  --color-brand-purple: #8B5CF6;
+  --color-brand-purpleHover: #7C3AED;
+  --color-brand-dark: #1F2937;
+  --color-brand-gray: #6B7280;
+  --color-brand-light: #F9FAFB;
+}
+*, ::after, ::before, ::backdrop, ::file-selector-button {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0 solid;
+}
+html, :host {
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  tab-size: 4;
+  font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji');
+  font-feature-settings: var(--default-font-feature-settings, normal);
+  font-variation-settings: var(--default-font-variation-settings, normal);
+  -webkit-tap-highlight-color: transparent;
+}
+hr {
+  height: 0;
+  color: inherit;
+  border-top-width: 1px;
+}
+abbr:where([title]) {
+  -webkit-text-decoration: underline dotted;
+  text-decoration: underline dotted;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+a {
+  color: inherit;
+  -webkit-text-decoration: inherit;
+  text-decoration: inherit;
+}
+b, strong {
+  font-weight: bolder;
+}
+code, kbd, samp, pre {
+  font-family: var(--default-mono-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace);
+  font-feature-settings: var(--default-mono-font-feature-settings, normal);
+  font-variation-settings: var(--default-mono-font-variation-settings, normal);
+  font-size: 1em;
+}
+small {
+  font-size: 80%;
+}
+sub, sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+sub {
+  bottom: -0.25em;
+}
+sup {
+  top: -0.5em;
+}
+table {
+  text-indent: 0;
+  border-color: inherit;
+  border-collapse: collapse;
+}
+:-moz-focusring {
+  outline: auto;
+}
+progress {
+  vertical-align: baseline;
+}
+summary {
+  display: list-item;
+}
+ol, ul, menu {
+  list-style: none;
+}
+img, svg, video, canvas, audio, iframe, embed, object {
+  display: block;
+  vertical-align: middle;
+}
+img, video {
+  max-width: 100%;
+  height: auto;
+}
+button, input, select, optgroup, textarea, ::file-selector-button {
+  font: inherit;
+  font-feature-settings: inherit;
+  font-variation-settings: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  border-radius: 0;
+  background-color: transparent;
+  opacity: 1;
+}
+:where(select:is([multiple], [size])) optgroup {
+  font-weight: bolder;
+}
+:where(select:is([multiple], [size])) optgroup option {
+  padding-inline-start: 20px;
+}
+::file-selector-button {
+  margin-inline-end: 4px;
+}
+::placeholder {
+  opacity: 1;
+}
+@supports (not (-webkit-appearance: -apple-pay-button))  or (contain-intrinsic-size: 1px) {
+  ::placeholder {
+    color: currentcolor;
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, currentcolor 50%, transparent);
+    }
+  }
+}
+textarea {
+  resize: vertical;
+}
+::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+::-webkit-date-and-time-value {
+  min-height: 1lh;
+  text-align: inherit;
+}
+::-webkit-datetime-edit {
+  display: inline-flex;
+}
+::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
+}
+::-webkit-datetime-edit, ::-webkit-datetime-edit-year-field, ::-webkit-datetime-edit-month-field, ::-webkit-datetime-edit-day-field, ::-webkit-datetime-edit-hour-field, ::-webkit-datetime-edit-minute-field, ::-webkit-datetime-edit-second-field, ::-webkit-datetime-edit-millisecond-field, ::-webkit-datetime-edit-meridiem-field {
+  padding-block: 0;
+}
+:-moz-ui-invalid {
+  box-shadow: none;
+}
+button, input:where([type='button'], [type='reset'], [type='submit']), ::file-selector-button {
+  appearance: button;
+}
+::-webkit-inner-spin-button, ::-webkit-outer-spin-button {
+  height: auto;
+}
+[hidden]:where(:not([hidden='until-found'])) {
+  display: none !important;
+}
+.absolute {
+  position: absolute;
+}
+.fixed {
+  position: fixed;
+}
+.relative {
+  position: relative;
+}
+.sticky {
+  position: sticky;
+}
+.inset-0 {
+  inset: calc(var(--spacing) * 0);
+}
+.top-0 {
+  top: calc(var(--spacing) * 0);
+}
+.right-0 {
+  right: calc(var(--spacing) * 0);
+}
+.right-5 {
+  right: calc(var(--spacing) * 5);
+}
+.right-20 {
+  right: calc(var(--spacing) * 20);
+}
+.bottom-5 {
+  bottom: calc(var(--spacing) * 5);
+}
+.bottom-20 {
+  bottom: calc(var(--spacing) * 20);
+}
+.left-0 {
+  left: calc(var(--spacing) * 0);
+}
+.z-30 {
+  z-index: 30;
+}
+.z-50 {
+  z-index: 50;
+}
+.z-\[55\] {
+  z-index: 55;
+}
+.z-\[60\] {
+  z-index: 60;
+}
+.z-\[70\] {
+  z-index: 70;
+}
+.z-\[95\] {
+  z-index: 95;
+}
+.z-\[100\] {
+  z-index: 100;
+}
+.z-\[200\] {
+  z-index: 200;
+}
+.mx-auto {
+  margin-inline: auto;
+}
+.my-1 {
+  margin-block: calc(var(--spacing) * 1);
+}
+.mt-0\.5 {
+  margin-top: calc(var(--spacing) * 0.5);
+}
+.mt-1 {
+  margin-top: calc(var(--spacing) * 1);
+}
+.mt-2 {
+  margin-top: calc(var(--spacing) * 2);
+}
+.mt-3 {
+  margin-top: calc(var(--spacing) * 3);
+}
+.mt-4 {
+  margin-top: calc(var(--spacing) * 4);
+}
+.mt-6 {
+  margin-top: calc(var(--spacing) * 6);
+}
+.mr-2 {
+  margin-right: calc(var(--spacing) * 2);
+}
+.mb-1 {
+  margin-bottom: calc(var(--spacing) * 1);
+}
+.mb-2 {
+  margin-bottom: calc(var(--spacing) * 2);
+}
+.mb-3 {
+  margin-bottom: calc(var(--spacing) * 3);
+}
+.mb-4 {
+  margin-bottom: calc(var(--spacing) * 4);
+}
+.ml-1 {
+  margin-left: calc(var(--spacing) * 1);
+}
+.ml-4 {
+  margin-left: calc(var(--spacing) * 4);
+}
+.block {
+  display: block;
+}
+.flex {
+  display: flex;
+}
+.grid {
+  display: grid;
+}
+.hidden {
+  display: none;
+}
+.inline {
+  display: inline;
+}
+.inline-block {
+  display: inline-block;
+}
+.inline-flex {
+  display: inline-flex;
+}
+.h-2 {
+  height: calc(var(--spacing) * 2);
+}
+.h-7 {
+  height: calc(var(--spacing) * 7);
+}
+.h-9 {
+  height: calc(var(--spacing) * 9);
+}
+.h-10 {
+  height: calc(var(--spacing) * 10);
+}
+.h-11 {
+  height: calc(var(--spacing) * 11);
+}
+.h-12 {
+  height: calc(var(--spacing) * 12);
+}
+.h-32 {
+  height: calc(var(--spacing) * 32);
+}
+.h-36 {
+  height: calc(var(--spacing) * 36);
+}
+.h-40 {
+  height: calc(var(--spacing) * 40);
+}
+.h-52 {
+  height: calc(var(--spacing) * 52);
+}
+.h-64 {
+  height: calc(var(--spacing) * 64);
+}
+.h-\[34px\] {
+  height: 34px;
+}
+.h-\[60vh\] {
+  height: 60vh;
+}
+.h-\[78vh\] {
+  height: 78vh;
+}
+.h-\[80vh\] {
+  height: 80vh;
+}
+.h-\[82vh\] {
+  height: 82vh;
+}
+.h-\[85vh\] {
+  height: 85vh;
+}
+.h-\[92vh\] {
+  height: 92vh;
+}
+.h-screen {
+  height: 100vh;
+}
+.max-h-40 {
+  max-height: calc(var(--spacing) * 40);
+}
+.max-h-52 {
+  max-height: calc(var(--spacing) * 52);
+}
+.max-h-\[60vh\] {
+  max-height: 60vh;
+}
+.max-h-\[80vh\] {
+  max-height: 80vh;
+}
+.max-h-\[92vh\] {
+  max-height: 92vh;
+}
+.min-h-screen {
+  min-height: 100vh;
+}
+.w-0 {
+  width: calc(var(--spacing) * 0);
+}
+.w-2 {
+  width: calc(var(--spacing) * 2);
+}
+.w-5xl {
+  width: var(--container-5xl);
+}
+.w-7 {
+  width: calc(var(--spacing) * 7);
+}
+.w-7xl {
+  width: var(--container-7xl);
+}
+.w-10 {
+  width: calc(var(--spacing) * 10);
+}
+.w-11 {
+  width: calc(var(--spacing) * 11);
+}
+.w-12 {
+  width: calc(var(--spacing) * 12);
+}
+.w-\[16\%\] {
+  width: 16%;
+}
+.w-\[28\%\] {
+  width: 28%;
+}
+.w-\[90px\] {
+  width: 90px;
+}
+.w-\[96px\] {
+  width: 96px;
+}
+.w-\[100px\] {
+  width: 100px;
+}
+.w-\[110px\] {
+  width: 110px;
+}
+.w-\[120px\] {
+  width: 120px;
+}
+.w-\[130px\] {
+  width: 130px;
+}
+.w-\[140px\] {
+  width: 140px;
+}
+.w-\[160px\] {
+  width: 160px;
+}
+.w-\[170px\] {
+  width: 170px;
+}
+.w-\[190px\] {
+  width: 190px;
+}
+.w-\[280px\] {
+  width: 280px;
+}
+.w-\[720px\] {
+  width: 720px;
+}
+.w-\[1250px\] {
+  width: 1250px;
+}
+.w-full {
+  width: 100%;
+}
+.w-lg {
+  width: var(--container-lg);
+}
+.w-max {
+  width: max-content;
+}
+.w-md {
+  width: var(--container-md);
+}
+.w-sm {
+  width: var(--container-sm);
+}
+.w-xl {
+  width: var(--container-xl);
+}
+.max-w-5xl {
+  max-width: var(--container-5xl);
+}
+.max-w-7xl {
+  max-width: var(--container-7xl);
+}
+.max-w-\[130px\] {
+  max-width: 130px;
+}
+.max-w-\[140px\] {
+  max-width: 140px;
+}
+.max-w-full {
+  max-width: 100%;
+}
+.max-w-lg {
+  max-width: var(--container-lg);
+}
+.max-w-md {
+  max-width: var(--container-md);
+}
+.max-w-sm {
+  max-width: var(--container-sm);
+}
+.max-w-xl {
+  max-width: var(--container-xl);
+}
+.min-w-0 {
+  min-width: calc(var(--spacing) * 0);
+}
+.min-w-\[90px\] {
+  min-width: 90px;
+}
+.min-w-\[100px\] {
+  min-width: 100px;
+}
+.min-w-\[110px\] {
+  min-width: 110px;
+}
+.min-w-\[120px\] {
+  min-width: 120px;
+}
+.min-w-\[130px\] {
+  min-width: 130px;
+}
+.min-w-\[160px\] {
+  min-width: 160px;
+}
+.min-w-\[170px\] {
+  min-width: 170px;
+}
+.min-w-\[190px\] {
+  min-width: 190px;
+}
+.min-w-\[280px\] {
+  min-width: 280px;
+}
+.min-w-\[720px\] {
+  min-width: 720px;
+}
+.min-w-\[1250px\] {
+  min-width: 1250px;
+}
+.flex-1 {
+  flex: 1;
+}
+.flex-shrink {
+  flex-shrink: 1;
+}
+.shrink-0 {
+  flex-shrink: 0;
+}
+.table-auto {
+  table-layout: auto;
+}
+.border-collapse {
+  border-collapse: collapse;
+}
+.translate-y-0 {
+  --tw-translate-y: calc(var(--spacing) * 0);
+  translate: var(--tw-translate-x) var(--tw-translate-y);
+}
+.translate-y-10 {
+  --tw-translate-y: calc(var(--spacing) * 10);
+  translate: var(--tw-translate-x) var(--tw-translate-y);
+}
+.transform {
+  transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,);
+}
+.animate-spin {
+  animation: var(--animate-spin);
+}
+.cursor-not-allowed {
+  cursor: not-allowed;
+}
+.cursor-pointer {
+  cursor: pointer;
+}
+.grid-cols-1 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+.grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.flex-col {
+  flex-direction: column;
+}
+.flex-wrap {
+  flex-wrap: wrap;
+}
+.items-center {
+  align-items: center;
+}
+.items-end {
+  align-items: flex-end;
+}
+.items-start {
+  align-items: flex-start;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-end {
+  justify-content: flex-end;
+}
+.gap-0\.5 {
+  gap: calc(var(--spacing) * 0.5);
+}
+.gap-1 {
+  gap: calc(var(--spacing) * 1);
+}
+.gap-1\.5 {
+  gap: calc(var(--spacing) * 1.5);
+}
+.gap-2 {
+  gap: calc(var(--spacing) * 2);
+}
+.gap-3 {
+  gap: calc(var(--spacing) * 3);
+}
+.gap-4 {
+  gap: calc(var(--spacing) * 4);
+}
+.gap-6 {
+  gap: calc(var(--spacing) * 6);
+}
+.space-y-0\.5 {
+  :where(& > :not(:last-child)) {
+    --tw-space-y-reverse: 0;
+    margin-block-start: calc(calc(var(--spacing) * 0.5) * var(--tw-space-y-reverse));
+    margin-block-end: calc(calc(var(--spacing) * 0.5) * calc(1 - var(--tw-space-y-reverse)));
+  }
+}
+.space-y-1 {
+  :where(& > :not(:last-child)) {
+    --tw-space-y-reverse: 0;
+    margin-block-start: calc(calc(var(--spacing) * 1) * var(--tw-space-y-reverse));
+    margin-block-end: calc(calc(var(--spacing) * 1) * calc(1 - var(--tw-space-y-reverse)));
+  }
+}
+.space-y-1\.5 {
+  :where(& > :not(:last-child)) {
+    --tw-space-y-reverse: 0;
+    margin-block-start: calc(calc(var(--spacing) * 1.5) * var(--tw-space-y-reverse));
+    margin-block-end: calc(calc(var(--spacing) * 1.5) * calc(1 - var(--tw-space-y-reverse)));
+  }
+}
+.space-y-2 {
+  :where(& > :not(:last-child)) {
+    --tw-space-y-reverse: 0;
+    margin-block-start: calc(calc(var(--spacing) * 2) * var(--tw-space-y-reverse));
+    margin-block-end: calc(calc(var(--spacing) * 2) * calc(1 - var(--tw-space-y-reverse)));
+  }
+}
+.space-y-3 {
+  :where(& > :not(:last-child)) {
+    --tw-space-y-reverse: 0;
+    margin-block-start: calc(calc(var(--spacing) * 3) * var(--tw-space-y-reverse));
+    margin-block-end: calc(calc(var(--spacing) * 3) * calc(1 - var(--tw-space-y-reverse)));
+  }
+}
+.space-y-4 {
+  :where(& > :not(:last-child)) {
+    --tw-space-y-reverse: 0;
+    margin-block-start: calc(calc(var(--spacing) * 4) * var(--tw-space-y-reverse));
+    margin-block-end: calc(calc(var(--spacing) * 4) * calc(1 - var(--tw-space-y-reverse)));
+  }
+}
+.space-y-7 {
+  :where(& > :not(:last-child)) {
+    --tw-space-y-reverse: 0;
+    margin-block-start: calc(calc(var(--spacing) * 7) * var(--tw-space-y-reverse));
+    margin-block-end: calc(calc(var(--spacing) * 7) * calc(1 - var(--tw-space-y-reverse)));
+  }
+}
+.space-y-8 {
+  :where(& > :not(:last-child)) {
+    --tw-space-y-reverse: 0;
+    margin-block-start: calc(calc(var(--spacing) * 8) * var(--tw-space-y-reverse));
+    margin-block-end: calc(calc(var(--spacing) * 8) * calc(1 - var(--tw-space-y-reverse)));
+  }
+}
+.divide-y {
+  :where(& > :not(:last-child)) {
+    --tw-divide-y-reverse: 0;
+    border-bottom-style: var(--tw-border-style);
+    border-top-style: var(--tw-border-style);
+    border-top-width: calc(1px * var(--tw-divide-y-reverse));
+    border-bottom-width: calc(1px * calc(1 - var(--tw-divide-y-reverse)));
+  }
+}
+.divide-gray-50 {
+  :where(& > :not(:last-child)) {
+    border-color: var(--color-gray-50);
+  }
+}
+.divide-gray-100 {
+  :where(& > :not(:last-child)) {
+    border-color: var(--color-gray-100);
+  }
+}
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.overflow-auto {
+  overflow: auto;
+}
+.overflow-clip {
+  overflow: clip;
+}
+.overflow-hidden {
+  overflow: hidden;
+}
+.overflow-x-auto {
+  overflow-x: auto;
+}
+.overflow-x-hidden {
+  overflow-x: hidden;
+}
+.overflow-y-auto {
+  overflow-y: auto;
+}
+.rounded-2xl {
+  border-radius: var(--radius-2xl);
+}
+.rounded-3xl {
+  border-radius: var(--radius-3xl);
+}
+.rounded-\[2rem\] {
+  border-radius: 2rem;
+}
+.rounded-full {
+  border-radius: calc(infinity * 1px);
+}
+.rounded-lg {
+  border-radius: var(--radius-lg);
+}
+.rounded-md {
+  border-radius: var(--radius-md);
+}
+.rounded-xl {
+  border-radius: var(--radius-xl);
+}
+.rounded-t {
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
+}
+.rounded-t-3xl {
+  border-top-left-radius: var(--radius-3xl);
+  border-top-right-radius: var(--radius-3xl);
+}
+.rounded-t-\[2rem\] {
+  border-top-left-radius: 2rem;
+  border-top-right-radius: 2rem;
+}
+.rounded-t-xl {
+  border-top-left-radius: var(--radius-xl);
+  border-top-right-radius: var(--radius-xl);
+}
+.border {
+  border-style: var(--tw-border-style);
+  border-width: 1px;
+}
+.border-2 {
+  border-style: var(--tw-border-style);
+  border-width: 2px;
+}
+.border-4 {
+  border-style: var(--tw-border-style);
+  border-width: 4px;
+}
+.border-t {
+  border-top-style: var(--tw-border-style);
+  border-top-width: 1px;
+}
+.border-t-2 {
+  border-top-style: var(--tw-border-style);
+  border-top-width: 2px;
+}
+.border-r {
+  border-right-style: var(--tw-border-style);
+  border-right-width: 1px;
+}
+.border-b {
+  border-bottom-style: var(--tw-border-style);
+  border-bottom-width: 1px;
+}
+.border-b-2 {
+  border-bottom-style: var(--tw-border-style);
+  border-bottom-width: 2px;
+}
+.border-\[\#86EFAC\] {
+  border-color: #86EFAC;
+}
+.border-\[\#BAE6FD\] {
+  border-color: #BAE6FD;
+}
+.border-\[\#BAE6FD\]\/70 {
+  border-color: color-mix(in oklab, #BAE6FD 70%, transparent);
+}
+.border-\[\#C4B5FD\] {
+  border-color: #C4B5FD;
+}
+.border-\[\#C4B5FD\]\/50 {
+  border-color: color-mix(in oklab, #C4B5FD 50%, transparent);
+}
+.border-\[\#C4B5FD\]\/60 {
+  border-color: color-mix(in oklab, #C4B5FD 60%, transparent);
+}
+.border-\[\#C4B5FD\]\/70 {
+  border-color: color-mix(in oklab, #C4B5FD 70%, transparent);
+}
+.border-\[\#DCFCE7\] {
+  border-color: #DCFCE7;
+}
+.border-\[\#EDE9FE\] {
+  border-color: #EDE9FE;
+}
+.border-\[\#EDE9FE\]\/80 {
+  border-color: color-mix(in oklab, #EDE9FE 80%, transparent);
+}
+.border-\[\#FBCFE8\] {
+  border-color: #FBCFE8;
+}
+.border-\[\#FBCFE8\]\/70 {
+  border-color: color-mix(in oklab, #FBCFE8 70%, transparent);
+}
+.border-\[\#FDBA74\] {
+  border-color: #FDBA74;
+}
+.border-\[\#FED7AA\] {
+  border-color: #FED7AA;
+}
+.border-\[\#FED7AA\]\/50 {
+  border-color: color-mix(in oklab, #FED7AA 50%, transparent);
+}
+.border-\[\#FEE2E2\] {
+  border-color: #FEE2E2;
+}
+.border-\[\#FEF08A\] {
+  border-color: #FEF08A;
+}
+.border-\[\#FEF08A\]\/30 {
+  border-color: color-mix(in oklab, #FEF08A 30%, transparent);
+}
+.border-\[\#FEF08A\]\/40 {
+  border-color: color-mix(in oklab, #FEF08A 40%, transparent);
+}
+.border-\[\#FEF08A\]\/70 {
+  border-color: color-mix(in oklab, #FEF08A 70%, transparent);
+}
+.border-\[\#FFE4E6\] {
+  border-color: #FFE4E6;
+}
+.border-brand-purple {
+  border-color: var(--color-brand-purple);
+}
+.border-gray-50 {
+  border-color: var(--color-gray-50);
+}
+.border-gray-100 {
+  border-color: var(--color-gray-100);
+}
+.border-gray-200 {
+  border-color: var(--color-gray-200);
+}
+.border-purple-100 {
+  border-color: var(--color-purple-100);
+}
+.border-transparent {
+  border-color: transparent;
+}
+.border-t-transparent {
+  border-top-color: transparent;
+}
+.bg-\[\#EDE9FE\] {
+  background-color: #EDE9FE;
+}
+.bg-\[\#F0FDF4\] {
+  background-color: #F0FDF4;
+}
+.bg-\[\#F3F4F6\] {
+  background-color: #F3F4F6;
+}
+.bg-\[\#FEFCE8\] {
+  background-color: #FEFCE8;
+}
+.bg-\[\#FFF1F2\] {
+  background-color: #FFF1F2;
+}
+.bg-\[\#FFF7ED\] {
+  background-color: #FFF7ED;
+}
+.bg-\[\#FFF9F6\] {
+  background-color: #FFF9F6;
+}
+.bg-blue-50 {
+  background-color: var(--color-blue-50);
+}
+.bg-brand-light {
+  background-color: var(--color-brand-light);
+}
+.bg-brand-purple {
+  background-color: var(--color-brand-purple);
+}
+.bg-gray-50 {
+  background-color: var(--color-gray-50);
+}
+.bg-gray-50\/50 {
+  background-color: color-mix(in srgb, oklch(98.5% 0.002 247.839) 50%, transparent);
+  @supports (color: color-mix(in lab, red, red)) {
+    background-color: color-mix(in oklab, var(--color-gray-50) 50%, transparent);
+  }
+}
+.bg-gray-100 {
+  background-color: var(--color-gray-100);
+}
+.bg-gray-950\/40 {
+  background-color: color-mix(in srgb, oklch(13% 0.028 261.692) 40%, transparent);
+  @supports (color: color-mix(in lab, red, red)) {
+    background-color: color-mix(in oklab, var(--color-gray-950) 40%, transparent);
+  }
+}
+.bg-gray-950\/50 {
+  background-color: color-mix(in srgb, oklch(13% 0.028 261.692) 50%, transparent);
+  @supports (color: color-mix(in lab, red, red)) {
+    background-color: color-mix(in oklab, var(--color-gray-950) 50%, transparent);
+  }
+}
+.bg-purple-50 {
+  background-color: var(--color-purple-50);
+}
+.bg-purple-50\/30 {
+  background-color: color-mix(in srgb, oklch(97.7% 0.014 308.299) 30%, transparent);
+  @supports (color: color-mix(in lab, red, red)) {
+    background-color: color-mix(in oklab, var(--color-purple-50) 30%, transparent);
+  }
+}
+.bg-purple-50\/40 {
+  background-color: color-mix(in srgb, oklch(97.7% 0.014 308.299) 40%, transparent);
+  @supports (color: color-mix(in lab, red, red)) {
+    background-color: color-mix(in oklab, var(--color-purple-50) 40%, transparent);
+  }
+}
+.bg-transparent {
+  background-color: transparent;
+}
+.bg-white {
+  background-color: var(--color-white);
+}
+.bg-white\/60 {
+  background-color: color-mix(in srgb, #fff 60%, transparent);
+  @supports (color: color-mix(in lab, red, red)) {
+    background-color: color-mix(in oklab, var(--color-white) 60%, transparent);
+  }
+}
+.bg-white\/80 {
+  background-color: color-mix(in srgb, #fff 80%, transparent);
+  @supports (color: color-mix(in lab, red, red)) {
+    background-color: color-mix(in oklab, var(--color-white) 80%, transparent);
+  }
+}
+.p-0 {
+  padding: calc(var(--spacing) * 0);
+}
+.p-0\.5 {
+  padding: calc(var(--spacing) * 0.5);
+}
+.p-1 {
+  padding: calc(var(--spacing) * 1);
+}
+.p-2 {
+  padding: calc(var(--spacing) * 2);
+}
+.p-3 {
+  padding: calc(var(--spacing) * 3);
+}
+.p-4 {
+  padding: calc(var(--spacing) * 4);
+}
+.p-5 {
+  padding: calc(var(--spacing) * 5);
+}
+.p-8 {
+  padding: calc(var(--spacing) * 8);
+}
+.px-1 {
+  padding-inline: calc(var(--spacing) * 1);
+}
+.px-1\.5 {
+  padding-inline: calc(var(--spacing) * 1.5);
+}
+.px-2 {
+  padding-inline: calc(var(--spacing) * 2);
+}
+.px-2\.5 {
+  padding-inline: calc(var(--spacing) * 2.5);
+}
+.px-3 {
+  padding-inline: calc(var(--spacing) * 3);
+}
+.px-4 {
+  padding-inline: calc(var(--spacing) * 4);
+}
+.px-5 {
+  padding-inline: calc(var(--spacing) * 5);
+}
+.px-6 {
+  padding-inline: calc(var(--spacing) * 6);
+}
+.py-0\.5 {
+  padding-block: calc(var(--spacing) * 0.5);
+}
+.py-1 {
+  padding-block: calc(var(--spacing) * 1);
+}
+.py-1\.5 {
+  padding-block: calc(var(--spacing) * 1.5);
+}
+.py-2 {
+  padding-block: calc(var(--spacing) * 2);
+}
+.py-3 {
+  padding-block: calc(var(--spacing) * 3);
+}
+.py-3\.5 {
+  padding-block: calc(var(--spacing) * 3.5);
+}
+.py-4 {
+  padding-block: calc(var(--spacing) * 4);
+}
+.py-5 {
+  padding-block: calc(var(--spacing) * 5);
+}
+.py-6 {
+  padding-block: calc(var(--spacing) * 6);
+}
+.py-8 {
+  padding-block: calc(var(--spacing) * 8);
+}
+.py-12 {
+  padding-block: calc(var(--spacing) * 12);
+}
+.pt-2 {
+  padding-top: calc(var(--spacing) * 2);
+}
+.pt-3 {
+  padding-top: calc(var(--spacing) * 3);
+}
+.pt-4 {
+  padding-top: calc(var(--spacing) * 4);
+}
+.pt-6 {
+  padding-top: calc(var(--spacing) * 6);
+}
+.pt-8 {
+  padding-top: calc(var(--spacing) * 8);
+}
+.pr-2 {
+  padding-right: calc(var(--spacing) * 2);
+}
+.pr-3 {
+  padding-right: calc(var(--spacing) * 3);
+}
+.pb-1 {
+  padding-bottom: calc(var(--spacing) * 1);
+}
+.pb-2 {
+  padding-bottom: calc(var(--spacing) * 2);
+}
+.pb-4 {
+  padding-bottom: calc(var(--spacing) * 4);
+}
+.pb-5 {
+  padding-bottom: calc(var(--spacing) * 5);
+}
+.pl-3 {
+  padding-left: calc(var(--spacing) * 3);
+}
+.text-center {
+  text-align: center;
+}
+.text-left {
+  text-align: left;
+}
+.text-right {
+  text-align: right;
+}
+.font-sans {
+  font-family: var(--font-sans);
+}
+.text-2xl {
+  font-size: var(--text-2xl);
+  line-height: var(--tw-leading, var(--text-2xl--line-height));
+}
+.text-3xl {
+  font-size: var(--text-3xl);
+  line-height: var(--tw-leading, var(--text-3xl--line-height));
+}
+.text-base {
+  font-size: var(--text-base);
+  line-height: var(--tw-leading, var(--text-base--line-height));
+}
+.text-lg {
+  font-size: var(--text-lg);
+  line-height: var(--tw-leading, var(--text-lg--line-height));
+}
+.text-sm {
+  font-size: var(--text-sm);
+  line-height: var(--tw-leading, var(--text-sm--line-height));
+}
+.text-xl {
+  font-size: var(--text-xl);
+  line-height: var(--tw-leading, var(--text-xl--line-height));
+}
+.text-xs {
+  font-size: var(--text-xs);
+  line-height: var(--tw-leading, var(--text-xs--line-height));
+}
+.text-\[9px\] {
+  font-size: 9px;
+}
+.text-\[10px\] {
+  font-size: 10px;
+}
+.text-\[11px\] {
+  font-size: 11px;
+}
+.leading-none {
+  --tw-leading: 1;
+  line-height: 1;
+}
+.leading-relaxed {
+  --tw-leading: var(--leading-relaxed);
+  line-height: var(--leading-relaxed);
+}
+.leading-snug {
+  --tw-leading: var(--leading-snug);
+  line-height: var(--leading-snug);
+}
+.font-bold {
+  --tw-font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-bold);
+}
+.font-extrabold {
+  --tw-font-weight: var(--font-weight-extrabold);
+  font-weight: var(--font-weight-extrabold);
+}
+.font-medium {
+  --tw-font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-medium);
+}
+.font-normal {
+  --tw-font-weight: var(--font-weight-normal);
+  font-weight: var(--font-weight-normal);
+}
+.font-semibold {
+  --tw-font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-semibold);
+}
+.tracking-\[0\.6em\] {
+  --tw-tracking: 0.6em;
+  letter-spacing: 0.6em;
+}
+.tracking-tight {
+  --tw-tracking: var(--tracking-tight);
+  letter-spacing: var(--tracking-tight);
+}
+.tracking-wider {
+  --tw-tracking: var(--tracking-wider);
+  letter-spacing: var(--tracking-wider);
+}
+.tracking-widest {
+  --tw-tracking: var(--tracking-widest);
+  letter-spacing: var(--tracking-widest);
+}
+.whitespace-nowrap {
+  white-space: nowrap;
+}
+.text-\[\#5B21B6\] {
+  color: #5B21B6;
+}
+.text-\[\#7C3AED\] {
+  color: #7C3AED;
+}
+.text-\[\#9F1239\] {
+  color: #9F1239;
+}
+.text-\[\#93C5FD\] {
+  color: #93C5FD;
+}
+.text-\[\#15803D\] {
+  color: #15803D;
+}
+.text-\[\#C2410C\] {
+  color: #C2410C;
+}
+.text-blue-400 {
+  color: var(--color-blue-400);
+}
+.text-blue-600 {
+  color: var(--color-blue-600);
+}
+.text-brand-dark {
+  color: var(--color-brand-dark);
+}
+.text-brand-gray {
+  color: var(--color-brand-gray);
+}
+.text-brand-purple {
+  color: var(--color-brand-purple);
+}
+.text-gray-300 {
+  color: var(--color-gray-300);
+}
+.text-gray-400 {
+  color: var(--color-gray-400);
+}
+.text-gray-500 {
+  color: var(--color-gray-500);
+}
+.text-gray-500\/70 {
+  color: color-mix(in srgb, oklch(55.1% 0.027 264.364) 70%, transparent);
+  @supports (color: color-mix(in lab, red, red)) {
+    color: color-mix(in oklab, var(--color-gray-500) 70%, transparent);
+  }
+}
+.text-gray-600 {
+  color: var(--color-gray-600);
+}
+.text-gray-700 {
+  color: var(--color-gray-700);
+}
+.text-gray-800 {
+  color: var(--color-gray-800);
+}
+.text-gray-900 {
+  color: var(--color-gray-900);
+}
+.text-purple-400 {
+  color: var(--color-purple-400);
+}
+.text-purple-500 {
+  color: var(--color-purple-500);
+}
+.text-purple-700 {
+  color: var(--color-purple-700);
+}
+.text-red-400 {
+  color: var(--color-red-400);
+}
+.text-red-500 {
+  color: var(--color-red-500);
+}
+.text-white {
+  color: var(--color-white);
+}
+.uppercase {
+  text-transform: uppercase;
+}
+.italic {
+  font-style: italic;
+}
+.opacity-0 {
+  opacity: 0%;
+}
+.opacity-30 {
+  opacity: 30%;
+}
+.opacity-100 {
+  opacity: 100%;
+}
+.shadow {
+  --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+}
+.shadow-2xl {
+  --tw-shadow: 0 25px 50px -12px var(--tw-shadow-color, rgb(0 0 0 / 0.25));
+  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+}
+.shadow-lg {
+  --tw-shadow: 0 10px 15px -3px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 4px 6px -4px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+}
+.shadow-md {
+  --tw-shadow: 0 4px 6px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 2px 4px -2px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+}
+.shadow-sm {
+  --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+}
+.shadow-soft {
+  --tw-shadow: 0 4px 25px -2px var(--tw-shadow-color, rgba(0,0,0,.04));
+  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+}
+.shadow-xl {
+  --tw-shadow: 0 20px 25px -5px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 8px 10px -6px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+}
+.backdrop-blur-sm {
+  --tw-backdrop-blur: blur(var(--blur-sm));
+  -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
+  backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
+}
+.transition-all {
+  transition-property: all;
+  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+  transition-duration: var(--tw-duration, var(--default-transition-duration));
+}
+.transition-colors {
+  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
+  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+  transition-duration: var(--tw-duration, var(--default-transition-duration));
+}
+.duration-300 {
+  --tw-duration: 300ms;
+  transition-duration: 300ms;
+}
+.outline-none {
+  --tw-outline-style: none;
+  outline-style: none;
+}
+.placeholder\:tracking-\[0\.5em\] {
+  &::placeholder {
+    --tw-tracking: 0.5em;
+    letter-spacing: 0.5em;
+  }
+}
+.placeholder\:text-gray-300 {
+  &::placeholder {
+    color: var(--color-gray-300);
+  }
+}
+.last\:border-0 {
+  &:last-child {
+    border-style: var(--tw-border-style);
+    border-width: 0px;
+  }
+}
+.last\:border-b {
+  &:last-child {
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 1px;
+  }
+}
+.last\:border-b-0 {
+  &:last-child {
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 0px;
+  }
+}
+.hover\:border-\[\#4ADE80\] {
+  &:hover {
+    @media (hover: hover) {
+      border-color: #4ADE80;
+    }
+  }
+}
+.hover\:border-\[\#7DD3FC\] {
+  &:hover {
+    @media (hover: hover) {
+      border-color: #7DD3FC;
+    }
+  }
+}
+.hover\:border-\[\#7DD3FC\]\/70 {
+  &:hover {
+    @media (hover: hover) {
+      border-color: color-mix(in oklab, #7DD3FC 70%, transparent);
+    }
+  }
+}
+.hover\:border-\[\#A78BFA\] {
+  &:hover {
+    @media (hover: hover) {
+      border-color: #A78BFA;
+    }
+  }
+}
+.hover\:border-\[\#A78BFA\]\/70 {
+  &:hover {
+    @media (hover: hover) {
+      border-color: color-mix(in oklab, #A78BFA 70%, transparent);
+    }
+  }
+}
+.hover\:border-\[\#C4B5FD\] {
+  &:hover {
+    @media (hover: hover) {
+      border-color: #C4B5FD;
+    }
+  }
+}
+.hover\:border-\[\#EAB308\] {
+  &:hover {
+    @media (hover: hover) {
+      border-color: #EAB308;
+    }
+  }
+}
+.hover\:border-\[\#EAB308\]\/60 {
+  &:hover {
+    @media (hover: hover) {
+      border-color: color-mix(in oklab, #EAB308 60%, transparent);
+    }
+  }
+}
+.hover\:border-\[\#F9A8D4\] {
+  &:hover {
+    @media (hover: hover) {
+      border-color: #F9A8D4;
+    }
+  }
+}
+.hover\:border-\[\#F9A8D4\]\/70 {
+  &:hover {
+    @media (hover: hover) {
+      border-color: color-mix(in oklab, #F9A8D4 70%, transparent);
+    }
+  }
+}
+.hover\:border-\[\#FB923C\] {
+  &:hover {
+    @media (hover: hover) {
+      border-color: #FB923C;
+    }
+  }
+}
+.hover\:border-brand-purple {
+  &:hover {
+    @media (hover: hover) {
+      border-color: var(--color-brand-purple);
+    }
+  }
+}
+.hover\:border-red-200 {
+  &:hover {
+    @media (hover: hover) {
+      border-color: var(--color-red-200);
+    }
+  }
+}
+.hover\:bg-\[\#DDD6FE\] {
+  &:hover {
+    @media (hover: hover) {
+      background-color: #DDD6FE;
+    }
+  }
+}
+.hover\:bg-\[\#F5F3FF\] {
+  &:hover {
+    @media (hover: hover) {
+      background-color: #F5F3FF;
+    }
+  }
+}
+.hover\:bg-\[\#FFF7ED\] {
+  &:hover {
+    @media (hover: hover) {
+      background-color: #FFF7ED;
+    }
+  }
+}
+.hover\:bg-brand-purpleHover {
+  &:hover {
+    @media (hover: hover) {
+      background-color: var(--color-brand-purpleHover);
+    }
+  }
+}
+.hover\:bg-gray-50 {
+  &:hover {
+    @media (hover: hover) {
+      background-color: var(--color-gray-50);
+    }
+  }
+}
+.hover\:bg-gray-50\/70 {
+  &:hover {
+    @media (hover: hover) {
+      background-color: color-mix(in srgb, oklch(98.5% 0.002 247.839) 70%, transparent);
+      @supports (color: color-mix(in lab, red, red)) {
+        background-color: color-mix(in oklab, var(--color-gray-50) 70%, transparent);
+      }
+    }
+  }
+}
+.hover\:bg-gray-50\/80 {
+  &:hover {
+    @media (hover: hover) {
+      background-color: color-mix(in srgb, oklch(98.5% 0.002 247.839) 80%, transparent);
+      @supports (color: color-mix(in lab, red, red)) {
+        background-color: color-mix(in oklab, var(--color-gray-50) 80%, transparent);
+      }
+    }
+  }
+}
+.hover\:bg-gray-100 {
+  &:hover {
+    @media (hover: hover) {
+      background-color: var(--color-gray-100);
+    }
+  }
+}
+.hover\:bg-gray-200 {
+  &:hover {
+    @media (hover: hover) {
+      background-color: var(--color-gray-200);
+    }
+  }
+}
+.hover\:bg-purple-100 {
+  &:hover {
+    @media (hover: hover) {
+      background-color: var(--color-purple-100);
+    }
+  }
+}
+.hover\:bg-red-50 {
+  &:hover {
+    @media (hover: hover) {
+      background-color: var(--color-red-50);
+    }
+  }
+}
+.hover\:bg-white {
+  &:hover {
+    @media (hover: hover) {
+      background-color: var(--color-white);
+    }
+  }
+}
+.hover\:text-\[\#5B21B6\] {
+  &:hover {
+    @media (hover: hover) {
+      color: #5B21B6;
+    }
+  }
+}
+.hover\:text-\[\#7C3AED\] {
+  &:hover {
+    @media (hover: hover) {
+      color: #7C3AED;
+    }
+  }
+}
+.hover\:text-\[\#9A3412\] {
+  &:hover {
+    @media (hover: hover) {
+      color: #9A3412;
+    }
+  }
+}
+.hover\:text-\[\#60A5FA\] {
+  &:hover {
+    @media (hover: hover) {
+      color: #60A5FA;
+    }
+  }
+}
+.hover\:text-brand-purple {
+  &:hover {
+    @media (hover: hover) {
+      color: var(--color-brand-purple);
+    }
+  }
+}
+.hover\:text-brand-purpleHover {
+  &:hover {
+    @media (hover: hover) {
+      color: var(--color-brand-purpleHover);
+    }
+  }
+}
+.hover\:text-gray-500 {
+  &:hover {
+    @media (hover: hover) {
+      color: var(--color-gray-500);
+    }
+  }
+}
+.hover\:text-gray-600 {
+  &:hover {
+    @media (hover: hover) {
+      color: var(--color-gray-600);
+    }
+  }
+}
+.hover\:text-gray-700 {
+  &:hover {
+    @media (hover: hover) {
+      color: var(--color-gray-700);
+    }
+  }
+}
+.hover\:text-gray-800 {
+  &:hover {
+    @media (hover: hover) {
+      color: var(--color-gray-800);
+    }
+  }
+}
+.hover\:text-red-400 {
+  &:hover {
+    @media (hover: hover) {
+      color: var(--color-red-400);
+    }
+  }
+}
+.hover\:underline {
+  &:hover {
+    @media (hover: hover) {
+      text-decoration-line: underline;
+    }
+  }
+}
+.hover\:shadow-\[0_0_8px_rgba\(125\,211\,252\,0\.25\)\] {
+  &:hover {
+    @media (hover: hover) {
+      --tw-shadow: 0 0 8px var(--tw-shadow-color, rgba(125,211,252,0.25));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+}
+.hover\:shadow-\[0_0_8px_rgba\(167\,139\,250\,0\.25\)\] {
+  &:hover {
+    @media (hover: hover) {
+      --tw-shadow: 0 0 8px var(--tw-shadow-color, rgba(167,139,250,0.25));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+}
+.hover\:shadow-\[0_0_8px_rgba\(196\,181\,253\,0\.3\)\] {
+  &:hover {
+    @media (hover: hover) {
+      --tw-shadow: 0 0 8px var(--tw-shadow-color, rgba(196,181,253,0.3));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+}
+.hover\:shadow-\[0_0_8px_rgba\(196\,181\,253\,0\.35\)\] {
+  &:hover {
+    @media (hover: hover) {
+      --tw-shadow: 0 0 8px var(--tw-shadow-color, rgba(196,181,253,0.35));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+}
+.hover\:shadow-\[0_0_8px_rgba\(234\,179\,8\,0\.2\)\] {
+  &:hover {
+    @media (hover: hover) {
+      --tw-shadow: 0 0 8px var(--tw-shadow-color, rgba(234,179,8,0.2));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+}
+.hover\:shadow-\[0_0_8px_rgba\(249\,168\,212\,0\.25\)\] {
+  &:hover {
+    @media (hover: hover) {
+      --tw-shadow: 0 0 8px var(--tw-shadow-color, rgba(249,168,212,0.25));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+}
+.hover\:shadow-\[0_0_10px_rgba\(74\,222\,128\,0\.25\)\] {
+  &:hover {
+    @media (hover: hover) {
+      --tw-shadow: 0 0 10px var(--tw-shadow-color, rgba(74,222,128,0.25));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+}
+.hover\:shadow-\[0_0_10px_rgba\(167\,139\,250\,0\.3\)\] {
+  &:hover {
+    @media (hover: hover) {
+      --tw-shadow: 0 0 10px var(--tw-shadow-color, rgba(167,139,250,0.3));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+}
+.hover\:shadow-\[0_0_10px_rgba\(251\,146\,60\,0\.25\)\] {
+  &:hover {
+    @media (hover: hover) {
+      --tw-shadow: 0 0 10px var(--tw-shadow-color, rgba(251,146,60,0.25));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+}
+.hover\:shadow-\[0_0_12px_rgba\(196\,181\,253\,0\.4\)\] {
+  &:hover {
+    @media (hover: hover) {
+      --tw-shadow: 0 0 12px var(--tw-shadow-color, rgba(196,181,253,0.4));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+}
+.hover\:shadow-\[0_0_12px_rgba\(196\,181\,253\,0\.35\)\] {
+  &:hover {
+    @media (hover: hover) {
+      --tw-shadow: 0 0 12px var(--tw-shadow-color, rgba(196,181,253,0.35));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+}
+.focus\:border-brand-purple {
+  &:focus {
+    border-color: var(--color-brand-purple);
+  }
+}
+.focus\:bg-white {
+  &:focus {
+    background-color: var(--color-white);
+  }
+}
+.focus\:ring-4 {
+  &:focus {
+    --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(4px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+}
+.focus\:ring-brand-purple\/10 {
+  &:focus {
+    --tw-ring-color: color-mix(in srgb, #8B5CF6 10%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      --tw-ring-color: color-mix(in oklab, var(--color-brand-purple) 10%, transparent);
+    }
+  }
+}
+.disabled\:cursor-not-allowed {
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+.disabled\:cursor-wait {
+  &:disabled {
+    cursor: wait;
+  }
+}
+.disabled\:opacity-50 {
+  &:disabled {
+    opacity: 50%;
+  }
+}
+.disabled\:opacity-60 {
+  &:disabled {
+    opacity: 60%;
+  }
+}
+.sm\:inline-block {
+  @media (width >= 40rem) {
+    display: inline-block;
+  }
+}
+.sm\:h-80 {
+  @media (width >= 40rem) {
+    height: calc(var(--spacing) * 80);
+  }
+}
+.sm\:h-auto {
+  @media (width >= 40rem) {
+    height: auto;
+  }
+}
+.sm\:max-h-\[78vh\] {
+  @media (width >= 40rem) {
+    max-height: 78vh;
+  }
+}
+.sm\:max-h-\[82vh\] {
+  @media (width >= 40rem) {
+    max-height: 82vh;
+  }
+}
+.sm\:max-h-\[85vh\] {
+  @media (width >= 40rem) {
+    max-height: 85vh;
+  }
+}
+.sm\:w-auto {
+  @media (width >= 40rem) {
+    width: auto;
+  }
+}
+.sm\:flex-none {
+  @media (width >= 40rem) {
+    flex: none;
+  }
+}
+.sm\:grid-cols-2 {
+  @media (width >= 40rem) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.sm\:flex-row {
+  @media (width >= 40rem) {
+    flex-direction: row;
+  }
+}
+.sm\:items-center {
+  @media (width >= 40rem) {
+    align-items: center;
+  }
+}
+.sm\:items-end {
+  @media (width >= 40rem) {
+    align-items: flex-end;
+  }
+}
+.sm\:justify-between {
+  @media (width >= 40rem) {
+    justify-content: space-between;
+  }
+}
+.sm\:gap-4 {
+  @media (width >= 40rem) {
+    gap: calc(var(--spacing) * 4);
+  }
+}
+.sm\:gap-6 {
+  @media (width >= 40rem) {
+    gap: calc(var(--spacing) * 6);
+  }
+}
+.sm\:rounded-3xl {
+  @media (width >= 40rem) {
+    border-radius: var(--radius-3xl);
+  }
+}
+.sm\:rounded-\[2rem\] {
+  @media (width >= 40rem) {
+    border-radius: 2rem;
+  }
+}
+.sm\:p-4 {
+  @media (width >= 40rem) {
+    padding: calc(var(--spacing) * 4);
+  }
+}
+.sm\:p-5 {
+  @media (width >= 40rem) {
+    padding: calc(var(--spacing) * 5);
+  }
+}
+.sm\:p-6 {
+  @media (width >= 40rem) {
+    padding: calc(var(--spacing) * 6);
+  }
+}
+.sm\:p-8 {
+  @media (width >= 40rem) {
+    padding: calc(var(--spacing) * 8);
+  }
+}
+.sm\:p-10 {
+  @media (width >= 40rem) {
+    padding: calc(var(--spacing) * 10);
+  }
+}
+.sm\:px-6 {
+  @media (width >= 40rem) {
+    padding-inline: calc(var(--spacing) * 6);
+  }
+}
+.sm\:text-xl {
+  @media (width >= 40rem) {
+    font-size: var(--text-xl);
+    line-height: var(--tw-leading, var(--text-xl--line-height));
+  }
+}
+.sm\:text-\[10px\] {
+  @media (width >= 40rem) {
+    font-size: 10px;
+  }
+}
+.lg\:grid-cols-2 {
+  @media (width >= 64rem) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@property --tw-translate-x {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-translate-y {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-translate-z {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-rotate-x {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-rotate-y {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-rotate-z {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-skew-x {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-skew-y {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-space-y-reverse {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-divide-y-reverse {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-border-style {
+  syntax: "*";
+  inherits: false;
+  initial-value: solid;
+}
+@property --tw-leading {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-font-weight {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-tracking {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-shadow-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-shadow-alpha {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-inset-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-shadow-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-inset-shadow-alpha {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-ring-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-ring-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-ring-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-inset-ring-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-ring-inset {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-ring-offset-width {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --tw-ring-offset-color {
+  syntax: "*";
+  inherits: false;
+  initial-value: #fff;
+}
+@property --tw-ring-offset-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-backdrop-blur {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-brightness {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-contrast {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-grayscale {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-hue-rotate {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-invert {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-opacity {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-saturate {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-sepia {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-duration {
+  syntax: "*";
+  inherits: false;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@layer properties {
+  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
+    *, ::before, ::after, ::backdrop {
+      --tw-translate-x: 0;
+      --tw-translate-y: 0;
+      --tw-translate-z: 0;
+      --tw-rotate-x: initial;
+      --tw-rotate-y: initial;
+      --tw-rotate-z: initial;
+      --tw-skew-x: initial;
+      --tw-skew-y: initial;
+      --tw-space-y-reverse: 0;
+      --tw-divide-y-reverse: 0;
+      --tw-border-style: solid;
+      --tw-leading: initial;
+      --tw-font-weight: initial;
+      --tw-tracking: initial;
+      --tw-shadow: 0 0 #0000;
+      --tw-shadow-color: initial;
+      --tw-shadow-alpha: 100%;
+      --tw-inset-shadow: 0 0 #0000;
+      --tw-inset-shadow-color: initial;
+      --tw-inset-shadow-alpha: 100%;
+      --tw-ring-color: initial;
+      --tw-ring-shadow: 0 0 #0000;
+      --tw-inset-ring-color: initial;
+      --tw-inset-ring-shadow: 0 0 #0000;
+      --tw-ring-inset: initial;
+      --tw-ring-offset-width: 0px;
+      --tw-ring-offset-color: #fff;
+      --tw-ring-offset-shadow: 0 0 #0000;
+      --tw-backdrop-blur: initial;
+      --tw-backdrop-brightness: initial;
+      --tw-backdrop-contrast: initial;
+      --tw-backdrop-grayscale: initial;
+      --tw-backdrop-hue-rotate: initial;
+      --tw-backdrop-invert: initial;
+      --tw-backdrop-opacity: initial;
+      --tw-backdrop-saturate: initial;
+      --tw-backdrop-sepia: initial;
+      --tw-duration: initial;
+    }
+  }
+}
+
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -1087,9 +3221,10 @@
                 </div>
                 <button onclick="closeCompanyHistoryModal()" class="text-gray-300 hover:text-gray-500 text-2xl leading-none transition-colors ml-4">&times;</button>
             </div>
-            <div class="px-6 pt-3 border-b border-gray-100 shrink-0 flex gap-2">
+            <div class="px-6 pt-3 border-b border-gray-100 shrink-0 flex gap-2 overflow-x-auto">
                 <button id="company-history-tab-expenses" type="button" onclick="switchCompanyHistoryTab('expenses')" class="px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 border-brand-purple text-brand-purple transition-colors">Расходы</button>
                 <button id="company-history-tab-incomes" type="button" onclick="switchCompanyHistoryTab('incomes')" class="px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 border-transparent text-gray-400 transition-colors">Доходы</button>
+                <button id="company-history-tab-transfers" type="button" onclick="switchCompanyHistoryTab('transfers')" class="px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 border-transparent text-gray-400 transition-colors">Между объектами</button>
             </div>
             <div class="overflow-y-auto overflow-x-auto flex-1">
                 <table class="w-full border-collapse" style="min-width:860px;">
@@ -1132,6 +3267,7 @@
                                 <button class="modal-dd-item selected" data-value="project" onclick="selectOperationScope('project','По объекту')" type="button">По объекту</button>
                                 <button class="modal-dd-item" data-value="company" onclick="selectOperationScope('company','По компании')" type="button">По компании</button>
                                 <button class="modal-dd-item" data-value="settlement" onclick="selectOperationScope('settlement','Расчёты по объекту')" type="button">Расчёты по объекту</button>
+                                <button class="modal-dd-item" data-value="transfer" onclick="selectOperationScope('transfer','Между объектами')" type="button">Между объектами</button>
                             </div>
                             <input type="hidden" id="uni-scope" value="project">
                         </div>
@@ -1160,6 +3296,33 @@
                             <div class="modal-dd-menu" id="dd-project-menu"></div>
                             <input type="hidden" id="uni-project" value="">
                         </div>
+                    </div>
+                    <div id="uni-target-project-wrapper" class="space-y-1 hidden">
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">В объект</label>
+                        <div class="modal-dd" id="dd-target-project">
+                            <button type="button" class="modal-dd-btn" style="font-weight:400;" onclick="toggleModalDD('dd-target-project')">
+                                <span id="dd-target-project-label">Выберите объект</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            <div class="modal-dd-menu" id="dd-target-project-menu"></div>
+                            <input type="hidden" id="uni-target-project" value="">
+                        </div>
+                        <p class="text-[10px] leading-snug text-gray-400">На этом объекте создастся обычный прямой расход, оплаченный Юнион Эскей.</p>
+                    </div>
+                    <div id="uni-transfer-settlement-wrapper" class="space-y-1 hidden">
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Как учитывать в исходном объекте</label>
+                        <div class="modal-dd" id="dd-transfer-settlement">
+                            <button type="button" class="modal-dd-btn" style="font-weight:400;" onclick="toggleModalDD('dd-transfer-settlement')">
+                                <span id="dd-transfer-settlement-label">Вывод прибыли Юнион Эскей</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            <div class="modal-dd-menu" id="dd-transfer-settlement-menu">
+                                <button class="modal-dd-item selected" data-value="Вывод прибыли" onclick="selectModalDD('dd-transfer-settlement','Вывод прибыли','Вывод прибыли Юнион Эскей')" type="button">Вывод прибыли Юнион Эскей</button>
+                                <button class="modal-dd-item" data-value="Возврат вложений" onclick="selectModalDD('dd-transfer-settlement','Возврат вложений','Возврат вложений Юнион Эскей')" type="button">Возврат вложений Юнион Эскей</button>
+                            </div>
+                            <input type="hidden" id="uni-transfer-settlement" value="Вывод прибыли">
+                        </div>
+                        <p class="text-[10px] leading-snug text-gray-400">Это влияет только на внутренние расчёты Юнион по исходному объекту. Партнёры исходного объекта эту операцию не видят.</p>
                     </div>
                     <div id="uni-investor-wrapper" class="space-y-1">
                         <label id="uni-investor-label" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Кто оплатил / вложил</label>
@@ -1488,7 +3651,7 @@
         };
 
         let data = [], companyTransactions = [], profitWithdrawals = [], authRole = null, currentRole = null;
-        let API_CAPABILITIES = { apiVersion: 0, projectTrash: false, operationTrash: false, withdrawalLedger: false, withdrawalTypes: false, withdrawalReinvestment: false, companySettlementTypes: false, companyGeneralSettlementTypes: false, projectTrashRecordId: false, projectTaxSettings: false, projectOrder: false, projectOrderInitialized: false, taxPaymentSources: false };
+        let API_CAPABILITIES = { apiVersion: 0, projectTrash: false, operationTrash: false, withdrawalLedger: false, withdrawalTypes: false, withdrawalReinvestment: false, companySettlementTypes: false, companyGeneralSettlementTypes: false, projectTrashRecordId: false, projectTaxSettings: false, projectOrder: false, projectOrderInitialized: false, taxPaymentSources: false, projectTransfers: false };
         
         let chartsInstance = { 
             bar: null, 
@@ -1647,6 +3810,21 @@
             return String(transaction?.type || '') === 'taxPayment';
         }
 
+        function isProjectTransferTransaction(transaction) {
+            return String(transaction?.type || '') === 'projectTransfer';
+        }
+
+        function getProjectTransferTarget(transaction) {
+            const target = normalizeTaxSourceBreakdown(transaction?.sourceBreakdown)[0];
+            if (!target) return null;
+            const project = data.find(item => Number(item.id) === Number(target.projectId));
+            return {
+                projectId: Number(target.projectId || 0),
+                projectName: project?.name || target.projectName || ('ID ' + target.projectId),
+                amount: Number(target.amount || transaction?.amount || 0)
+            };
+        }
+
         function normalizeTaxSourceBreakdown(value) {
             let rows = value;
             if (typeof rows === 'string') { try { rows = JSON.parse(rows || '[]'); } catch (e) { rows = []; } }
@@ -1690,6 +3868,16 @@
             }, 0);
         }
 
+        function getProjectTransferOutAmount(projectId, includeOperation = null) {
+            if (currentRole !== 'director') return 0;
+            return companyTransactions.reduce((sum, transaction) => {
+                if (!isProjectTransferTransaction(transaction)) return sum;
+                if (Number(transaction.sourceProjectId || 0) !== Number(projectId)) return sum;
+                if (typeof includeOperation === 'function' && !includeOperation(transaction)) return sum;
+                return sum + Math.max(0, Number(transaction.amount || 0));
+            }, 0);
+        }
+
         const COMPANY_SETTLEMENT_META_KEY = 'ues_company_settlement_meta_v1';
 
         function normalizePersonalSettlementType(value) {
@@ -1722,7 +3910,7 @@
         }
 
         function isCompanyProjectSettlementType(type) {
-            return ['personal', 'general'].includes(String(type || ''));
+            return ['personal', 'general', 'projectTransfer'].includes(String(type || ''));
         }
 
         function persistCompanySettlementMeta(record) {
@@ -2077,6 +4265,7 @@
             );
             const taxPaymentAmount = getProjectTaxPaymentAmount(project.id, includeOperation);
             const companyExpenseFundingAmount = getProjectCompanyExpenseFundingAmount(project.id, includeOperation);
+            const projectTransferOutAmount = getProjectTransferOutAmount(project.id, includeOperation);
             // Директор видит движения денег из объекта отдельно от экономики объекта.
             const taxPaymentHtml = currentRole === 'director'
                 ? `<div class="border-t border-gray-100 mt-3 pt-3 director-only">
@@ -2088,6 +4277,11 @@
                     ${companyExpenseFundingAmount > 0 ? `<div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:2px 0 3px;">
                         <span class="text-xs text-gray-600 font-medium">Из прибыли Юнион → расходы компании</span>
                         <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;white-space:nowrap;font-variant-numeric:tabular-nums;">${formatMoney(companyExpenseFundingAmount)}</span>
+                        <span></span>
+                    </div>` : ''}
+                    ${projectTransferOutAmount > 0 ? `<div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:2px 0 3px;">
+                        <span class="text-xs text-gray-600 font-medium">Из прибыли Юнион → другие объекты</span>
+                        <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;white-space:nowrap;font-variant-numeric:tabular-nums;">${formatMoney(projectTransferOutAmount)}</span>
                         <span></span>
                     </div>` : ''}
                 </div>`
@@ -2489,6 +4683,68 @@
             setRole(currentRole);
         }
 
+        // Надёжный GET для Google Apps Script. При запуске сайта из file://
+        // некоторые браузеры блокируют CORS-редирект ContentService и дают
+        // Failed to fetch, хотя сам URL веб-приложения открывается нормально.
+        // В этом случае автоматически используем JSONP как запасной путь.
+        function jsonpApiRequest(url, timeoutMs = 20000) {
+            return new Promise((resolve, reject) => {
+                const callbackName = `_uesJsonp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+                const script = document.createElement('script');
+                let settled = false;
+                let timer = null;
+                const cleanup = () => {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timer);
+                    try { delete window[callbackName]; } catch (_) { window[callbackName] = undefined; }
+                    script.remove();
+                };
+                window[callbackName] = data => {
+                    if (settled) return;
+                    const result = data;
+                    cleanup();
+                    resolve(result);
+                };
+                script.onerror = () => {
+                    if (settled) return;
+                    cleanup();
+                    reject(new Error('Не удалось загрузить данные через резервное подключение'));
+                };
+                const sep = url.includes('?') ? '&' : '?';
+                script.src = `${url}${sep}callback=${encodeURIComponent(callbackName)}&_ts=${Date.now()}`;
+                script.async = true;
+                document.head.appendChild(script);
+                timer = setTimeout(() => {
+                    if (settled) return;
+                    cleanup();
+                    reject(new Error('Превышено время ожидания Google Таблицы'));
+                }, timeoutMs);
+            });
+        }
+
+        async function fetchApiJson(url = API_URL) {
+            const sep = url.includes('?') ? '&' : '?';
+            try {
+                const response = await fetch(url + sep + '_ts=' + Date.now(), {
+                    method: 'GET',
+                    mode: 'cors',
+                    cache: 'no-store'
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const rawText = await response.text();
+                try {
+                    return JSON.parse(rawText);
+                } catch (jsonErr) {
+                    console.error('Ответ сервера не является JSON. Ответ:', rawText);
+                    throw new Error('Неверный формат ответа от Google Sheets');
+                }
+            } catch (fetchError) {
+                console.warn('Обычный fetch недоступен, пробуем резервное JSONP-подключение:', fetchError);
+                return await jsonpApiRequest(url);
+            }
+        }
+
         // Глобальная переменная для отслеживания активного промиса предзагрузки
         let activeFetchPromise = null;
 
@@ -2502,20 +4758,7 @@
 
             activeFetchPromise = (async () => {
                 try {
-                    const separator = API_URL.includes('?') ? '&' : '?';
-                    const response = await fetch(API_URL + separator + '_ts=' + Date.now(), {
-                        method: 'GET',
-                        mode: 'cors',
-                        cache: 'no-store'
-                    });
-                    const rawText = await response.text();
-                    let jsonData;
-                    try {
-                        jsonData = JSON.parse(rawText);
-                    } catch (jsonErr) {
-                        console.error("Ответ сервера не является JSON. Ответ:", rawText);
-                        throw new Error("Неверный формат ответа от Google Sheets");
-                    }
+                    const jsonData = await fetchApiJson(API_URL);
 
                     API_CAPABILITIES = {
                         apiVersion: Number(jsonData?.capabilities?.apiVersion || 0),
@@ -2530,7 +4773,8 @@
                         projectTaxSettings: jsonData?.capabilities?.projectTaxSettings === true,
                         projectOrder: jsonData?.capabilities?.projectOrder === true,
                         projectOrderInitialized: jsonData?.capabilities?.projectOrderInitialized === true,
-                        taxPaymentSources: jsonData?.capabilities?.taxPaymentSources === true
+                        taxPaymentSources: jsonData?.capabilities?.taxPaymentSources === true,
+                        projectTransfers: jsonData?.capabilities?.projectTransfers === true
                     };
                     
                     // Считываем доступы партнеров, если они вернулись с сервера без перезаписи цветов
@@ -2629,7 +4873,8 @@
                             amount: parseFormattedNumber(tx.amount),
                             sourceProjectId: Number(tx.sourceProjectId || 0),
                             settlementType: normalizePersonalSettlementType(tx.settlementType || tx.personalSettlementType),
-                            sourceBreakdown: normalizeTaxSourceBreakdown(tx.sourceBreakdown)
+                            sourceBreakdown: normalizeTaxSourceBreakdown(tx.sourceBreakdown),
+                            requestId: tx.requestId || ''
                         }));
                     }
 
@@ -2848,7 +5093,7 @@
         }
 
         function isAddOperationAction(action) {
-            return ['addExpense','addIncome','addCompanyExpense','addWithdrawal'].includes(String(action || ''));
+            return ['addExpense','addIncome','addCompanyExpense','addWithdrawal','addProjectTransfer'].includes(String(action || ''));
         }
 
         function getOperationRequestFingerprint(payload) {
@@ -2924,6 +5169,26 @@
                         proj.paid = proj.incomes.reduce((sum, i) => sum + i.amount, 0);
                     }
                 }
+            } else if (payload.action === 'addProjectTransfer') {
+                const sourceProject = data.find(p => Number(p.id) === Number(payload.sourceProjectId));
+                const targetProject = data.find(p => Number(p.id) === Number(payload.targetProjectId));
+                const transaction = hydrateCompanySettlementMeta({
+                    date:payload.date, type:'projectTransfer', amount:Number(payload.amount), category:payload.category,
+                    comment:payload.comment || '', investor:'Юнион Эскей', settlementType:normalizePersonalSettlementType(payload.settlementType) || 'Вывод прибыли',
+                    sourceProjectId:Number(payload.sourceProjectId || 0),
+                    sourceBreakdown:[{ projectId:Number(payload.targetProjectId || 0), projectName:payload.targetProjectName || targetProject?.name || '', amount:Number(payload.amount) }],
+                    requestId:payload.requestId
+                });
+                companyTransactions.push(transaction);
+                if (targetProject) {
+                    if (!targetProject.expenses) targetProject.expenses = [];
+                    targetProject.expenses.push({
+                        date:payload.date, category:payload.category, amount:Number(payload.amount), comment:payload.comment || '',
+                        investor:'Юнион Эскей', settled:false, requestId:payload.requestId
+                    });
+                    targetProject.cost = targetProject.expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+                }
+                persistCompanySettlementMeta(transaction);
             } else if (payload.action === 'addCompanyExpense') {
                 const transaction = hydrateCompanySettlementMeta({
                     date: payload.date,
@@ -4062,6 +6327,9 @@
                 });
 
                 companyTransactions.forEach(t => {
+                    // Перевод между объектами — только внутренний источник финансирования.
+                    // Реальный отток уже учтён прямым расходом целевого объекта.
+                    if (isProjectTransferTransaction(t)) return;
                     const category = t.category || 'Без категории';
                     const month = getYearMonth(t.date);
                     if (isCompanyIncomeTransaction(t)) {
@@ -4695,8 +6963,7 @@
         async function loadWithdrawalsFromGAS() {
             if (!isLive()) return;
             try {
-                const res = await fetch(API_URL + '?action=getWithdrawals');
-                const json = await res.json();
+                const json = await fetchApiJson(API_URL + '?action=getWithdrawals');
                 if (json && json.withdrawals) {
                     generatorsWithdrawals = json.withdrawals;
                     saveWithdrawals();
@@ -4710,17 +6977,20 @@
 
         function getCompanyHistoryRows() {
             return [...companyTransactions]
-                .filter(transaction => currentCompanyHistoryTab === 'incomes'
-                    ? isCompanyIncomeTransaction(transaction)
-                    : !isCompanyIncomeTransaction(transaction))
+                .filter(transaction => {
+                    if (currentCompanyHistoryTab === 'transfers') return isProjectTransferTransaction(transaction);
+                    if (currentCompanyHistoryTab === 'incomes') return isCompanyIncomeTransaction(transaction);
+                    return !isCompanyIncomeTransaction(transaction) && !isProjectTransferTransaction(transaction);
+                })
                 .sort((a,b) => new Date(b.date) - new Date(a.date));
         }
 
         function switchCompanyHistoryTab(tab) {
-            currentCompanyHistoryTab = tab === 'incomes' ? 'incomes' : 'expenses';
+            currentCompanyHistoryTab = ['incomes','transfers'].includes(tab) ? tab : 'expenses';
             const expBtn = document.getElementById('company-history-tab-expenses');
             const incBtn = document.getElementById('company-history-tab-incomes');
-            [[expBtn, 'expenses'], [incBtn, 'incomes']].forEach(([button, key]) => {
+            const transferBtn = document.getElementById('company-history-tab-transfers');
+            [[expBtn, 'expenses'], [incBtn, 'incomes'], [transferBtn, 'transfers']].forEach(([button, key]) => {
                 if (!button) return;
                 const active = currentCompanyHistoryTab === key;
                 button.classList.toggle('border-brand-purple', active);
@@ -4752,7 +7022,9 @@
             if (sorted.length === 0) {
                 const emptyText = currentCompanyHistoryTab === 'incomes'
                     ? 'Доходов компании пока нет'
-                    : 'Расходов компании пока нет';
+                    : currentCompanyHistoryTab === 'transfers'
+                        ? 'Переводов между объектами пока нет'
+                        : 'Расходов компании пока нет';
                 tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-400 italic">${emptyText}</td></tr>`;
                 return;
             }
@@ -4761,7 +7033,9 @@
                 const isIncome = isCompanyIncomeTransaction(t);
                 const isGeneral = t.type === 'general';
                 const isTaxPayment = isTaxPaymentTransaction(t);
+                const isTransfer = isProjectTransferTransaction(t);
                 const sourceProject = data.find(project => Number(project.id) === Number(t.sourceProjectId || 0));
+                const transferTarget = isTransfer ? getProjectTransferTarget(t) : null;
                 const settlementType = normalizePersonalSettlementType(t.settlementType || t.personalSettlementType);
                 const settlementSuffix = sourceProject && settlementType
                     ? ` · ${settlementType === 'Возврат вложений' ? 'возврат вложений' : 'чистая прибыль'} · ${sourceProject.name}`
@@ -4770,24 +7044,30 @@
                 const generalSourceSuffix = isGeneral && sourceProject
                     ? ` · из ${sourceProject.name}`
                     : '';
-                const typeStr = isIncome
-                    ? 'Доход компании'
-                    : isTaxPayment
-                        ? 'Уплата налога'
-                        : isGeneral
-                            ? `Расход компании${generalSourceSuffix}${settlementSuffix}`
-                            : (t.type === 'withdrawal' ? 'Вывод прибыли' : `${personalType}${sourceProject ? ` · ${sourceProject.name}` : ''}`);
+                const typeStr = isTransfer
+                    ? `${sourceProject?.name || 'Объект'} → ${transferTarget?.projectName || 'Объект'} · ${normalizePersonalSettlementType(t.settlementType) === 'Возврат вложений' ? 'возврат вложений Юнион' : 'вывод прибыли Юнион'}`
+                    : isIncome
+                        ? 'Доход компании'
+                        : isTaxPayment
+                            ? 'Уплата налога'
+                            : isGeneral
+                                ? `Расход компании${generalSourceSuffix}${settlementSuffix}`
+                                : (t.type === 'withdrawal' ? 'Вывод прибыли' : `${personalType}${sourceProject ? ` · ${sourceProject.name}` : ''}`);
                 const purposeText = isTaxPayment
                     ? (getTaxPaymentSourceSummary(t) || 'Источник не указан')
                     : (t.category || '—');
                 const canEdit = currentRole === 'director';
 
-                const actionHtml = canEdit ? `
+                const actionHtml = canEdit ? (isTransfer ? `
+                    <div id="company-actions-${idx}" class="flex justify-center gap-2 text-xs font-bold">
+                        <button onclick="askDeleteCompanyExpense(${idx})" class="text-[#93C5FD] hover:text-[#60A5FA] hover:underline">Удалить</button>
+                    </div>
+                ` : `
                     <div id="company-actions-${idx}" class="flex justify-center gap-2 text-xs font-bold">
                         <button onclick="startEditCompanyExpense(${idx})" class="text-[#7C3AED] hover:underline">Изменить</button>
                         <button onclick="askDeleteCompanyExpense(${idx})" class="text-[#93C5FD] hover:text-[#60A5FA] hover:underline">Удалить</button>
                     </div>
-                ` : '';
+                `) : '';
                 const amountText = `${isIncome ? '+' : ''}${formatMoney(t.amount)}`;
 
                 tbody.innerHTML += `
@@ -4880,6 +7160,41 @@
         }
 
         async function deleteCompanyExpense(displayIdx) {
+            const sortedRows = getCompanyHistoryRows();
+            const selectedRecord = sortedRows[displayIdx];
+            if (isProjectTransferTransaction(selectedRecord)) {
+                if (!isLive() || !API_CAPABILITIES.projectTransfers) {
+                    showNotification('Сначала обновите Google Apps Script — иначе связанный перевод удалить безопасно нельзя.', 'error');
+                    return;
+                }
+                const target = getProjectTransferTarget(selectedRecord);
+                const payload = {
+                    action:'deleteProjectTransfer',
+                    rowIndex:selectedRecord.rowIndex || '',
+                    requestId:selectedRecord.requestId || '',
+                    sourceProjectId:Number(selectedRecord.sourceProjectId || 0),
+                    targetProjectId:Number(target?.projectId || 0),
+                    date:selectedRecord.date,
+                    amount:Number(selectedRecord.amount || 0),
+                    category:selectedRecord.category || '',
+                    comment:selectedRecord.comment || ''
+                };
+                const req = sendPost(payload, false);
+                const origIdx = companyTransactions.findIndex(t => t === selectedRecord || (selectedRecord.rowIndex && Number(t.rowIndex) === Number(selectedRecord.rowIndex)));
+                if (origIdx !== -1) companyTransactions.splice(origIdx, 1);
+                const targetProject = data.find(p => Number(p.id) === Number(target?.projectId || 0));
+                if (targetProject) {
+                    const expIdx = (targetProject.expenses || []).findIndex(e =>
+                        (selectedRecord.requestId && e.requestId === selectedRecord.requestId) ||
+                        (e.date === selectedRecord.date && Number(e.amount) === Number(selectedRecord.amount) && e.category === selectedRecord.category && e.comment === selectedRecord.comment && isUnionEskeyRecipient(e.investor))
+                    );
+                    if (expIdx !== -1) targetProject.expenses.splice(expIdx, 1);
+                }
+                renderCompanyHistoryTable(); renderTable(); renderCharts(); refreshGeneratorsCard();
+                const sent = await req;
+                if (sent) showNotification('Перевод между объектами удалён', 'success');
+                return;
+            }
             if (!isLive() || !API_CAPABILITIES.operationTrash) {
                 showNotification('Корзина расходов пока не подключена. Сначала обновите Google Apps Script.', 'error');
                 renderCompanyHistoryTable();
@@ -6885,7 +9200,8 @@
                     general:'Бухгалтерия, Налоги, Аренда...',
                     companyIncome:'Прочий доход, Возмещение, Бонус...',
                     personal:'Личный вывод, Дивиденды...',
-                    taxPayment:'Уплата налога'
+                    taxPayment:'Уплата налога',
+                    projectTransfer:'Категория расхода в целевом объекте'
                 };
                 catEl.placeholder = placeholders[value] || 'Материалы, Зарплата, Топливо...';
                 catEl._catListId = value === 'income'
@@ -6904,16 +9220,18 @@
         function getOperationScopeForType(type) {
             if (type === 'general' || type === 'companyIncome' || type === 'personal' || type === 'taxPayment') return 'company';
             if (type === 'withdrawal') return 'settlement';
+            if (type === 'projectTransfer') return 'transfer';
             return 'project';
         }
 
         function selectOperationScope(scope, label, preferredType = '') {
             const isPartnerUser = currentRole !== 'director';
-            const safeScope = isPartnerUser ? 'project' : (['project','company','settlement'].includes(scope) ? scope : 'project');
+            const safeScope = isPartnerUser ? 'project' : (['project','company','settlement','transfer'].includes(scope) ? scope : 'project');
             const scopeLabels = {
                 project:'По объекту',
                 company:'По компании',
-                settlement:'Расчёты по объекту'
+                settlement:'Расчёты по объекту',
+                transfer:'Между объектами'
             };
 
             const hidden = document.getElementById('uni-scope');
@@ -6944,11 +9262,13 @@
                     { value:'personal', label:'Личный вывод' },
                     { value:'taxPayment', label:'Уплата налога' }
                 ];
-            } else {
+            } else if (safeScope === 'settlement') {
                 options = [{ value:'withdrawal', label:'Расчёт' }];
+            } else {
+                options = [{ value:'projectTransfer', label:'Финансирование объекта' }];
             }
 
-            if (operationWrap) operationWrap.classList.toggle('hidden', safeScope === 'settlement');
+            if (operationWrap) operationWrap.classList.toggle('hidden', safeScope === 'settlement' || safeScope === 'transfer');
             if (typeMenu && safeScope !== 'settlement') {
                 typeMenu.replaceChildren(...options.map(option => {
                     const button = document.createElement('button');
@@ -6965,6 +9285,9 @@
                 ? preferredType
                 : options[0].value;
             const chosenLabel = options.find(option => option.value === chosen)?.label || 'Операция';
+
+            const targetProjectWrapper = document.getElementById('uni-target-project-wrapper');
+            if (targetProjectWrapper) targetProjectWrapper.classList.toggle('hidden', safeScope !== 'transfer');
 
             const projectInput = document.getElementById('uni-project');
             const projectLabel = document.getElementById('dd-project-label');
@@ -7388,7 +9711,7 @@
             editingTaxPaymentOrigIdx = -1;
             initCatInput();
             const isPartnerUser = currentRole !== 'director';
-            const requestedType = ['project','income','general','companyIncome','personal','taxPayment','withdrawal'].includes(type) ? type : 'project';
+            const requestedType = ['project','income','general','companyIncome','personal','taxPayment','withdrawal','projectTransfer'].includes(type) ? type : 'project';
             const initialType = isPartnerUser && !['project','income'].includes(requestedType) ? 'project' : requestedType;
             const initialScope = getOperationScopeForType(initialType);
 
@@ -7422,6 +9745,24 @@
                     button.classList.toggle('selected', button.dataset.value === String(selectedProject.id));
                 });
             }
+
+            const targetSelect = document.getElementById('uni-target-project');
+            const targetMenu = document.getElementById('dd-target-project-menu');
+            if (targetMenu) {
+                targetMenu.replaceChildren(...projects.map(project => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'modal-dd-item';
+                    button.dataset.value = String(project.id);
+                    button.textContent = project.name;
+                    button.addEventListener('click', () => selectModalDD('dd-target-project', String(project.id), project.name));
+                    return button;
+                }));
+            }
+            const defaultTarget = projects.find(project => String(project.id) !== String(selectedProject?.id || '')) || null;
+            if (targetSelect) targetSelect.value = defaultTarget ? String(defaultTarget.id) : '';
+            const targetLabel = document.getElementById('dd-target-project-label');
+            if (targetLabel) targetLabel.textContent = defaultTarget?.name || 'Выберите объект';
 
             selectOperationScope(initialScope, '', initialType);
 
@@ -7476,8 +9817,9 @@
             const categoryVal = document.getElementById('uni-category-input')?.value.trim() || 'Без категории';
             let amountVal = parseFormattedNumber(document.getElementById('uni-amount')?.value || '');
             const projectId = document.getElementById('uni-project')?.value || '';
+            const targetProjectId = document.getElementById('uni-target-project')?.value || '';
             const commentVal = document.getElementById('uni-comment')?.value || '';
-            const allowedTypes = ['project','income','general','companyIncome','personal','taxPayment','withdrawal'];
+            const allowedTypes = ['project','income','general','companyIncome','personal','taxPayment','withdrawal','projectTransfer'];
             let payload = null;
 
             const fail = message => {
@@ -7501,9 +9843,23 @@
                 fail(type === 'taxPayment' ? 'Укажите объекты-источники и суммы для оплаты налога.' : 'Сумма операции должна быть больше нуля.');
                 return;
             }
-            if (['project','income','personal','withdrawal'].includes(type) && !projectId) {
+            if (['project','income','personal','withdrawal','projectTransfer'].includes(type) && !projectId) {
                 fail('Выберите объект для операции.');
                 return;
+            }
+            if (type === 'projectTransfer') {
+                if (!API_CAPABILITIES.projectTransfers) {
+                    fail('Сначала обновите Google Apps Script до версии с переводами между объектами.');
+                    return;
+                }
+                if (!targetProjectId) {
+                    fail('Выберите объект, который финансируем.');
+                    return;
+                }
+                if (Number(projectId) === Number(targetProjectId)) {
+                    fail('Исходный и целевой объект должны быть разными.');
+                    return;
+                }
             }
 
             if (type === 'withdrawal') {
@@ -7585,6 +9941,22 @@
                     category:'Уплата налога', comment:commentVal, investor:'Юнион Эскей',
                     settlementType:'', sourceProjectId:'', sourceBreakdown:sourceValidation.rows
                 };
+            } else if (type === 'projectTransfer') {
+                const sourceProject = data.find(item => Number(item.id) === Number(projectId));
+                const targetProject = data.find(item => Number(item.id) === Number(targetProjectId));
+                payload = {
+                    action:'addProjectTransfer',
+                    sourceProjectId:Number(projectId),
+                    sourceProjectName:sourceProject?.name || '',
+                    targetProjectId:Number(targetProjectId),
+                    targetProjectName:targetProject?.name || '',
+                    date:dateVal,
+                    amount:amountVal,
+                    category:categoryVal,
+                    comment:commentVal,
+                    investor:'Юнион Эскей',
+                    settlementType:normalizePersonalSettlementType(document.getElementById('uni-transfer-settlement')?.value) || 'Вывод прибыли'
+                };
             } else if (type === 'personal') {
                 payload = {
                     action:'addCompanyExpense',
@@ -7643,7 +10015,9 @@
                         ? 'Расход компании сохранён'
                         : type === 'taxPayment'
                             ? 'Уплата налога сохранена'
-                            : type === 'personal'
+                            : type === 'projectTransfer'
+                            ? 'Финансирование объекта сохранено'
+                        : type === 'personal'
                             ? 'Личный вывод сохранён'
                             : type === 'withdrawal'
                                 ? 'Расчёт по объекту сохранён'
@@ -7667,7 +10041,8 @@
             const isPersonal = type === 'personal';
             const isTaxPayment = type === 'taxPayment';
             const isWithdrawal = type === 'withdrawal';
-            const needsProject = isProjectExpense || isProjectIncome || isPersonal || isWithdrawal;
+            const isProjectTransfer = type === 'projectTransfer';
+            const needsProject = isProjectExpense || isProjectIncome || isPersonal || isWithdrawal || isProjectTransfer;
             const showsProjectSource = needsProject || isCompanyExpense;
 
             const projWrapper = document.getElementById('uni-project-wrapper');
@@ -7675,7 +10050,19 @@
             const projectLabel = document.getElementById('uni-project-label');
             if (projectLabel) projectLabel.textContent = isCompanyExpense
                 ? 'Из прибыли Юнион по объекту (необязательно)'
-                : isPersonal ? 'Объект-источник' : 'Объект';
+                : isProjectTransfer ? 'Из объекта' : isPersonal ? 'Объект-источник' : 'Объект';
+
+            const targetProjectWrapper = document.getElementById('uni-target-project-wrapper');
+            if (targetProjectWrapper) targetProjectWrapper.classList.toggle('hidden', !isProjectTransfer);
+
+            const transferSettlementWrapper = document.getElementById('uni-transfer-settlement-wrapper');
+            if (transferSettlementWrapper) transferSettlementWrapper.classList.toggle('hidden', !isProjectTransfer);
+            if (isProjectTransfer) {
+                const transferSettlement = document.getElementById('uni-transfer-settlement');
+                const transferSettlementLabel = document.getElementById('dd-transfer-settlement-label');
+                if (transferSettlement && !transferSettlement.value) transferSettlement.value = 'Вывод прибыли';
+                if (transferSettlementLabel && !transferSettlementLabel.textContent.trim()) transferSettlementLabel.textContent = 'Вывод прибыли Юнион Эскей';
+            }
 
             const projectInput = document.getElementById('uni-project');
             if (needsProject && projectInput && !projectInput.value) {
@@ -7689,7 +10076,7 @@
 
             const invWrapper = document.getElementById('uni-investor-wrapper');
             const partnerPayerLocked = currentRole !== 'director' && isProjectExpense;
-            if (invWrapper) invWrapper.classList.toggle('hidden', isCompanyExpense || isCompanyIncome || isPersonal || isTaxPayment || partnerPayerLocked);
+            if (invWrapper) invWrapper.classList.toggle('hidden', isCompanyExpense || isCompanyIncome || isPersonal || isTaxPayment || isProjectTransfer || partnerPayerLocked);
 
             const payoutTypeWrapper = document.getElementById('uni-payout-type-wrapper');
             if (payoutTypeWrapper) payoutTypeWrapper.classList.toggle('hidden', !isWithdrawal);
@@ -7753,6 +10140,14 @@
             } else if (isTaxPayment) {
                 if (catInput) { catInput.dataset.cattype = 'general'; catInput.value = 'Уплата налога'; }
                 if (modalTitle) modalTitle.textContent = editingTaxPaymentOrigIdx >= 0 ? 'Изменить уплату налога' : 'Уплата налога';
+                if (submitBtn) submitBtn.textContent = 'Сохранить';
+            } else if (isProjectTransfer) {
+                if (catLabel) catLabel.textContent = 'Категория расхода в целевом объекте';
+                if (catInput) {
+                    catInput.dataset.cattype = 'project';
+                    catInput.placeholder = 'Документация, Материалы, ППР...';
+                }
+                if (modalTitle) modalTitle.textContent = 'Финансирование другого объекта';
                 if (submitBtn) submitBtn.textContent = 'Сохранить';
             } else if (isPersonal) {
                 if (catLabel) catLabel.textContent = 'На что / категория';
