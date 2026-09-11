@@ -2483,6 +2483,18 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
         .project-card.drag-active:active { cursor: grabbing; }
         .project-card.dragging { opacity: 0.4; transform: scale(0.97); }
         .project-card.drag-over { outline: 2px dashed #C4B5FD; outline-offset: 2px; }
+        .project-card { scroll-margin-top: 92px; }
+        .project-card.project-jump-highlight .project-pair-card {
+            border-color: #A78BFA !important;
+            box-shadow: 0 0 0 3px rgba(167,139,250,.16), 0 14px 34px rgba(76,29,149,.12) !important;
+            transition: border-color .2s ease, box-shadow .2s ease;
+        }
+        .settlement-detail-link {
+            width:100%; border:0; background:transparent; padding:2px 0 3px; text-align:left;
+            cursor:pointer; border-radius:8px; transition:background-color .15s ease;
+        }
+        .settlement-detail-link:hover { background:#F5F3FF; }
+        .settlement-detail-link:focus-visible { outline:2px solid #C4B5FD; outline-offset:2px; }
         .project-pair-group { min-width: 0; }
         .project-pair-card { min-width: 0; }
         .project-action-link { cursor: pointer !important; }
@@ -4197,7 +4209,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
             return splitAmountEqually(Math.max(0, income - expenses - tax), getProjectParticipants(project));
         }
 
-        function renderWithdrawalBreakdownRows(summary, emptyText) {
+        function renderWithdrawalBreakdownRows(summary, emptyText, options = {}) {
             const rows = Object.entries(summary || {})
                 .filter(([, amount]) => Number(amount) > 0)
                 .sort(([aName, aSum], [bName, bSum]) => {
@@ -4206,24 +4218,44 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                     return Number(bSum) - Number(aSum);
                 });
             if (!rows.length) return `<div class="text-xs text-gray-300 italic">${emptyText}</div>`;
-            return rows.map(([recipient, amount]) => `
-                <div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:2px 0 3px;">
-                    <span class="text-xs text-gray-600 font-medium">${recipient}</span>
+            return rows.map(([recipient, amount]) => {
+                const projectId = Number(options.projectId || 0);
+                const monthKey = String(options.monthKey || '');
+                let clickHandler = '';
+                let clickable = false;
+                if (projectId && options.kind === 'funding') {
+                    clickHandler = `openParticipantFundingDetails(${projectId}, decodeURIComponent('${encodeURIComponent(recipient)}'), '${monthKey}')`;
+                    clickable = true;
+                } else if (projectId && options.kind === 'profitPayout' && isUnionEskeyRecipient(recipient) && currentRole === 'director') {
+                    clickHandler = `openUnionProfitDetails(${projectId}, '${monthKey}')`;
+                    clickable = true;
+                }
+                const rowInner = `
+                    <span class="text-xs text-gray-600 font-medium">${escapeTrashText(recipient)}</span>
                     <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;">${formatMoney(amount)}</span>
-                    <span></span>
-                </div>
-            `).join('');
+                    <span>${clickable ? '<span style="color:#A78BFA;font-size:13px;">›</span>' : ''}</span>`;
+                if (clickable) {
+                    return `<button type="button" class="settlement-detail-link" onclick="${clickHandler}" title="Посмотреть операции">
+                        <span style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;">${rowInner}</span>
+                    </button>`;
+                }
+                return `<div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:2px 0 3px;">${rowInner}</div>`;
+            }).join('');
         }
 
-        function renderCommonFundingRow(amount) {
+        function renderCommonFundingRow(amount, projectId = 0, monthKey = '') {
             if (!(Number(amount) > 0)) return '';
-            return `
-                <div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:5px 0 3px;margin-top:3px;border-top:1px solid #F3F4F6;">
-                    <span class="text-xs text-gray-500 font-medium">Общие 50/50</span>
-                    <span style="text-align:right;font-size:12px;font-weight:600;color:#4B5563;">${formatMoney(amount)}</span>
-                    <span></span>
-                </div>
-            `;
+            const clickable = Number(projectId) > 0;
+            const inner = `
+                <span class="text-xs text-gray-500 font-medium">Общие 50/50</span>
+                <span style="text-align:right;font-size:12px;font-weight:600;color:#4B5563;">${formatMoney(amount)}</span>
+                <span>${clickable ? '<span style="color:#A78BFA;font-size:13px;">›</span>' : ''}</span>`;
+            if (clickable) {
+                return `<button type="button" class="settlement-detail-link" onclick="openParticipantFundingDetails(${Number(projectId)}, '__COMMON__', '${String(monthKey || '')}')" title="Посмотреть общие расходы 50/50" style="margin-top:3px;border-top:1px solid #F3F4F6;border-radius:0;padding-top:5px;">
+                    <span style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;">${inner}</span>
+                </button>`;
+            }
+            return `<div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:5px 0 3px;margin-top:3px;border-top:1px solid #F3F4F6;">${inner}</div>`;
         }
 
         // Единая правая карточка для каждого объекта, включая «Генераторы».
@@ -4239,10 +4271,11 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
             );
             const hasPersonalInvestments = Object.values(fundingSummary.investedByParticipant)
                 .some(amount => Number(amount) > 0);
+            const detailMonthKey = String(options.periodKey || '');
             const investedHtml = hasPersonalInvestments
-                ? renderWithdrawalBreakdownRows(fundingSummary.investedByParticipant, '')
+                ? renderWithdrawalBreakdownRows(fundingSummary.investedByParticipant, '', { projectId: project.id, kind:'funding', monthKey: detailMonthKey })
                 : '';
-            const commonFundingHtml = renderCommonFundingRow(fundingSummary.commonAmount);
+            const commonFundingHtml = renderCommonFundingRow(fundingSummary.commonAmount, project.id, detailMonthKey);
             const fundedRowsHtml = (investedHtml || commonFundingHtml)
                 ? `${investedHtml}${commonFundingHtml}`
                 : '<div class="text-xs text-gray-300 italic">Нет вложений</div>';
@@ -4261,7 +4294,8 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
             );
             const withdrawnProfitHtml = renderWithdrawalBreakdownRows(
                 payoutsVisibleToViewer ? breakdown.profitByRecipient : withoutUnionEskeyAmount(breakdown.profitByRecipient),
-                'Нет выводов прибыли'
+                'Нет выводов прибыли',
+                { projectId: project.id, kind:'profitPayout', monthKey: detailMonthKey }
             );
             const taxPaymentAmount = getProjectTaxPaymentAmount(project.id, includeOperation);
             const companyExpenseFundingAmount = getProjectCompanyExpenseFundingAmount(project.id, includeOperation);
@@ -4740,8 +4774,14 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                     throw new Error('Неверный формат ответа от Google Sheets');
                 }
             } catch (fetchError) {
-                console.warn('Обычный fetch недоступен, пробуем резервное JSONP-подключение:', fetchError);
-                return await jsonpApiRequest(url);
+                // JSONP нужен только для локального запуска file://. На GitHub Pages
+                // он не используется, чтобы браузер/Preview не запрашивал доступ к сети
+                // отдельным всплывающим окном при фоновой синхронизации.
+                if (window.location.protocol === 'file:') {
+                    console.warn('Локальный file://: обычный fetch недоступен, пробуем резервное JSONP-подключение:', fetchError);
+                    return await jsonpApiRequest(url);
+                }
+                throw fetchError;
             }
         }
 
@@ -6006,7 +6046,9 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                 }
 
                 tbody.innerHTML += `<tr class="hover:bg-gray-50/70 transition-all">
-                    <td class="px-6 py-4 font-bold text-brand-dark whitespace-nowrap" title="${p.name}">${p.name}</td>
+                    <td class="px-6 py-4 font-bold text-brand-dark whitespace-nowrap" title="Нажми, чтобы перейти к карточке объекта">
+                        <button type="button" onclick="scrollToProjectCard(${Number(p.id)})" class="text-left font-bold text-brand-dark hover:text-brand-purple transition-colors underline-offset-4 hover:underline">${escapeTrashText(p.name)}</button>
+                    </td>
                     <td class="px-6 py-4">
                         <textarea onchange="updateTodo(${p.id}, this.value)" placeholder="Запишите задачи..." class="todo-ta w-full bg-gray-50/50 hover:bg-gray-50 focus:bg-white border border-transparent focus:border-brand-purple focus:ring-4 focus:ring-brand-purple/10 rounded-2xl p-3 text-xs text-brand-dark outline-none transition-all leading-relaxed" id="todo-ta-${p.id}" style="resize:both;height:54px;min-height:40px;width:220px;max-width:320px;min-width:100px;display:block;overflow:auto;box-sizing:border-box;" translate="no" spellcheck="false" lang="ru">${p.todo || ''}</textarea>
                     </td>
@@ -6775,6 +6817,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
 
             const card = document.createElement('section');
             card.id = 'generators-monthly-card';
+            card.dataset.projectId = String(genProj.id);
             card.className = 'project-card project-pair-group grid grid-cols-1 lg:grid-cols-2 gap-4 animate-fade-in' + (dragModeActive ? ' drag-active' : '');
             card.style.userSelect = 'none';
             card.setAttribute('draggable', 'true');
@@ -6889,7 +6932,8 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                 ? operation => getYearMonth(operation?.date) === mk
                 : null;
             const generatorSettlementCardHtml = buildParticipantSettlementCardHtml(genProj, {
-                includeOperation: generatorSettlementPeriodFilter
+                includeOperation: generatorSettlementPeriodFilter,
+                periodKey: isMonth ? mk : ''
             });
             const generatorTax = calculateProjectTax(genProj, incSum);
             const generatorCleanProfit = net - generatorTax;
@@ -7446,6 +7490,132 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
         }
 
         function closeMonthlyModal() { document.getElementById('monthly-modal').classList.add('hidden'); document.body.style.overflow = ''; }
+
+        function scrollToProjectCard(projectId) {
+            const card = document.querySelector(`.project-card[data-project-id="${Number(projectId)}"]`);
+            if (!card) {
+                showNotification('Карточка этого объекта сейчас не отображается', 'error');
+                return;
+            }
+            card.scrollIntoView({ behavior:'smooth', block:'start' });
+            card.classList.remove('project-jump-highlight');
+            void card.offsetWidth;
+            card.classList.add('project-jump-highlight');
+            window.setTimeout(() => card.classList.remove('project-jump-highlight'), 1800);
+        }
+
+        function getProjectDetailPeriodLabel(monthKey = '') {
+            const normalized = /^\d{4}-\d{2}$/.test(String(monthKey || '')) ? String(monthKey) : '';
+            if (!normalized) return 'Все время';
+            const [year, month] = normalized.split('-');
+            return `${MONTH_NAMES_RU_FULL[month] || month} ${year}`;
+        }
+
+        function projectDetailPeriodMatches(row, monthKey = '') {
+            const normalized = /^\d{4}-\d{2}$/.test(String(monthKey || '')) ? String(monthKey) : '';
+            return !normalized || getYearMonth(row?.date) === normalized;
+        }
+
+        function showProjectDetailTable({ titleText, subtitleText, headers, rowsHtml, total }) {
+            const modal = document.getElementById('project-operations-modal');
+            const title = document.getElementById('project-operations-title');
+            const subtitle = document.getElementById('project-operations-subtitle');
+            const content = document.getElementById('project-operations-content');
+            if (!modal || !title || !subtitle || !content) return;
+            title.textContent = titleText || 'Операции объекта';
+            subtitle.textContent = subtitleText || '';
+            content.innerHTML = rowsHtml
+                ? `<div class="overflow-auto rounded-2xl border border-gray-100">
+                    <table class="w-full min-w-[720px] border-collapse text-xs">
+                        <thead class="bg-gray-50 text-[10px] uppercase tracking-wider text-gray-400"><tr>${headers.map(h => `<th class="px-3 py-3 text-center whitespace-nowrap">${escapeTrashText(h)}</th>`).join('')}</tr></thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                   </div>
+                   <div class="mt-4 flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Итого</span>
+                        <span class="text-base font-bold text-brand-dark">${formatMoney(total || 0)}</span>
+                   </div>`
+                : '<div class="py-10 text-center text-sm text-gray-300 italic">За выбранный период операций нет</div>';
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function openParticipantFundingDetails(projectId, participantName, monthKey = '') {
+            const project = data.find(item => Number(item.id) === Number(projectId));
+            if (!project) return;
+            const isCommon = participantName === '__COMMON__';
+            const canonical = isCommon ? '' : getCanonicalParticipantName(participantName);
+            const rows = getProjectOperationalExpenses(project)
+                .filter(row => projectDetailPeriodMatches(row, monthKey))
+                .filter(row => isCommon
+                    ? isCommonInvestor(row.investor)
+                    : (!isCommonInvestor(row.investor) && normalizeName(getCanonicalParticipantName(row.investor || 'Юнион Эскей')) === normalizeName(canonical)))
+                .slice()
+                .sort((a,b) => String(b.date || '').localeCompare(String(a.date || '')));
+            const total = sumAmounts(rows);
+            const rowsHtml = rows.map(row => `
+                <tr class="border-b border-gray-50 last:border-0">
+                    <td class="px-3 py-3 text-center whitespace-nowrap">${escapeTrashText(row.date || '—')}</td>
+                    <td class="px-3 py-3 text-center">${escapeTrashText(row.category || 'Без категории')}</td>
+                    <td class="px-3 py-3 text-center font-semibold whitespace-nowrap">${formatMoney(row.amount || 0)}</td>
+                    <td class="px-3 py-3 text-center text-gray-400">${escapeTrashText(row.comment || '—')}</td>
+                </tr>`).join('');
+            showProjectDetailTable({
+                titleText: `${project.name} · вложено`,
+                subtitleText: `${isCommon ? 'Общие 50/50' : canonical} · ${getProjectDetailPeriodLabel(monthKey)}`,
+                headers:['Дата','Категория','Сумма','Комментарий'],
+                rowsHtml,
+                total
+            });
+        }
+
+        function openUnionProfitDetails(projectId, monthKey = '') {
+            if (currentRole !== 'director') return;
+            const project = data.find(item => Number(item.id) === Number(projectId));
+            if (!project) return;
+            const details = [];
+
+            getProjectUnionProfitPayouts(projectId)
+                .filter(row => projectDetailPeriodMatches(row, monthKey))
+                .forEach(row => details.push({
+                    date: row.date,
+                    method: 'Вывод прибыли',
+                    amount: Number(row.amount || 0),
+                    comment: row.comment || '—'
+                }));
+
+            companyTransactions.forEach(row => {
+                if (!isCompanyProjectSettlementType(row.type)) return;
+                if (Number(row.sourceProjectId || 0) !== Number(projectId)) return;
+                if (normalizePersonalSettlementType(row.settlementType || row.personalSettlementType) !== 'Вывод прибыли') return;
+                if (!projectDetailPeriodMatches(row, monthKey)) return;
+                let method = 'Вывод прибыли';
+                if (String(row.type) === 'personal') method = 'Личный вывод';
+                else if (String(row.type) === 'general') method = `Расход компании · ${row.category || 'Без категории'}`;
+                else if (String(row.type) === 'projectTransfer') {
+                    const target = getProjectTransferTarget(row);
+                    method = `В другой объект${target?.projectName ? ' · ' + target.projectName : ''}`;
+                }
+                details.push({ date:row.date, method, amount:Number(row.amount || 0), comment:row.comment || '—' });
+            });
+
+            details.sort((a,b) => String(b.date || '').localeCompare(String(a.date || '')));
+            const total = details.reduce((sum,row) => sum + Math.max(0, Number(row.amount || 0)), 0);
+            const rowsHtml = details.map(row => `
+                <tr class="border-b border-gray-50 last:border-0">
+                    <td class="px-3 py-3 text-center whitespace-nowrap">${escapeTrashText(row.date || '—')}</td>
+                    <td class="px-3 py-3 text-center font-medium">${escapeTrashText(row.method)}</td>
+                    <td class="px-3 py-3 text-center font-semibold whitespace-nowrap">${formatMoney(row.amount || 0)}</td>
+                    <td class="px-3 py-3 text-center text-gray-400">${escapeTrashText(row.comment || '—')}</td>
+                </tr>`).join('');
+            showProjectDetailTable({
+                titleText: `${project.name} · выведено прибыли`,
+                subtitleText: `Юнион Эскей · ${getProjectDetailPeriodLabel(monthKey)}`,
+                headers:['Дата','Как использовали','Сумма','Комментарий'],
+                rowsHtml,
+                total
+            });
+        }
 
         function closeProjectOperationsModal() {
             const modal = document.getElementById('project-operations-modal');
