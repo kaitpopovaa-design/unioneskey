@@ -764,7 +764,7 @@
                     <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
                         <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
                             <span>Траты компании</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
-                            <span class="stat-card-hint" role="tooltip">Бухгалтерия, реклама, офис и другие операционные траты Юнион Эскей, не привязанные к конкретному объекту. Фактическая уплата налогов сюда не входит, чтобы не уменьшать прибыль второй раз.</span>
+                            <span class="stat-card-hint" role="tooltip">Бухгалтерия, реклама, офис и другие операционные траты Юнион Эскей. Если указан объект-источник, сумма считается использованием прибыли Юнион из этого объекта и не затрагивает долю партнёра. Фактическая уплата налогов сюда не входит.</span>
                         </div>
                         <p id="general-expense" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
                     </div>
@@ -1680,6 +1680,16 @@
             }, 0);
         }
 
+        function getProjectCompanyExpenseFundingAmount(projectId, includeOperation = null) {
+            if (currentRole !== 'director') return 0;
+            return companyTransactions.reduce((sum, transaction) => {
+                if (String(transaction?.type || '') !== 'general') return sum;
+                if (Number(transaction.sourceProjectId || 0) !== Number(projectId)) return sum;
+                if (typeof includeOperation === 'function' && !includeOperation(transaction)) return sum;
+                return sum + Math.max(0, Number(transaction.amount || 0));
+            }, 0);
+        }
+
         const COMPANY_SETTLEMENT_META_KEY = 'ues_company_settlement_meta_v1';
 
         function normalizePersonalSettlementType(value) {
@@ -1737,6 +1747,12 @@
                     settlementType = settlementType || normalizePersonalSettlementType(saved.settlementType);
                     sourceProjectId = sourceProjectId || Number(saved.sourceProjectId || 0);
                 }
+            }
+            // Любой общий расход компании, оплаченный деньгами конкретного объекта,
+            // является использованием доли прибыли Юнион Эскей из этого объекта.
+            // Это не расход объекта и не затрагивает долю партнёра.
+            if (!settlementType && String(record.type || '') === 'general' && sourceProjectId) {
+                settlementType = 'Вывод прибыли';
             }
             const hydrated = { ...record, settlementType, sourceProjectId };
             persistCompanySettlementMeta(hydrated);
@@ -2060,8 +2076,8 @@
                 'Нет выводов прибыли'
             );
             const taxPaymentAmount = getProjectTaxPaymentAmount(project.id, includeOperation);
-            // Директор всегда видит отдельную строку уплаты налогов, даже если пока 0 ₽.
-            // Так понятно, где смотреть фактическое движение денег объекта на налоги.
+            const companyExpenseFundingAmount = getProjectCompanyExpenseFundingAmount(project.id, includeOperation);
+            // Директор видит движения денег из объекта отдельно от экономики объекта.
             const taxPaymentHtml = currentRole === 'director'
                 ? `<div class="border-t border-gray-100 mt-3 pt-3 director-only">
                     <div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:2px 0 3px;">
@@ -2069,6 +2085,11 @@
                         <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;white-space:nowrap;font-variant-numeric:tabular-nums;">${formatMoney(taxPaymentAmount)}</span>
                         <span></span>
                     </div>
+                    ${companyExpenseFundingAmount > 0 ? `<div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:2px 0 3px;">
+                        <span class="text-xs text-gray-600 font-medium">Из прибыли Юнион → расходы компании</span>
+                        <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;white-space:nowrap;font-variant-numeric:tabular-nums;">${formatMoney(companyExpenseFundingAmount)}</span>
+                        <span></span>
+                    </div>` : ''}
                 </div>`
                 : '';
             return `
@@ -4063,7 +4084,7 @@
                     const flowCategory = isTaxPaymentTransaction(t)
                         ? `Уплата налога компании${taxSourceSummary ? ` · ${taxSourceSummary}` : ''}`
                         : t.type === 'general'
-                            ? `Траты компании · ${category}`
+                            ? `Траты компании · ${category}${sourceProject ? ` · из ${sourceProject.name}` : ''}`
                             : (t.type === 'withdrawal'
                                 ? `Вывод прибыли ЮЭ · ${category}`
                                 : `${personalSettlement === 'Возврат вложений' ? 'Возврат вложений ЮЭ' : 'Личный вывод из прибыли'}${sourceProject ? ` · ${sourceProject.name}` : ''} · ${category}`);
@@ -4746,12 +4767,15 @@
                     ? ` · ${settlementType === 'Возврат вложений' ? 'возврат вложений' : 'чистая прибыль'} · ${sourceProject.name}`
                     : '';
                 const personalType = settlementType === 'Возврат вложений' ? 'Личный вывод · возврат вложений' : 'Личный вывод из прибыли';
+                const generalSourceSuffix = isGeneral && sourceProject
+                    ? ` · из ${sourceProject.name}`
+                    : '';
                 const typeStr = isIncome
                     ? 'Доход компании'
                     : isTaxPayment
                         ? 'Уплата налога'
                         : isGeneral
-                            ? `Расход компании${settlementSuffix}`
+                            ? `Расход компании${generalSourceSuffix}${settlementSuffix}`
                             : (t.type === 'withdrawal' ? 'Вывод прибыли' : `${personalType}${sourceProject ? ` · ${sourceProject.name}` : ''}`);
                 const purposeText = isTaxPayment
                     ? (getTaxPaymentSourceSummary(t) || 'Источник не указан')
@@ -5635,15 +5659,17 @@
             document.getElementById('edit-operation-person-wrap')?.classList.toggle('hidden', isCompany);
             document.getElementById('edit-operation-category-wrap')?.classList.toggle('hidden', isWithdrawal);
             document.getElementById('edit-operation-payout-type-wrap')?.classList.toggle('hidden', !isWithdrawal);
-            document.getElementById('edit-operation-personal-settlement-wrap')?.classList.toggle('hidden', !isCompany || !document.getElementById('edit-operation-project')?.value);
+            document.getElementById('edit-operation-personal-settlement-wrap')?.classList.toggle('hidden', !isPersonal || !document.getElementById('edit-operation-project')?.value);
 
             const categoryLabel = document.getElementById('edit-operation-category-label-text');
             const categoryInput = document.getElementById('edit-operation-category');
             const personLabel = document.getElementById('edit-operation-person-label-text');
             const projectLabel = document.getElementById('edit-operation-project-label-text');
-            if (projectLabel) projectLabel.textContent = (type === 'general' || type === 'personal') ? 'Источник средств' : 'Объект';
+            if (projectLabel) projectLabel.textContent = type === 'general'
+                ? 'Из прибыли Юнион по объекту (необязательно)'
+                : type === 'personal' ? 'Объект-источник' : 'Объект';
             const settlementLabel = document.querySelector('#edit-operation-personal-settlement-wrap > label');
-            if (settlementLabel) settlementLabel.textContent = isPersonal ? 'Как учесть личную трату' : 'За счет чего учесть расход';
+            if (settlementLabel) settlementLabel.textContent = 'Как учесть личную трату';
             if (categoryLabel) categoryLabel.textContent = (isIncome || isCompanyIncome) ? 'Основание дохода' : 'Категория / назначение';
             if (categoryInput) {
                 categoryInput.placeholder = isIncome
@@ -5740,7 +5766,7 @@
                 return {
                     action:'addCompanyExpense', date:values.date, type, amount:values.amount,
                     category:values.category, comment:values.comment, investor:'Юнион Эскей',
-                    settlementType:(type === 'general' || type === 'personal') && values.projectId ? values.settlementType : '',
+                    settlementType:type === 'personal' && values.projectId ? values.settlementType : (type === 'general' && values.projectId ? 'Вывод прибыли' : ''),
                     sourceProjectId:(type === 'general' || type === 'personal') ? (values.projectId || '') : ''
                 };
             }
@@ -5850,7 +5876,7 @@
                     category:newCategory,
                     comment:newComment,
                     investor:'Юнион Эскей',
-                    settlementType:(targetType === 'general' || targetType === 'personal') && targetProjectId ? newSettlementType : '',
+                    settlementType:targetType === 'personal' && targetProjectId ? newSettlementType : (targetType === 'general' && targetProjectId ? 'Вывод прибыли' : ''),
                     sourceProjectId:(targetType === 'general' || targetType === 'personal') && targetProjectId ? Number(targetProjectId) : 0
                 };
                 persistCompanySettlementMeta(companyTransactions[editing.origIdx]);
@@ -5863,7 +5889,7 @@
                     oldSourceProjectId:Number(oldRecord.sourceProjectId || 0),
                     newDate, newType:targetType, newAmount, newCategory, newComment,
                     newInvestor:'Юнион Эскей',
-                    newSettlementType:(targetType === 'general' || targetType === 'personal') && targetProjectId ? newSettlementType : '',
+                    newSettlementType:targetType === 'personal' && targetProjectId ? newSettlementType : (targetType === 'general' && targetProjectId ? 'Вывод прибыли' : ''),
                     newSourceProjectId:(targetType === 'general' || targetType === 'personal') && targetProjectId ? Number(targetProjectId) : 0
                 }, false);
                 showNotification('Операция изменена', 'success');
@@ -7540,8 +7566,8 @@
                     category:categoryVal,
                     comment:commentVal,
                     investor:'Юнион Эскей',
-                    settlementType:'',
-                    sourceProjectId:'',
+                    settlementType:type === 'general' && projectId ? 'Вывод прибыли' : '',
+                    sourceProjectId:type === 'general' ? (projectId || '') : '',
                     sourceBreakdown:[]
                 };
             } else if (type === 'taxPayment') {
@@ -7642,11 +7668,14 @@
             const isTaxPayment = type === 'taxPayment';
             const isWithdrawal = type === 'withdrawal';
             const needsProject = isProjectExpense || isProjectIncome || isPersonal || isWithdrawal;
+            const showsProjectSource = needsProject || isCompanyExpense;
 
             const projWrapper = document.getElementById('uni-project-wrapper');
-            if (projWrapper) projWrapper.classList.toggle('hidden', !needsProject);
+            if (projWrapper) projWrapper.classList.toggle('hidden', !showsProjectSource);
             const projectLabel = document.getElementById('uni-project-label');
-            if (projectLabel) projectLabel.textContent = isPersonal ? 'Объект-источник' : 'Объект';
+            if (projectLabel) projectLabel.textContent = isCompanyExpense
+                ? 'Из прибыли Юнион по объекту (необязательно)'
+                : isPersonal ? 'Объект-источник' : 'Объект';
 
             const projectInput = document.getElementById('uni-project');
             if (needsProject && projectInput && !projectInput.value) {
