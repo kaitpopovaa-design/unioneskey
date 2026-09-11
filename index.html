@@ -712,10 +712,10 @@
                         </div>
                         <p id="total-revenue" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
                     </div>
-                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" onclick="if(!event.target.closest('.stat-card-label')) openDashboardBreakdown('directExpenses')" style="cursor:pointer;user-select:none;" title="Нажми, чтобы посмотреть по объектам">
                         <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
                             <span>Прямые затраты</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
-                            <span class="stat-card-hint" role="tooltip">Все операционные расходы по объектам за выбранный период. Выплаты участникам, фактическая уплата налогов и траты компании сюда не входят.</span>
+                            <span class="stat-card-hint" role="tooltip">Все операционные расходы по объектам за выбранный период. Выплаты участникам, фактическая уплата налогов и траты компании сюда не входят. Нажми на плашку, чтобы увидеть разбивку по объектам.</span>
                         </div>
                         <p id="direct-expense" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
                     </div>
@@ -733,10 +733,10 @@
                         </div>
                         <p id="projects-net-profit" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
                     </div>
-                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" style="cursor:default;user-select:none;">
+                    <div class="bg-transparent p-4 sm:p-5 rounded-2xl sm:rounded-3xl border-2 border-[#C4B5FD]/60 transition-all hover:border-[#A78BFA] hover:shadow-[0_0_12px_rgba(196,181,253,0.4)]" onclick="if(!event.target.closest('.stat-card-label')) openDashboardBreakdown('unionInvested')" style="cursor:pointer;user-select:none;" title="Нажми, чтобы посмотреть по объектам">
                         <div class="stat-card-label text-gray-500/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" tabindex="0" role="button" aria-expanded="false" onclick="toggleStatCardHint(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleStatCardHint(this); }">
                             <span>Оплачено Юнион</span><span class="stat-card-help-icon" aria-hidden="true">i</span>
-                            <span class="stat-card-hint" role="tooltip">Прямые расходы объектов, фактически профинансированные Юнион Эскей. В расходах «Общие 50/50» сюда относится половина суммы.</span>
+                            <span class="stat-card-hint" role="tooltip">Прямые расходы объектов, фактически профинансированные Юнион Эскей. В расходах «Общие 50/50» сюда относится половина суммы. Нажми на плашку, чтобы увидеть разбивку по объектам.</span>
                         </div>
                         <p id="union-direct-expense" class="text-lg sm:text-xl font-bold text-gray-800 truncate">0 ₽</p>
                     </div>
@@ -2441,16 +2441,27 @@
             PARTNER_CONFIG.partner4.name = document.getElementById('set-name-partner4').value.trim() || "Партнер 4";
             PARTNER_CONFIG.partner4.pin = document.getElementById('set-pin-partner4').value.trim() || "4444";
             
+            // Сразу обновляем текущий браузер, затем подтверждаем сохранение на сервере.
+            // Старые жестко прошитые PIN-коды больше не используются при входе.
             localStorage.setItem('union_partner_config_v2', JSON.stringify(PARTNER_CONFIG));
-            
-            showNotification("Настройки сохранены! Личные кабинеты и PIN-коды обновлены.", "success");
             closeSettingsModal();
-            
-            // Отправляем изменения обратно в таблицу во вкладку "Партнеры"
-            await sendPost({
+
+            const savedOnServer = await sendPost({
                 action: 'updatePartners',
                 config: PARTNER_CONFIG
             }, false);
+            if (savedOnServer) {
+                showNotification("Настройки сохранены! PIN-коды обновлены.", "success");
+                // Перечитываем серверный конфиг, чтобы убедиться, что сайт использует именно его.
+                try {
+                    activeFetchPromise = null;
+                    await preFetchConfig();
+                } catch (e) {
+                    console.warn('Не удалось повторно проверить сохраненные PIN-коды:', e);
+                }
+            } else {
+                showNotification("PIN изменён только на этом устройстве: Google Таблица не подтвердила сохранение.", "error");
+            }
 
             renderViewSwitcher();
             updateAccessDropdowns();
@@ -2633,11 +2644,14 @@
             return true;
         }
 
-        // Умный вход: если PIN-код отсутствует в кэше, принудительно опрашиваем Google Таблицу на наличие обновлений
+        // Вход всегда проверяет актуальные PIN-коды. При наличии сети сначала
+        // подтягиваем настройки из Google Таблицы; офлайн используем только последний
+        // сохраненный конфиг из localStorage. Жестко прошитые старые PIN-коды не принимаются.
         async function checkPin() {
             const inp = document.getElementById('pin-input');
             const errEl = document.getElementById('login-error');
             const pinVal = inp ? inp.value.trim() : '';
+            const btn = document.querySelector('#login-screen button');
 
             if (errEl) { errEl.classList.add('hidden'); errEl.textContent = 'Неверный PIN-код'; }
 
@@ -2646,28 +2660,25 @@
                 return;
             }
 
+            // Сначала берем последний локально сохраненный конфиг. Если есть сеть —
+            // принудительно обновляем его с сервера, чтобы смена PIN на другом устройстве
+            // начинала действовать сразу.
             loadConfig();
+            if (isLive()) {
+                if (btn) { btn.disabled = true; btn.textContent = 'Проверка...'; }
+                try {
+                    activeFetchPromise = null;
+                    await preFetchConfig();
+                } catch (e) {
+                    console.warn('Не удалось обновить PIN-коды с сервера, использую последний сохраненный конфиг:', e);
+                } finally {
+                    if (btn) { btn.disabled = false; btn.textContent = 'Войти в систему'; }
+                }
+            }
 
             let foundRole = null;
             for (const [role, cfg] of Object.entries(PARTNER_CONFIG)) {
                 if (String(cfg.pin || '').trim() === pinVal) { foundRole = role; break; }
-            }
-
-            if (!foundRole) {
-                const defaults = { director:'0942', dima:'1010', kolya:'8914', partner3:'3333', partner4:'4444' };
-                for (const [role, pin] of Object.entries(defaults)) {
-                    if (pin === pinVal) { foundRole = role; break; }
-                }
-            }
-
-            if (!foundRole && isLive()) {
-                const btn = document.querySelector('#login-screen button');
-                if (btn) { btn.disabled = true; btn.textContent = 'Проверка...'; }
-                try { await preFetchConfig(); } catch(e) {}
-                for (const [role, cfg] of Object.entries(PARTNER_CONFIG)) {
-                    if (String(cfg.pin || '').trim() === pinVal) { foundRole = role; break; }
-                }
-                if (btn) { btn.disabled = false; btn.textContent = 'Войти в систему'; }
             }
 
             if (foundRole) {
@@ -2802,9 +2813,59 @@
             return [...active, ...done];
         }
 
+        // Защита от случайных дублей: одинаковые операции, отправленные почти
+        // одновременно, получают один и тот же requestId. Apps Script хранит этот ID
+        // вместе со строкой и повторно ту же операцию уже не добавляет.
+        const RECENT_OPERATION_REQUEST_TTL = 5000;
+        const recentOperationRequestIds = new Map();
+
+        function createOperationRequestId() {
+            try {
+                if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+            } catch (e) {}
+            return 'req-' + Date.now() + '-' + Math.random().toString(36).slice(2, 12);
+        }
+
+        function isAddOperationAction(action) {
+            return ['addExpense','addIncome','addCompanyExpense','addWithdrawal'].includes(String(action || ''));
+        }
+
+        function getOperationRequestFingerprint(payload) {
+            if (!payload || !isAddOperationAction(payload.action)) return '';
+            const copy = { ...payload };
+            delete copy.requestId;
+            return JSON.stringify(copy);
+        }
+
+        function ensureOperationRequestId(payload) {
+            if (!payload || !isAddOperationAction(payload.action)) return payload;
+            if (payload.requestId) return payload;
+            const now = Date.now();
+            const fingerprint = getOperationRequestFingerprint(payload);
+            for (const [key, value] of recentOperationRequestIds.entries()) {
+                if (!value || now - Number(value.time || 0) > RECENT_OPERATION_REQUEST_TTL) recentOperationRequestIds.delete(key);
+            }
+            const existing = recentOperationRequestIds.get(fingerprint);
+            if (existing && now - existing.time <= RECENT_OPERATION_REQUEST_TTL) {
+                payload.requestId = existing.id;
+                return payload;
+            }
+            const id = createOperationRequestId();
+            recentOperationRequestIds.set(fingerprint, { id, time: now });
+            payload.requestId = id;
+            return payload;
+        }
+
         // СИМУЛЯЦИЯ И ОПТИМИСТИЧНОЕ ОБНОВЛЕНИЕ ДАННЫХ В ОФФЛАЙН-РЕЖИМЕ
+        const locallyAppliedRequestIds = new Set();
+
         function simulateOfflinePost(payload) {
             if (!payload) return;
+            if (payload.requestId && isAddOperationAction(payload.action)) {
+                if (locallyAppliedRequestIds.has(payload.requestId)) return;
+                locallyAppliedRequestIds.add(payload.requestId);
+                setTimeout(() => locallyAppliedRequestIds.delete(payload.requestId), 15000);
+            }
             if (payload.action === 'addExpense') {
                 const proj = data.find(p => Number(p.id) === Number(payload.projectId));
                 if (proj) {
@@ -2936,6 +2997,7 @@
 
         // Глобальная функция отправки данных на сервер Google Sheets
         async function sendPost(payload, reload = false) {
+            payload = ensureOperationRequestId(payload);
             // Оптимистичная перерисовка не должна обрывать реальную запись в Google
             // Sheets. Раньше ошибка интерфейса могла возникнуть уже после локального
             // добавления строки, но до POST — окно оставалось открытым и повторный
@@ -3388,13 +3450,30 @@
                 summary[key] = (summary[key] || 0) + value;
             };
 
-            if (kind === 'invested') {
+            if (kind === 'directExpenses') {
+                data.forEach(project => {
+                    const amount = sumAmounts(filterByPeriod(getProjectOperationalExpenses(project), 'date'));
+                    add(project.name || 'Без объекта', amount);
+                });
+            } else if (kind === 'unionInvested') {
                 data.forEach(project => {
                     filterByPeriod(getProjectOperationalExpenses(project), 'date').forEach(expense => {
                         const amount = Math.max(0, Number(expense.amount || 0));
                         if (!amount) return;
                         if (isCommonInvestor(expense.investor)) {
-                            add('Общие 50/50', amount / 2);
+                            add(project.name || 'Без объекта', amount / 2);
+                        } else if (isUnionEskeyRecipient(expense.investor)) {
+                            add(project.name || 'Без объекта', amount);
+                        }
+                    });
+                });
+            } else if (kind === 'invested') {
+                data.forEach(project => {
+                    filterByPeriod(getProjectOperationalExpenses(project), 'date').forEach(expense => {
+                        const amount = Math.max(0, Number(expense.amount || 0));
+                        if (!amount) return;
+                        if (isCommonInvestor(expense.investor)) {
+                            add(`50/50 · ${project.name || 'Без объекта'}`, amount / 2);
                         } else if (!isUnionEskeyRecipient(expense.investor)) {
                             add(getCanonicalParticipantName(expense.investor), amount);
                         }
@@ -3419,6 +3498,8 @@
         function openDashboardBreakdown(kind) {
             if (currentRole !== 'director') return;
             const titles = {
+                directExpenses: 'Прямые затраты',
+                unionInvested: 'Оплачено Юнион',
                 invested: 'Оплачено партнёрами',
                 returned: 'Возвращено вложений',
                 profit: 'Выплачено прибыли партнёрам'
