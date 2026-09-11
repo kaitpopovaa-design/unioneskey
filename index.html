@@ -3651,7 +3651,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
         };
 
         let data = [], companyTransactions = [], profitWithdrawals = [], authRole = null, currentRole = null;
-        let API_CAPABILITIES = { apiVersion: 0, projectTrash: false, operationTrash: false, withdrawalLedger: false, withdrawalTypes: false, withdrawalReinvestment: false, companySettlementTypes: false, companyGeneralSettlementTypes: false, projectTrashRecordId: false, projectTaxSettings: false, projectOrder: false, projectOrderInitialized: false, taxPaymentSources: false, projectTransfers: false };
+        let API_CAPABILITIES = { apiVersion: 0, projectTrash: false, operationTrash: false, withdrawalLedger: false, withdrawalTypes: false, withdrawalReinvestment: false, companySettlementTypes: false, companyGeneralSettlementTypes: false, projectTrashRecordId: false, projectTaxSettings: false, projectOrder: false, projectOrderInitialized: false, taxPaymentSources: false, projectTransfers: false, projectTransferEditing: false };
         
         let chartsInstance = { 
             bar: null, 
@@ -4667,10 +4667,10 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
             }, false);
             if (savedOnServer) {
                 showNotification("Настройки сохранены! PIN-коды обновлены.", "success");
-                // Перечитываем серверный конфиг, чтобы убедиться, что сайт использует именно его.
+                // Перечитываем только маленький блок доступов — это быстрее полной синхронизации.
                 try {
-                    activeFetchPromise = null;
-                    await preFetchConfig();
+                    authFetchPromise = null;
+                    await preFetchAuthConfig(true);
                 } catch (e) {
                     console.warn('Не удалось повторно проверить сохраненные PIN-коды:', e);
                 }
@@ -4745,7 +4745,52 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
             }
         }
 
-        // Глобальная переменная для отслеживания активного промиса предзагрузки
+        // Быстрая отдельная загрузка только PIN-кодов. Она запускается сразу при
+        // открытии страницы и не тянет всю финансовую базу.
+        let authFetchPromise = null;
+        let authConfigReady = false;
+
+        function applyAuthPartners(jsonData) {
+            if (!jsonData || !jsonData.partners) return false;
+            let applied = false;
+            for (const key in jsonData.partners) {
+                if (!PARTNER_CONFIG[key]) continue;
+                const serverName = String(jsonData.partners[key].name || '').trim();
+                const serverPin = String(jsonData.partners[key].pin || '').trim();
+                if (serverName) PARTNER_CONFIG[key].name = serverName;
+                // Пустой PIN с сервера не заменяем дефолтным/старым значением.
+                if (serverPin) PARTNER_CONFIG[key].pin = serverPin;
+                applied = true;
+            }
+            if (applied) {
+                localStorage.setItem('union_partner_config_v2', JSON.stringify(PARTNER_CONFIG));
+                authConfigReady = true;
+                try { renderViewSwitcher(); } catch (_) {}
+                try { updateAccessDropdowns(); } catch (_) {}
+            }
+            return applied;
+        }
+
+        function preFetchAuthConfig(force = false) {
+            if (!isLive()) return Promise.resolve(false);
+            if (!force && authFetchPromise) return authFetchPromise;
+            const authUrl = API_URL + (API_URL.includes('?') ? '&' : '?') + 'mode=auth';
+            authFetchPromise = (async () => {
+                try {
+                    const jsonData = await fetchApiJson(authUrl);
+                    if (!applyAuthPartners(jsonData)) throw new Error('Сервер не вернул настройки доступа');
+                    return true;
+                } catch (e) {
+                    console.warn('Быстрая загрузка PIN не удалась:', e);
+                    authConfigReady = false;
+                    authFetchPromise = null;
+                    throw e;
+                }
+            })();
+            return authFetchPromise;
+        }
+
+        // Глобальная переменная для отслеживания активного промиса полной загрузки
         let activeFetchPromise = null;
 
         // ПРЕДВАРИТЕЛЬНАЯ ФОНОВАЯ ЗАГРУЗКА ДАННЫХ И ДОСТУПОВ (РЕШЕНИЕ ГОНКИ ЗАПРОСОВ)
@@ -4774,7 +4819,9 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                         projectOrder: jsonData?.capabilities?.projectOrder === true,
                         projectOrderInitialized: jsonData?.capabilities?.projectOrderInitialized === true,
                         taxPaymentSources: jsonData?.capabilities?.taxPaymentSources === true,
-                        projectTransfers: jsonData?.capabilities?.projectTransfers === true
+                        projectTransfers: jsonData?.capabilities?.projectTransfers === true,
+                        projectTransferEditing: jsonData?.capabilities?.projectTransferEditing === true,
+                        fastAuth: jsonData?.capabilities?.fastAuth === true
                     };
                     
                     // Считываем доступы партнеров, если они вернулись с сервера без перезаписи цветов
@@ -4786,6 +4833,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                             }
                         }
                         localStorage.setItem('union_partner_config_v2', JSON.stringify(PARTNER_CONFIG));
+                        authConfigReady = true;
                     }
 
                     // Парсим проекты
@@ -4926,15 +4974,13 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                 return;
             }
 
-            // Сначала берем последний локально сохраненный конфиг. Если есть сеть —
-            // принудительно обновляем его с сервера, чтобы смена PIN на другом устройстве
-            // начинала действовать сразу.
+            // PIN-коды начинают загружаться в фоне ещё при открытии страницы.
+            // При нажатии ждём только этот маленький auth-запрос, а не всю таблицу.
             loadConfig();
             if (isLive()) {
-                if (btn) { btn.disabled = true; btn.textContent = 'Проверка...'; }
+                if (btn && !authConfigReady) { btn.disabled = true; btn.textContent = 'Проверка...'; }
                 try {
-                    activeFetchPromise = null;
-                    await preFetchConfig();
+                    await preFetchAuthConfig(false);
                 } catch (e) {
                     console.warn('Не удалось обновить PIN-коды с сервера, использую последний сохраненный конфиг:', e);
                 } finally {
@@ -5189,6 +5235,37 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                     targetProject.cost = targetProject.expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
                 }
                 persistCompanySettlementMeta(transaction);
+            } else if (payload.action === 'editProjectTransfer') {
+                const txIdx = payload.requestId
+                    ? companyTransactions.findIndex(t => t.requestId === payload.requestId && isProjectTransferTransaction(t))
+                    : companyTransactions.findIndex(t => Number(t.rowIndex || 0) === Number(payload.rowIndex || 0) && isProjectTransferTransaction(t));
+                const oldTarget = data.find(p => Number(p.id) === Number(payload.oldTargetProjectId || 0));
+                if (oldTarget?.expenses) {
+                    const oldExpIdx = payload.requestId
+                        ? oldTarget.expenses.findIndex(e => e.requestId === payload.requestId)
+                        : oldTarget.expenses.findIndex(e => e.date === payload.oldDate && Number(e.amount) === Number(payload.oldAmount) && e.category === payload.oldCategory && e.comment === payload.oldComment && isUnionEskeyRecipient(e.investor));
+                    if (oldExpIdx !== -1) oldTarget.expenses.splice(oldExpIdx, 1);
+                    oldTarget.cost = oldTarget.expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+                }
+                const newTarget = data.find(p => Number(p.id) === Number(payload.targetProjectId || 0));
+                if (newTarget) {
+                    if (!newTarget.expenses) newTarget.expenses = [];
+                    newTarget.expenses.push({
+                        date:payload.date, category:payload.category, amount:Number(payload.amount), comment:payload.comment || '',
+                        investor:'Юнион Эскей', settled:false, requestId:payload.requestId
+                    });
+                    newTarget.cost = newTarget.expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+                }
+                if (txIdx !== -1) {
+                    companyTransactions[txIdx] = hydrateCompanySettlementMeta({
+                        ...companyTransactions[txIdx],
+                        date:payload.date, type:'projectTransfer', amount:Number(payload.amount), category:payload.category,
+                        comment:payload.comment || '', investor:'Юнион Эскей', settlementType:normalizePersonalSettlementType(payload.settlementType) || 'Вывод прибыли',
+                        sourceProjectId:Number(payload.sourceProjectId || 0),
+                        sourceBreakdown:[{projectId:Number(payload.targetProjectId || 0), projectName:payload.targetProjectName || newTarget?.name || '', amount:Number(payload.amount)}],
+                        requestId:payload.requestId || companyTransactions[txIdx].requestId
+                    });
+                }
             } else if (payload.action === 'addCompanyExpense') {
                 const transaction = hydrateCompanySettlementMeta({
                     date: payload.date,
@@ -7060,6 +7137,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
 
                 const actionHtml = canEdit ? (isTransfer ? `
                     <div id="company-actions-${idx}" class="flex justify-center gap-2 text-xs font-bold">
+                        <button onclick="startEditCompanyExpense(${idx})" class="text-[#7C3AED] hover:underline">Изменить</button>
                         <button onclick="askDeleteCompanyExpense(${idx})" class="text-[#93C5FD] hover:text-[#60A5FA] hover:underline">Удалить</button>
                     </div>
                 ` : `
@@ -7106,7 +7184,63 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                 openTaxPaymentEdit(origIdx);
                 return;
             }
+            if (isProjectTransferTransaction(t)) {
+                openProjectTransferEdit(origIdx);
+                return;
+            }
             openEditOperationModal({ kind:'company', origIdx, record:t });
+        }
+
+        let editingProjectTransferOrigIdx = -1;
+
+        function setModalDropdownValue(ddId, value, label) {
+            const hiddenMap = {
+                'dd-project':'uni-project',
+                'dd-target-project':'uni-target-project',
+                'dd-transfer-settlement':'uni-transfer-settlement'
+            };
+            const hidden = document.getElementById(hiddenMap[ddId] || '');
+            if (hidden) hidden.value = String(value ?? '');
+            const lbl = document.getElementById(ddId + '-label');
+            if (lbl) lbl.textContent = label || 'Выберите';
+            const menu = document.getElementById(ddId + '-menu');
+            if (menu) menu.querySelectorAll('.modal-dd-item').forEach(button => {
+                button.classList.toggle('selected', String(button.dataset.value || '') === String(value ?? ''));
+            });
+        }
+
+        function openProjectTransferEdit(origIdx) {
+            const record = companyTransactions[origIdx];
+            if (!record || !isProjectTransferTransaction(record) || currentRole !== 'director') return;
+            if (!API_CAPABILITIES.projectTransferEditing) {
+                showNotification('Обновите Google Apps Script до версии с редактированием переводов между объектами.', 'error');
+                return;
+            }
+            const target = getProjectTransferTarget(record);
+            const source = data.find(project => Number(project.id) === Number(record.sourceProjectId || 0));
+            const targetProject = data.find(project => Number(project.id) === Number(target?.projectId || 0));
+
+            openUniversalModal('projectTransfer', record.sourceProjectId);
+            editingProjectTransferOrigIdx = origIdx;
+
+            setModalDropdownValue('dd-project', Number(record.sourceProjectId || 0), source?.name || 'Выберите объект');
+            setModalDropdownValue('dd-target-project', Number(target?.projectId || 0), targetProject?.name || target?.projectName || 'Выберите объект');
+            const settlement = normalizePersonalSettlementType(record.settlementType) || 'Вывод прибыли';
+            setModalDropdownValue('dd-transfer-settlement', settlement, settlement === 'Возврат вложений' ? 'Возврат вложений Юнион Эскей' : 'Вывод прибыли Юнион Эскей');
+
+            const dateInput = document.getElementById('uni-date');
+            const amountInput = document.getElementById('uni-amount');
+            const categoryInput = document.getElementById('uni-category-input');
+            const commentInput = document.getElementById('uni-comment');
+            if (dateInput) dateInput.value = record.date || '';
+            syncDateDisplay('uni-date');
+            if (amountInput) amountInput.value = formatNumberWithSpaces(record.amount);
+            if (categoryInput) categoryInput.value = record.category || '';
+            if (commentInput) commentInput.value = record.comment || '';
+            const title = document.getElementById('uni-modal-title');
+            const saveBtn = document.getElementById('btn-save-universal');
+            if (title) title.textContent = 'Изменить финансирование объекта';
+            if (saveBtn) saveBtn.textContent = 'Сохранить изменения';
         }
 
         function openTaxPaymentEdit(origIdx) {
@@ -9312,6 +9446,8 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                 applyUniversalOperationType(value, label, true);
             } else {
                 const hiddenId = ddId === 'dd-project' ? 'uni-project'
+                    : ddId === 'dd-target-project' ? 'uni-target-project'
+                    : ddId === 'dd-transfer-settlement' ? 'uni-transfer-settlement'
                     : ddId === 'dd-payout-type' ? 'uni-payout-type'
                     : ddId === 'dd-personal-settlement' ? 'uni-personal-settlement'
                     : ddId === 'dd-add-partner' ? 'add-project-partner'
@@ -9709,6 +9845,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
 
         function openUniversalModal(type, pid) {
             editingTaxPaymentOrigIdx = -1;
+            editingProjectTransferOrigIdx = -1;
             initCatInput();
             const isPartnerUser = currentRole !== 'director';
             const requestedType = ['project','income','general','companyIncome','personal','taxPayment','withdrawal','projectTransfer'].includes(type) ? type : 'project';
@@ -9805,7 +9942,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
             document.body.style.overflow = 'hidden';
         }
 
-        function closeUniversalModal() { document.getElementById('universal-modal').classList.add('hidden'); document.body.style.overflow = ''; editingTaxPaymentOrigIdx = -1; }
+        function closeUniversalModal() { document.getElementById('universal-modal').classList.add('hidden'); document.body.style.overflow = ''; editingTaxPaymentOrigIdx = -1; editingProjectTransferOrigIdx = -1; }
         
         async function saveUniversalExpense() {
             const submitBtn = document.querySelector('#btn-save-universal');
@@ -9973,6 +10110,42 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
 
             if (!payload) {
                 fail('Этот тип операции пока не поддерживается.');
+                return;
+            }
+
+            if (type === 'projectTransfer' && editingProjectTransferOrigIdx >= 0) {
+                const editIdx = editingProjectTransferOrigIdx;
+                const oldTx = { ...companyTransactions[editIdx] };
+                const oldTarget = getProjectTransferTarget(oldTx);
+                const editPayload = {
+                    action:'editProjectTransfer',
+                    rowIndex:oldTx.rowIndex || '',
+                    requestId:oldTx.requestId || '',
+                    oldSourceProjectId:Number(oldTx.sourceProjectId || 0),
+                    oldTargetProjectId:Number(oldTarget?.projectId || 0),
+                    oldDate:oldTx.date || '',
+                    oldAmount:Number(oldTx.amount || 0),
+                    oldCategory:oldTx.category || '',
+                    oldComment:oldTx.comment || '',
+                    sourceProjectId:Number(payload.sourceProjectId || 0),
+                    sourceProjectName:payload.sourceProjectName || '',
+                    targetProjectId:Number(payload.targetProjectId || 0),
+                    targetProjectName:payload.targetProjectName || '',
+                    date:payload.date,
+                    amount:Number(payload.amount || 0),
+                    category:payload.category || 'Без категории',
+                    comment:payload.comment || '',
+                    settlementType:payload.settlementType || 'Вывод прибыли'
+                };
+                const editRequest = sendPost(editPayload, false);
+                closeUniversalModal();
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Сохранить'; }
+                renderCompanyHistoryTable(); renderTable(); renderCharts(); refreshGeneratorsCard();
+                const sent = await editRequest;
+                if (sent) {
+                    showNotification('Финансирование объекта изменено', 'success');
+                    setTimeout(initApp, 700);
+                }
                 return;
             }
 
@@ -10588,6 +10761,14 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
             renderTable(); 
             setTimeout(renderCharts, 100);
         }
+
+        // Начинаем проверку доступов заранее, пока пользователь только вводит PIN.
+        document.addEventListener('DOMContentLoaded', () => {
+            try { loadConfig(); } catch (_) {}
+            if (isLive()) {
+                preFetchAuthConfig(false).catch(() => {});
+            }
+        });
     </script>
     <div id="cat-dd" style="display:none;position:fixed;background:white;border:1px solid #E5E7EB;border-radius:16px;box-shadow:0 10px 25px rgba(0,0,0,0.15);z-index:99999;max-height:200px;overflow-y:auto;padding:8px;"></div>
     <!-- КОРЗИНА УДАЛЁННЫХ ОБЪЕКТОВ И РАСХОДОВ -->
