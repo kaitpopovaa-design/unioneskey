@@ -2490,16 +2490,65 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
             transition: border-color .2s ease, box-shadow .2s ease;
         }
         .settlement-detail-link {
-            width:100%; border:0; background:transparent; padding:2px 0 3px; text-align:left;
-            cursor:pointer; border-radius:8px; transition:background-color .15s ease;
+            width:100%;
+            border:0;
+            background:transparent;
+            padding:4px 7px;
+            margin:0 -7px;
+            text-align:left;
+            cursor:pointer;
+            border-radius:10px;
+            transition:color .15s ease, opacity .15s ease;
         }
-        .settlement-detail-link:hover { background:#F5F3FF; }
+        .settlement-detail-link:hover { background:transparent; }
+        .settlement-detail-link:hover .settlement-click-name { color:#6D28D9 !important; }
         .settlement-detail-link:focus-visible { outline:2px solid #C4B5FD; outline-offset:2px; }
+
+        /* Единый спокойный дизайн таблиц детализации. */
+        .project-detail-table th { padding:12px 12px; text-align:center; white-space:nowrap; }
+        .project-detail-table td { padding:12px 12px; text-align:center; }
+        .project-detail-table tbody tr:last-child { border-bottom:0 !important; }
         .project-pair-group { min-width: 0; }
         .project-pair-card { min-width: 0; }
-        .project-action-link { cursor: pointer !important; }
-        .project-action-link:hover { background: #F5F3FF; color: #6D28D9; }
-        .project-action-link:focus-visible { outline: 2px solid #A78BFA; outline-offset: 2px; }
+        /* Кликабельные текстовые элементы: без рамок/подложек, только мягкая подсветка текста. */
+        .project-action-link {
+            cursor: pointer !important;
+            background: transparent !important;
+            border-color: transparent !important;
+            box-shadow: none !important;
+            transition: color .15s ease, opacity .15s ease !important;
+        }
+        .project-action-link:hover {
+            background: transparent !important;
+            border-color: transparent !important;
+            box-shadow: none !important;
+            color: #6D28D9 !important;
+        }
+        .project-action-link:focus-visible {
+            outline: none !important;
+            color: #6D28D9 !important;
+        }
+        /* В строках затрат цвет задан на внутренних элементах, поэтому
+           подсвечиваем их явно, сохраняя прозрачный фон без рамки. */
+        .project-action-link[data-category]:hover > span,
+        .project-action-link[data-category]:focus-visible > span {
+            color: #6D28D9 !important;
+        }
+        .info-project-link {
+            text-decoration: none !important;
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            transition: color .15s ease, opacity .15s ease;
+        }
+        .info-project-link:hover,
+        .info-project-link:focus-visible {
+            text-decoration: none !important;
+            color: #6D28D9 !important;
+            outline: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
 
         /* Детализация финансового потока */
         .flow-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -4231,15 +4280,14 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                     clickable = true;
                 }
                 const rowInner = `
-                    <span class="text-xs text-gray-600 font-medium">${escapeTrashText(recipient)}</span>
-                    <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;">${formatMoney(amount)}</span>
-                    <span>${clickable ? '<span style="color:#A78BFA;font-size:13px;">›</span>' : ''}</span>`;
+                    <span class="settlement-click-name text-xs text-gray-600 font-medium" style="padding-left:1px;">${escapeTrashText(recipient)}</span>
+                    <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;white-space:nowrap;font-variant-numeric:tabular-nums;">${formatMoney(amount)}</span>`;
                 if (clickable) {
                     return `<button type="button" class="settlement-detail-link" onclick="${clickHandler}" title="Посмотреть операции">
-                        <span style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;">${rowInner}</span>
+                        <span style="display:grid;grid-template-columns:minmax(0,1fr) 94px;gap:12px;align-items:center;">${rowInner}</span>
                     </button>`;
                 }
-                return `<div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:2px 0 3px;">${rowInner}</div>`;
+                return `<div style="display:grid;grid-template-columns:minmax(0,1fr) 94px;gap:12px;align-items:center;padding:4px 7px;">${rowInner}</div>`;
             }).join('');
         }
 
@@ -4247,15 +4295,14 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
             if (!(Number(amount) > 0)) return '';
             const clickable = Number(projectId) > 0;
             const inner = `
-                <span class="text-xs text-gray-500 font-medium">Общие 50/50</span>
-                <span style="text-align:right;font-size:12px;font-weight:600;color:#4B5563;">${formatMoney(amount)}</span>
-                <span>${clickable ? '<span style="color:#A78BFA;font-size:13px;">›</span>' : ''}</span>`;
+                <span class="settlement-click-name text-xs text-gray-500 font-medium" style="padding-left:1px;">Общие 50/50</span>
+                <span style="text-align:right;font-size:12px;font-weight:600;color:#4B5563;white-space:nowrap;font-variant-numeric:tabular-nums;">${formatMoney(amount)}</span>`;
             if (clickable) {
-                return `<button type="button" class="settlement-detail-link" onclick="openParticipantFundingDetails(${Number(projectId)}, '__COMMON__', '${String(monthKey || '')}')" title="Посмотреть общие расходы 50/50" style="margin-top:3px;border-top:1px solid #F3F4F6;border-radius:0;padding-top:5px;">
-                    <span style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;">${inner}</span>
+                return `<button type="button" class="settlement-detail-link" onclick="openParticipantFundingDetails(${Number(projectId)}, '__COMMON__', '${String(monthKey || '')}')" title="Посмотреть общие расходы 50/50" style="margin-top:3px;border-top:1px solid #F3F4F6;padding-top:7px;">
+                    <span style="display:grid;grid-template-columns:minmax(0,1fr) 94px;gap:12px;align-items:center;">${inner}</span>
                 </button>`;
             }
-            return `<div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:5px 0 3px;margin-top:3px;border-top:1px solid #F3F4F6;">${inner}</div>`;
+            return `<div style="display:grid;grid-template-columns:minmax(0,1fr) 94px;gap:12px;align-items:center;padding:7px 7px 4px;margin-top:3px;border-top:1px solid #F3F4F6;">${inner}</div>`;
         }
 
         // Единая правая карточка для каждого объекта, включая «Генераторы».
@@ -4298,26 +4345,13 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                 { projectId: project.id, kind:'profitPayout', monthKey: detailMonthKey }
             );
             const taxPaymentAmount = getProjectTaxPaymentAmount(project.id, includeOperation);
-            const companyExpenseFundingAmount = getProjectCompanyExpenseFundingAmount(project.id, includeOperation);
-            const projectTransferOutAmount = getProjectTransferOutAmount(project.id, includeOperation);
             // Директор видит движения денег из объекта отдельно от экономики объекта.
             const taxPaymentHtml = currentRole === 'director'
                 ? `<div class="border-t border-gray-100 mt-3 pt-3 director-only">
-                    <div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:2px 0 3px;">
+                    <div style="display:grid;grid-template-columns:minmax(0,1fr) 94px;gap:12px;align-items:center;padding:4px 7px;">
                         <span class="text-xs text-gray-600 font-medium">В налоги</span>
                         <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;white-space:nowrap;font-variant-numeric:tabular-nums;">${formatMoney(taxPaymentAmount)}</span>
-                        <span></span>
                     </div>
-                    ${companyExpenseFundingAmount > 0 ? `<div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:2px 0 3px;">
-                        <span class="text-xs text-gray-600 font-medium">Из прибыли Юнион → расходы компании</span>
-                        <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;white-space:nowrap;font-variant-numeric:tabular-nums;">${formatMoney(companyExpenseFundingAmount)}</span>
-                        <span></span>
-                    </div>` : ''}
-                    ${projectTransferOutAmount > 0 ? `<div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;padding:2px 0 3px;">
-                        <span class="text-xs text-gray-600 font-medium">Из прибыли Юнион → другие объекты</span>
-                        <span style="text-align:right;font-size:12px;font-weight:600;color:#1F2937;white-space:nowrap;font-variant-numeric:tabular-nums;">${formatMoney(projectTransferOutAmount)}</span>
-                        <span></span>
-                    </div>` : ''}
                 </div>`
                 : '';
             return `
@@ -4602,6 +4636,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
         // ВОССТАНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ ЗАГРУЗКИ КАСТОМНЫХ НАСТРОЕК
         function loadConfig() {
             const saved = localStorage.getItem('union_partner_config_v2');
+            authCachedVerified = !!localStorage.getItem('union_partner_config_verified_at');
             if (saved) {
                 try {
                     const parsed = JSON.parse(saved);
@@ -4613,6 +4648,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                     }
                 } catch(e) {
                     console.error("Ошибка загрузки кастомных настроек:", e);
+                    authCachedVerified = false;
                 }
             }
         }
@@ -4700,6 +4736,8 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                 config: PARTNER_CONFIG
             }, false);
             if (savedOnServer) {
+                localStorage.setItem('union_partner_config_verified_at', String(Date.now()));
+                authCachedVerified = true;
                 showNotification("Настройки сохранены! PIN-коды обновлены.", "success");
                 // Перечитываем только маленький блок доступов — это быстрее полной синхронизации.
                 try {
@@ -4789,6 +4827,9 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
         // открытии страницы и не тянет всю финансовую базу.
         let authFetchPromise = null;
         let authConfigReady = false;
+        // true only when local PINs were previously confirmed by the server.
+        // This lets repeat logins react instantly while a fresh check runs in background.
+        let authCachedVerified = false;
 
         function applyAuthPartners(jsonData) {
             if (!jsonData || !jsonData.partners) return false;
@@ -4804,6 +4845,8 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
             }
             if (applied) {
                 localStorage.setItem('union_partner_config_v2', JSON.stringify(PARTNER_CONFIG));
+                localStorage.setItem('union_partner_config_verified_at', String(Date.now()));
+                authCachedVerified = true;
                 authConfigReady = true;
                 try { renderViewSwitcher(); } catch (_) {}
                 try { updateAccessDropdowns(); } catch (_) {}
@@ -4873,6 +4916,8 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                             }
                         }
                         localStorage.setItem('union_partner_config_v2', JSON.stringify(PARTNER_CONFIG));
+                        localStorage.setItem('union_partner_config_verified_at', String(Date.now()));
+                        authCachedVerified = true;
                         authConfigReady = true;
                     }
 
@@ -5001,6 +5046,40 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
         // Вход всегда проверяет актуальные PIN-коды. При наличии сети сначала
         // подтягиваем настройки из Google Таблицы; офлайн используем только последний
         // сохраненный конфиг из localStorage. Жестко прошитые старые PIN-коды не принимаются.
+        function findRoleByPin(pinVal) {
+            for (const [role, cfg] of Object.entries(PARTNER_CONFIG)) {
+                if (String(cfg.pin || '').trim() === String(pinVal || '').trim()) return role;
+            }
+            return null;
+        }
+
+        function showAuthSyncScreen() {
+            const ls = document.getElementById('login-screen');
+            const ac = document.getElementById('app-content');
+            const ss = document.getElementById('sync-screen');
+            if (ls) ls.classList.add('hidden');
+            if (ac) ac.classList.remove('hidden');
+            if (ss) ss.classList.remove('hidden');
+        }
+
+        function returnToLoginAfterAuth(message = 'Неверный PIN-код') {
+            authRole = null;
+            currentRole = 'director';
+            const ls = document.getElementById('login-screen');
+            const ac = document.getElementById('app-content');
+            const ss = document.getElementById('sync-screen');
+            const errEl = document.getElementById('login-error');
+            const inp = document.getElementById('pin-input');
+            if (ss) ss.classList.add('hidden');
+            if (ac) ac.classList.add('hidden');
+            if (ls) ls.classList.remove('hidden');
+            if (errEl) { errEl.textContent = message; errEl.classList.remove('hidden'); }
+            if (inp) { inp.value = ''; inp.focus(); }
+        }
+
+        // Повторный вход на уже подтвержденном устройстве реагирует сразу:
+        // локально сохраненный PIN открывает экран синхронизации без ожидания Apps Script.
+        // Свежий auth-запрос всё равно проверяется до загрузки финансовых данных.
         async function checkPin() {
             const inp = document.getElementById('pin-input');
             const errEl = document.getElementById('login-error');
@@ -5008,41 +5087,78 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
             const btn = document.querySelector('#login-screen button');
 
             if (errEl) { errEl.classList.add('hidden'); errEl.textContent = 'Неверный PIN-код'; }
-
             if (!pinVal) {
                 if (errEl) { errEl.textContent = 'Введите PIN'; errEl.classList.remove('hidden'); }
                 return;
             }
 
-            // PIN-коды начинают загружаться в фоне ещё при открытии страницы.
-            // При нажатии ждём только этот маленький auth-запрос, а не всю таблицу.
             loadConfig();
-            if (isLive()) {
-                if (btn && !authConfigReady) { btn.disabled = true; btn.textContent = 'Проверка...'; }
+
+            // Если свежий auth уже успел прийти в фоне — вход полностью мгновенный.
+            if (authConfigReady) {
+                const freshRole = findRoleByPin(pinVal);
+                if (!freshRole) {
+                    if (errEl) errEl.classList.remove('hidden');
+                    if (inp) { inp.value = ''; inp.focus(); }
+                    return;
+                }
+                authRole = freshRole;
+                currentRole = freshRole;
+                showAuthSyncScreen();
+                try { renderViewSwitcher(); } catch (_) {}
+                try { updateAccessDropdowns(); } catch (_) {}
+                initApp();
+                return;
+            }
+
+            // Если этот набор PIN уже когда-то подтверждался сервером, не держим кнопку
+            // «Проверка...»: сразу показываем синхронизацию, но перед финансовыми данными
+            // обязательно сверяем PIN с текущим серверным значением.
+            const cachedRole = authCachedVerified ? findRoleByPin(pinVal) : null;
+            if (cachedRole) {
+                authRole = cachedRole;
+                currentRole = cachedRole;
+                showAuthSyncScreen();
+                try { renderViewSwitcher(); } catch (_) {}
+                try { updateAccessDropdowns(); } catch (_) {}
+
                 try {
                     await preFetchAuthConfig(false);
+                    const verifiedRole = findRoleByPin(pinVal);
+                    if (!verifiedRole || verifiedRole !== cachedRole) {
+                        returnToLoginAfterAuth('PIN-код был изменён. Введите новый PIN.');
+                        return;
+                    }
+                    authRole = verifiedRole;
+                    currentRole = verifiedRole;
+                    initApp();
                 } catch (e) {
-                    console.warn('Не удалось обновить PIN-коды с сервера, использую последний сохраненный конфиг:', e);
-                } finally {
-                    if (btn) { btn.disabled = false; btn.textContent = 'Войти в систему'; }
+                    // Сохраняем прежнее офлайн-поведение: ранее подтвержденный PIN
+                    // разрешает открыть локально сохраненные данные при сетевом сбое.
+                    console.warn('Не удалось перепроверить PIN онлайн, используем ранее подтвержденный PIN:', e);
+                    initApp();
                 }
+                return;
             }
 
-            let foundRole = null;
-            for (const [role, cfg] of Object.entries(PARTNER_CONFIG)) {
-                if (String(cfg.pin || '').trim() === pinVal) { foundRole = role; break; }
+            // Первый вход на этом устройстве или новый PIN: один раз ждём сервер.
+            if (btn) { btn.disabled = true; btn.textContent = 'Проверка...'; }
+            try {
+                await preFetchAuthConfig(false);
+            } catch (e) {
+                console.warn('Не удалось получить актуальные PIN-коды:', e);
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = 'Войти в систему'; }
             }
 
+            const foundRole = authConfigReady ? findRoleByPin(pinVal) : null;
             if (foundRole) {
                 authRole = foundRole;
-                currentRole = authRole;
-                const ls = document.getElementById('login-screen');
-                const ac = document.getElementById('app-content');
-                if (ls) ls.classList.add('hidden');
-                if (ac) ac.classList.remove('hidden');
-                try { renderViewSwitcher(); } catch(e) { console.error('rVS', e); }
-                try { updateAccessDropdowns(); } catch(e) { console.error('uAD', e); }
-                try { initApp(); } catch(e) { console.error('iA', e); }
+                currentRole = foundRole;
+                showAuthSyncScreen();
+                try { renderViewSwitcher(); } catch (_) {}
+                try { updateAccessDropdowns(); } catch (_) {}
+                initApp();
             } else {
                 if (errEl) errEl.classList.remove('hidden');
                 if (inp) { inp.value = ''; inp.focus(); }
@@ -6047,7 +6163,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
 
                 tbody.innerHTML += `<tr class="hover:bg-gray-50/70 transition-all">
                     <td class="px-6 py-4 font-bold text-brand-dark whitespace-nowrap" title="Нажми, чтобы перейти к карточке объекта">
-                        <button type="button" onclick="scrollToProjectCard(${Number(p.id)})" class="text-left font-bold text-brand-dark hover:text-brand-purple transition-colors underline-offset-4 hover:underline">${escapeTrashText(p.name)}</button>
+                        <button type="button" onclick="scrollToProjectCard(${Number(p.id)})" class="info-project-link text-left font-bold text-brand-dark">${escapeTrashText(p.name)}</button>
                     </td>
                     <td class="px-6 py-4">
                         <textarea onchange="updateTodo(${p.id}, this.value)" placeholder="Запишите задачи..." class="todo-ta w-full bg-gray-50/50 hover:bg-gray-50 focus:bg-white border border-transparent focus:border-brand-purple focus:ring-4 focus:ring-brand-purple/10 rounded-2xl p-3 text-xs text-brand-dark outline-none transition-all leading-relaxed" id="todo-ta-${p.id}" style="resize:both;height:54px;min-height:40px;width:220px;max-width:320px;min-width:100px;display:block;overflow:auto;box-sizing:border-box;" translate="no" spellcheck="false" lang="ru">${p.todo || ''}</textarea>
@@ -7694,7 +7810,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                     .slice()
                     .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
                     .map(row => `
-                        <tr class="border-b border-gray-50">
+                        <tr class="border-b border-gray-50 last:border-0">
                             <td class="text-center whitespace-nowrap">${escapeTrashText(row.date || '')}</td>
                             <td class="text-center">${escapeTrashText(row.category || row.reason || '—')}</td>
                             <td class="text-center">${escapeTrashText(row.investor || row.payer || '—')}</td>
@@ -7711,7 +7827,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                     .slice()
                     .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
                     .map(row => `
-                        <tr class="border-b border-gray-50">
+                        <tr class="border-b border-gray-50 last:border-0">
                             <td class="text-center whitespace-nowrap">${escapeTrashText(row.date || '')}</td>
                             <td class="text-center">${escapeTrashText(row.person || row.investor || 'Юнион Эскей')}</td>
                             <td class="text-center">${escapeTrashText(normalizePayoutType(row.payoutType || row.type))}</td>
@@ -7755,7 +7871,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                         }
 
                         return `
-                            <tr class="border-b border-gray-50">
+                            <tr class="border-b border-gray-50 last:border-0">
                                 <td class="text-center whitespace-nowrap">${escapeTrashText(row.date || '')}</td>
                                 <td class="text-center">${escapeTrashText(row.category || 'Без категории')}</td>
                                 <td class="text-center">${escapeTrashText(row.investor || 'Юнион Эскей')}</td>
@@ -7768,14 +7884,19 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
 
             title.textContent = sectionTitle;
             subtitle.textContent = periodLabel ? `${project.name} · ${periodLabel}` : project.name;
+            const detailTotal = rows.reduce((sum, row) => sum + Math.max(0, Number(row.amount || 0)), 0);
             content.innerHTML = rows.length ? `
-                <div class="overflow-x-auto">
-                    <table class="w-full min-w-[720px] text-xs text-gray-700">
-                        <thead class="sticky top-0 bg-white border-b text-[10px] uppercase text-gray-400">${tableHeader}</thead>
+                <div class="overflow-auto rounded-2xl border border-gray-100">
+                    <table class="project-detail-table w-full min-w-[720px] border-collapse text-xs text-gray-700">
+                        <thead class="sticky top-0 bg-gray-50 text-[10px] uppercase tracking-wider text-gray-400 border-b border-gray-100">${tableHeader}</thead>
                         <tbody>${rowsHtml}</tbody>
                     </table>
                 </div>
-            ` : `<div class="py-12 text-center text-sm italic text-gray-400">Нет операций${periodLabel ? ` за ${periodLabel.toLowerCase()}` : ' за выбранными условиями'}</div>`;
+                <div class="mt-4 flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Итого</span>
+                    <span class="text-base font-bold text-brand-dark">${formatMoney(detailTotal)}</span>
+                </div>
+            ` : `<div class="py-10 text-center text-sm text-gray-300 italic">Нет операций${periodLabel ? ` за ${periodLabel.toLowerCase()}` : ' за выбранными условиями'}</div>`;
 
             modal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
