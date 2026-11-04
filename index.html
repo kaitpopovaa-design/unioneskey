@@ -1913,25 +1913,6 @@
             return { investedByParticipant, commonAmount };
         }
 
-        // Это показатель окупаемости, а не вторая операция возврата вложений:
-        // уже выведенная прибыль сохраняет исходный тип выплаты.
-        function getPartnerInvestmentRecovery(project) {
-            const invested = getProjectFundingSummary(project).investedByParticipant;
-            const payouts = getProjectWithdrawalBreakdown(project);
-            return Object.entries(invested)
-                .filter(([name, amount]) => !isUnionEskeyRecipient(name) && Number(amount) > 0)
-                .map(([name, amount]) => {
-                    const investment = Math.max(0, Number(amount || 0));
-                    const capitalReturned = Math.min(investment, Math.max(0, Number(payouts.returnedByRecipient[name] || 0)));
-                    const profitPaid = Math.max(0, Number(payouts.profitByRecipient[name] || 0));
-                    const coveredByProfit = Math.min(investment - capitalReturned, profitPaid);
-                    return {
-                        name, investment, capitalReturned, profitPaid, coveredByProfit,
-                        remaining: Math.max(0, investment - capitalReturned - coveredByProfit)
-                    };
-                });
-        }
-
         function getProjectParticipants(project) {
             const participants = ['Юнион Эскей'];
             const accessRaw = String(project?.partnerAccess || '');
@@ -2038,21 +2019,12 @@
                 payoutsVisibleToViewer ? breakdown.profitByRecipient : withoutUnionEskeyAmount(breakdown.profitByRecipient),
                 'Нет выводов прибыли'
             );
-            const recoveryRows = getPartnerInvestmentRecovery(project);
-            const recoveryHtml = recoveryRows.length ? recoveryRows.map(row => `
-                <div class="py-1.5 border-b border-gray-50 last:border-0">
-                    <div class="flex justify-between gap-2 text-xs font-semibold text-gray-700">
-                        <span>${escapeTrashText(row.name)}</span><span class="whitespace-nowrap">Осталось отбить ${formatMoney(row.remaining)}</span>
-                    </div>
-                    <div class="mt-0.5 text-[10px] text-gray-500">Вложено ${formatMoney(row.investment)} · возврат вложений ${formatMoney(row.capitalReturned)} · окупилось выплатами прибыли ${formatMoney(row.coveredByProfit)}</div>
-                </div>`).join('') : '<div class="text-xs text-gray-300 italic">Вложений партнёров пока нет</div>';
             return `
                 <div class="border-t border-gray-100 pt-3"><div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Вложено участниками</div>${fundedRowsHtml}</div>
                 <div class="border-t border-gray-100 mt-3 pt-3"><div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Доли чистой прибыли</div>${profitSharesHtml}</div>
                 <div class="border-t border-gray-100 mt-3 pt-3"><div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Возвращено вложений</div>${returnedCapitalHtml}</div>
                 <div class="border-t border-gray-100 mt-3 pt-3"><div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Реинвестировано</div>${reinvestedHtml}</div>
                 <div class="border-t border-gray-100 mt-3 pt-3"><div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Выведено прибыли</div>${withdrawnProfitHtml}</div>
-                <div class="border-t border-gray-100 mt-3 pt-3"><div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Окупаемость вложений партнёров · за всё время</div>${recoveryHtml}${isFalseFloorProject(project) ? '<p class="mt-1 text-[10px] text-gray-400">Поступление на счёт компании партнёра само по себе не считается выплатой прибыли.</p>' : ''}</div>
             `;
         }
 
