@@ -1020,7 +1020,7 @@
                         </select>
                     </div>
                     <div id="edit-income-reserve-wrap" class="hidden space-y-1">
-                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Расчётный резерв / удержание</label>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Налог / резерв этого поступления</label>
                         <select id="edit-income-reserve-mode" onchange="toggleIncomeReserveManual('edit')" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-brand-purple">
                             <option value="project">Ставка объекта</option>
                             <option value="partnerVat22">НДС партнёра 22% внутри суммы (оценка)</option>
@@ -1241,7 +1241,7 @@
                             </select>
                         </div>
                         <div id="uni-income-reserve-wrap" class="hidden space-y-1">
-                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Расчётный резерв / удержание</label>
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Налог / резерв этого поступления</label>
                             <select id="uni-income-reserve-mode" onchange="toggleIncomeReserveManual('uni')" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-brand-purple">
                                 <option value="project">Ставка объекта</option>
                                 <option value="partnerVat22">НДС партнёра 22% внутри суммы (оценка)</option>
@@ -1321,7 +1321,7 @@
                     <button type="button" onclick="setProjectTaxRatePreset(6)" class="h-9 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:border-brand-purple hover:text-brand-purple">6%</button>
                     <button type="button" onclick="setProjectTaxRatePreset(22)" class="h-9 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:border-brand-purple hover:text-brand-purple">22%</button>
                 </div>
-                <p class="text-[10px] leading-snug text-gray-400">Если сумма поступления уже включает НДС 22%, для самого НДС обычно указывают 18,03% (22/122). Если цена в поступлениях без НДС — 22%.</p>
+                <p id="project-tax-modal-help" class="text-[10px] leading-snug text-gray-400">Ставка объекта применяется только к поступлениям, для которых не выбрано отдельное правило.</p>
                 <div class="pt-1 flex gap-2 justify-end">
                     <button type="button" onclick="closeProjectTaxModal()" class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors">Отмена</button>
                     <button type="submit" class="px-5 py-2 bg-brand-purple text-white text-sm font-bold rounded-xl shadow-md hover:bg-brand-purpleHover transition-all">Сохранить</button>
@@ -1342,11 +1342,11 @@
             </div>
             <form onsubmit="event.preventDefault(); saveNewProject();">
                 <div class="px-6 py-5 space-y-3" translate="no">
-                    <input type="text" id="add-project-name" autocomplete="off" name="prj_nm_x3" placeholder="Название объекта" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
+                    <input type="text" id="add-project-name" autocomplete="off" name="prj_nm_x3" oninput="maybeDefaultNewProjectTaxRate()" placeholder="Название объекта" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru" required>
                     <input type="text" id="add-project-contract" autocomplete="off" name="prj_ct_x3" oninput="formatInputSpaces(this)" placeholder="Сумма договора, если известна (₽)" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru">
                     <div class="space-y-1">
                         <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Налог от поступлений, %</label>
-                        <input type="number" id="add-project-tax-rate" min="0" max="100" step="0.01" value="6" inputmode="decimal" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" autocomplete="off" translate="no" spellcheck="false" lang="ru">
+                        <input type="number" id="add-project-tax-rate" min="0" max="100" step="0.01" value="6" oninput="this.dataset.manual = 'true'" inputmode="decimal" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" autocomplete="off" translate="no" spellcheck="false" lang="ru">
                     </div>
                     <input type="text" id="add-project-paid" autocomplete="off" name="prj_pd_x3" oninput="formatInputSpaces(this); toggleNewProjectIncomeFields();" placeholder="Поступило (₽)" class="w-full h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-normal outline-none focus:border-brand-purple transition-all" translate="no" spellcheck="false" lang="ru">
                     <div id="add-project-income-details" class="hidden space-y-3 rounded-2xl border border-purple-100 bg-purple-50/40 p-3">
@@ -1500,6 +1500,29 @@
         function getMonthlyUpd(projectId, month) {
             return monthlyUpds.find(row => Number(row.projectId) === Number(projectId) && row.month === month);
         }
+        function getGeneratorAccruedPeriod(project, period) {
+            if (!period || !isGeneratorProject(project)) return null;
+            const firstMonth = period.type === 'month' ? period.month
+                : period.type === 'quarter' ? (period.quarter - 1) * 3 + 1 : 1;
+            const lastMonth = period.type === 'month' ? period.month
+                : period.type === 'quarter' ? firstMonth + 2 : 12;
+            let income = 0, tax = 0;
+            for (let month = firstMonth; month <= lastMonth; month++) {
+                const monthKey = `${period.year}-${String(month).padStart(2, '0')}`;
+                const upd = getMonthlyUpd(project.id, monthKey);
+                if (upd) {
+                    income += upd.amount;
+                    tax += getProjectTaxAmount(project, upd.amount);
+                    continue;
+                }
+                const provisionalRows = (project.incomes || []).filter(row =>
+                    getYearMonth(row.date) === monthKey && (!row.serviceMonth || row.serviceMonth === monthKey)
+                );
+                income += sumAmounts(provisionalRows);
+                tax += getProjectTaxAmount(project, sumAmounts(provisionalRows), provisionalRows);
+            }
+            return { income, tax };
+        }
         function getIncomeReserve(project, row) {
             const gross = Math.max(0, Number(row?.amount || 0));
             switch (row?.reserveMode || 'project') {
@@ -1507,7 +1530,24 @@
                 case 'union6': return Math.round(gross * .06);
                 case 'manual': return Math.max(0, Number(row?.reserveAmount || 0));
                 case 'none': return 0;
-                default: return Math.round(gross * getProjectTaxRate(project) / 100);
+                default: {
+                    const rate = getProjectTaxRate(project);
+                    // В «Фальшполах» 22% означает НДС, уже включённый в сумму платежа.
+                    return isFalseFloorProject(project) && rate === 22
+                        ? Math.round(gross * 22 / 122)
+                        : Math.round(gross * rate / 100);
+                }
+            }
+        }
+        function getIncomeReserveLabel(project, row) {
+            switch (row?.reserveMode || 'project') {
+                case 'partnerVat22': return 'НДС 22% внутри суммы';
+                case 'union6': return 'Резерв Юнион 6%';
+                case 'manual': return 'Сумма вручную';
+                case 'none': return 'Без удержания';
+                default: return isFalseFloorProject(project) && getProjectTaxRate(project) === 22
+                    ? 'НДС объекта 22% внутри суммы'
+                    : `Ставка объекта ${formatTaxRate(getProjectTaxRate(project))}%`;
             }
         }
         function getProjectTaxAmount(project, income, incomeRows = null) {
@@ -3395,6 +3435,7 @@
                     <td class="px-6 py-4 text-right whitespace-nowrap">
                         <button onclick="openUniversalModal('project', ${p.id})" class="text-brand-purple hover:text-brand-purpleHover font-bold text-xs mr-2">+ Операция</button>
                         <button onclick="openHistoryModalById(${p.id})" class="text-gray-400 font-bold text-xs hover:text-brand-purple transition-all mr-2">История</button>
+                        ${currentRole === 'director' ? `<button type="button" onclick="openProjectTaxModal(${Number(p.id)})" class="text-brand-purple hover:text-brand-purpleHover font-bold text-xs" title="Ставка объекта по умолчанию; для отдельного поступления откройте его историю">${isFalseFloorProject(p) && getProjectTaxRate(p) === 22 ? 'НДС 22%' : `Налог ${formatTaxRate(getProjectTaxRate(p))}%`} ✎</button>` : ''}
                     </td>
                 </tr>`;
             });
@@ -3454,13 +3495,11 @@
                 // реинвестирование результат объекта не меняют.
                 const unionProjectProfit = data.reduce((sum, project) => {
                     const periodIncomeRows = filterByPeriod(project.incomes || [], 'date');
-                    const periodIncome = sumAmounts(periodIncomeRows);
                     const periodExpense = sumAmounts(filterByPeriod(getProjectOperationalExpenses(project), 'date'));
                     const period = getDashPeriodFilter();
-                    const monthKey = period?.type === 'month' ? `${period.year}-${String(period.month).padStart(2,'0')}` : '';
-                    const upd = isGeneratorProject(project) && monthKey ? getMonthlyUpd(project.id, monthKey) : null;
-                    const earned = upd ? upd.amount : periodIncome;
-                    const tax = upd ? getProjectTaxAmount(project, earned) : getProjectTaxAmount(project, earned, periodIncomeRows);
+                    const generatorAccrual = getGeneratorAccruedPeriod(project, period);
+                    const earned = generatorAccrual ? generatorAccrual.income : sumAmounts(periodIncomeRows);
+                    const tax = generatorAccrual ? generatorAccrual.tax : getProjectTaxAmount(project, earned, periodIncomeRows);
                     const cleanProfit = Math.max(0, earned - periodExpense - tax);
                     const unionShare = splitAmountEqually(cleanProfit, getProjectParticipants(project))
                         .find(share => isUnionEskeyRecipient(share.name));
@@ -4002,9 +4041,7 @@
                     const projectTax = getProjectTaxAmount(p, projectIncome);
                     const projectNetProfit = projectResultBeforeTax - projectTax;
                     const projectTaxRateLabel = isFalseFloorProject(p)
-                        ? `<span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Расчётный резерв по платежам</span>`
-                        : currentRole === 'director'
-                        ? `<button type="button" onclick="openProjectTaxModal(${Number(p.id)})" class="project-action-link -ml-1.5 rounded-lg px-1.5 py-1 text-left text-[10px] font-bold uppercase tracking-wider text-gray-400">Налог ${formatTaxRate(getProjectTaxRate(p))}% <span class="normal-case text-brand-purple">✎</span></button>`
+                        ? `<span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">НДС 22% / Юнион 6% · по платежам</span>`
                         : `<span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Налог ${formatTaxRate(getProjectTaxRate(p))}%</span>`;
                     const participantSettlementCardHtml = buildParticipantSettlementCardHtml(p);
                     const floorRecipientTotals = isFalseFloorProject(p) ? (p.incomes || []).reduce((totals, row) => {
@@ -4191,7 +4228,8 @@
             const mIncSum  = monthIncomes.reduce((s,i)=>s+i.amount, 0);
             const mExpSum  = monthExpensesOp.reduce((s,e)=>s+e.amount, 0);
             const monthlyUpd = getMonthlyUpd(genProj.id, mk);
-            const mEarned = monthlyUpd ? monthlyUpd.amount : mIncSum;
+            const mEarned = monthlyUpd ? monthlyUpd.amount
+                : sumAmounts(monthIncomes.filter(row => !row.serviceMonth || row.serviceMonth === mk));
             const mNet     = mEarned - mExpSum;
 
             // ── Данные общие ──
@@ -4292,9 +4330,7 @@
             const updEditHtml = isMonth && currentRole === 'director'
                 ? `<button type="button" onclick="editGeneratorMonthlyUpd(${Number(genProj.id)}, '${mk}')" class="project-action-link rounded-lg px-1.5 py-1 text-right text-xs font-bold text-brand-purple">${monthlyUpd ? formatMoney(incSum) : 'Внести сумму'} ✎</button>`
                 : `<span class="text-right text-xs font-bold text-gray-800">${formatMoney(incSum)}</span>`;
-            const generatorTaxRateLabel = currentRole === 'director'
-                ? `<button type="button" onclick="openProjectTaxModal(${Number(genProj.id)})" class="project-action-link -ml-1.5 rounded-lg px-1.5 py-1 text-left text-[10px] font-bold uppercase tracking-wider text-gray-400">Налог ${formatTaxRate(getProjectTaxRate(genProj))}% <span class="normal-case text-brand-purple">✎</span></button>`
-                : `<span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Налог ${formatTaxRate(getProjectTaxRate(genProj))}%</span>`;
+            const generatorTaxRateLabel = `<span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Налог ${formatTaxRate(getProjectTaxRate(genProj))}%</span>`;
             const generatorSortedCategories = genActiveCats.slice().sort((a, b) => genCatSums[b] - genCatSums[a]);
             const generatorVisibleCategories = generatorSortedCategories.slice(0, 5);
             const generatorHiddenCategories = generatorSortedCategories.slice(5);
@@ -4342,7 +4378,7 @@
                         ${isMonth ? `<span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Сдано по УПД</span>${updEditHtml}` : ''}
                         <button type="button" onclick="openProjectOperationsModal(${Number(genProj.id)}, 'income')" class="project-action-link rounded-lg px-1.5 py-1 text-left text-[10px] font-bold uppercase tracking-wider text-gray-400">Поступило на счета</button><button type="button" onclick="openProjectOperationsModal(${Number(genProj.id)}, 'income')" class="project-action-link rounded-lg px-1.5 py-1 text-right text-xs font-bold text-gray-800">${formatMoney(isMonth ? mIncSum : allIncSum)}</button>
                         ${cashBreakdownHtml}
-                        ${isMonth && !monthlyUpd ? '<span class="col-span-2 text-[10px] text-amber-600">УПД не внесено — прибыль предварительно по поступлениям</span>' : ''}
+                        ${isMonth && !monthlyUpd ? '<span class="col-span-2 text-[10px] text-amber-600">УПД не внесено — прибыль предварительная; оплаты за другие месяцы работ в неё не входят</span>' : ''}
                         ${!isMonth ? '<span class="col-span-2 text-[10px] text-gray-400">За всё время итог по поступлениям; месячная прибыль — по УПД</span>' : ''}
                         <button type="button" onclick="openProjectOperationsModal(${Number(genProj.id)}, 'expense')" class="project-action-link rounded-lg px-1.5 py-1 text-left text-[10px] font-bold uppercase tracking-wider text-gray-400">Прямые затраты</button><button type="button" onclick="openProjectOperationsModal(${Number(genProj.id)}, 'expense')" class="project-action-link rounded-lg px-1.5 py-1 text-right text-xs font-bold text-gray-800">${formatMoney(genExpSum)}</button>
                         <span class="pt-2 border-t border-gray-100 text-[10px] font-bold uppercase tracking-wider text-gray-400">Результат до налога</span><span class="pt-2 border-t border-gray-100 text-right text-xs font-semibold text-gray-800">${(net >= 0 ? '+' : '') + formatMoney(net)}</span>
@@ -4618,7 +4654,7 @@
                 if (monthIncomes.length === 0 && monthExpenses.length === 0 && !upd) return;
 
                 const cashSum = monthIncomes.reduce((s, i) => s + i.amount, 0);
-                const incSum = upd ? upd.amount : cashSum;
+                const incSum = upd ? upd.amount : sumAmounts(monthIncomes.filter(row => !row.serviceMonth || row.serviceMonth === monthKey));
                 const expSum = monthExpenses.reduce((s, e) => s + e.amount, 0);
                 const projectTax = getProjectTaxAmount(p, incSum);
                 const net = incSum - expSum - projectTax;
@@ -5850,7 +5886,9 @@
                         <td class="px-4 sm:px-6 py-3 text-xs text-gray-400" style="text-align:center;min-width:140px;max-width:240px;white-space:normal;">
                             ${escapeTrashText(inc.comment || '—')}
                             ${isGeneratorProject(p) && inc.serviceMonth ? `<div class="mt-1 text-[10px] font-semibold text-purple-600">За ${escapeTrashText(inc.serviceMonth)}</div>` : ''}
-                            ${isFalseFloorProject(p) ? `<div class="mt-1 text-[10px] font-semibold text-purple-600">На счёт: ${escapeTrashText(inc.receivedBy || 'Юнион Эскей')} · резерв ${formatMoney(getIncomeReserve(p, inc))}</div>` : ''}
+                            ${isFalseFloorProject(p) ? `<div class="mt-1 text-[10px] font-semibold text-purple-600">На счёт: ${escapeTrashText(inc.receivedBy || 'Юнион Эскей')}</div>
+                                ${isDirector ? `<button type="button" onclick="startEditIncome(${Number(p.id)}, ${idx})" class="mt-1 text-[10px] font-bold text-brand-purple hover:underline">${escapeTrashText(getIncomeReserveLabel(p, inc))}: ${formatMoney(getIncomeReserve(p, inc))} ✎</button>`
+                                : `<div class="mt-1 text-[10px] font-semibold text-purple-600">${escapeTrashText(getIncomeReserveLabel(p, inc))}: ${formatMoney(getIncomeReserve(p, inc))}</div>`}` : ''}
                         </td>
                         <td class="px-2 py-3 text-center w-[130px]">${incSettledColHtml}</td>
                         ${isDirector ? `<td class="px-4 sm:px-6 py-3 text-center whitespace-nowrap">${actionHtml}</td>` : ''}
@@ -6183,8 +6221,12 @@
             editingProjectTaxId = Number(project.id);
             const subtitle = document.getElementById('project-tax-modal-subtitle');
             const input = document.getElementById('project-tax-rate-input');
+            const help = document.getElementById('project-tax-modal-help');
             if (subtitle) subtitle.textContent = project.name;
             if (input) input.value = String(getProjectTaxRate(project));
+            if (help) help.textContent = isFalseFloorProject(project)
+                ? 'Для «Фальшполов» ставка 22% означает НДС внутри суммы (22/122). Она применяется только к поступлениям с правилом «Ставка объекта». Налог отдельного платежа меняется в истории поступлений.'
+                : 'Ставка объекта применяется только к поступлениям, для которых не выбрано отдельное правило.';
             document.getElementById('project-tax-modal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
             setTimeout(() => input?.focus(), 0);
@@ -6223,11 +6265,19 @@
             showNotification(`Ставка налога ${formatTaxRate(taxRate)}% сохранена`, 'success');
         }
 
+        function maybeDefaultNewProjectTaxRate() {
+            const rateInput = document.getElementById('add-project-tax-rate');
+            if (rateInput && rateInput.dataset.manual !== 'true') {
+                rateInput.value = isFalseFloorProject({ name: document.getElementById('add-project-name')?.value }) ? '22' : '6';
+            }
+        }
+
         function openAddProjectModal() { 
             refreshOperationCategoryOptions();
             document.getElementById('add-project-name').value = '';
             document.getElementById('add-project-contract').value = '';
             document.getElementById('add-project-tax-rate').value = '6';
+            document.getElementById('add-project-tax-rate').dataset.manual = 'false';
             document.getElementById('add-project-paid').value = '';
             document.getElementById('add-project-income-category').value = '';
             document.getElementById('add-project-income-comment').value = '';
