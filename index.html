@@ -4041,7 +4041,7 @@
                     const projectTax = getProjectTaxAmount(p, projectIncome);
                     const projectNetProfit = projectResultBeforeTax - projectTax;
                     const projectTaxRateLabel = isFalseFloorProject(p)
-                        ? `<span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">НДС 22% / Юнион 6% · по платежам</span>`
+                        ? `<span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Налог</span>`
                         : `<span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Налог ${formatTaxRate(getProjectTaxRate(p))}%</span>`;
                     const participantSettlementCardHtml = buildParticipantSettlementCardHtml(p);
                     const floorRecipientTotals = isFalseFloorProject(p) ? (p.incomes || []).reduce((totals, row) => {
